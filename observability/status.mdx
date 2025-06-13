@@ -1,0 +1,106 @@
+---
+title: "Status"
+---
+
+Once you've [deployed](/launch/deploy) an app and invoked it, you can check its status.
+
+<Info>
+	The API is available, and the CLI command is coming soon.
+</Info>
+
+```bash
+kernel invocation info <invocation_id>
+```
+```bash
+App Invocation:
+Invocation ID: 026d6dad-7a9d-4622-9c5a-a02ec6825889
+Status: RUNNING # One of [QUEUED, RUNNING, SUCCEEDED, FAILED]
+```
+
+You can also access the invocation's info by making a `GET` request to Kernel's API:
+<CodeGroup>
+
+```typescript Typescript/Javascript
+const response = await fetch(`https://api.onkernel.com/invocations/${invocation_id}`, {
+    headers: {
+        'Authorization': `Bearer ${process.env.KERNEL_API_KEY}`,
+        'Content-Type': 'application/json'
+    }
+});
+const {
+    id,
+    app_name,
+    action_name,
+    payload,
+    output,
+    started_at,
+    finished_at,
+    status,
+    status_reason } = await response.json();
+```
+
+```python Python
+response = requests.get(
+    f"https://api.onkernel.com/invocations/{invocation_id}",
+    headers={
+        'Authorization': f"Bearer {os.environ.get('KERNEL_API_KEY')}",
+        'Content-Type': 'application/json'
+    }
+)
+
+# Parse the JSON response
+data = response.json()
+invocation_id = data["id"]
+app_name = data["app_name"]
+action_name = data["action_name"]
+payload = data["payload"]
+output = data["output"]
+started_at = data["started_at"]
+finished_at = data["finished_at"]
+status = data["status"]
+status_reason = data["status_reason"]
+```
+
+</CodeGroup>
+
+Or, get the invocation's info using Kernel's SDK:
+
+<CodeGroup>
+```typescript Typescript/Javascript
+import { Kernel } from '@onkernel/sdk';
+
+const {
+    id,
+    app_name,
+    action_name,
+    payload,
+    output,
+    started_at,
+    finished_at,
+    status,
+    status_reason
+} = await Kernel.invocations.get(invocation_id);
+```
+
+```python Python
+import kernel
+
+data = kernel.invocations.get(invocation_id)
+invocation_id = data["id"]
+app_name = data["app_name"]
+action_name = data["action_name"]
+payload = data["payload"]
+output = data["output"]
+started_at = data["started_at"]
+finished_at = data["finished_at"]
+status = data["status"]
+status_reason = data["status_reason"]
+```
+
+</CodeGroup>
+
+<Info>
+  An invocation ends once its code execution finishes.
+</Info>
+
+Once the invocation's `status` reaches a terminal state (`SUCCEEDED` or `FAILED`), the same `kernel invocation info` command can be used to retrieve the [replay](/observability/replays).

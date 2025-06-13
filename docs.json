@@ -1,0 +1,131 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "theme": "palm",
+  "name": "Kernel",
+  "colors": {
+    "primary": "#111111",
+    "light": "#f7f7f7",
+    "dark": "#1e1e1e"
+  },
+  "favicon": "/favicon.svg",
+  "fonts": {
+    "family": "IBM Plex Sans",
+    "weight": 400,
+    "heading": {
+      "family": "IBM Plex Mono"
+    }
+  },
+  "contextual": {
+    "options": [
+      "chatgpt",
+      "claude"
+    ]
+  },
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Guides",
+        "groups": [
+        {
+          "group": "Get Started",
+          "pages": [
+            "introduction",
+            "quickstart"
+          ]
+        },
+        {
+          "group": "Build",
+          "pages": [
+            "build/develop",
+            "build/browser-frameworks"
+          ]
+        },
+        {
+          "group": "Launch",
+          "pages": [
+            "launch/deploy",
+            "launch/invoke",
+            {
+              "group": "Browsers",
+              "pages": [
+                "launch/browser-persistence",
+                "launch/browser-authentication",
+                "launch/browser-standby",
+                "launch/browser-stealth",
+                "launch/browser-termination"
+              ]
+            }
+          ]
+        },
+        {
+          "group": "Observability",
+          "pages": [
+            "observability/status",
+            "observability/logs",
+            {
+              "group": "Browsers",
+              "pages": [
+                "observability/live-view",
+                "observability/replays"
+              ]
+            }
+          ]
+        },
+        {
+          "group": "API",
+          "pages": [
+            "reference/cli",
+            "reference/api-keys"
+          ]
+        },
+        {
+          "group": "Community",
+          "pages": [
+            "community/github",
+            "community/discord"
+          ]
+        },
+        {
+          "group": "Info",
+          "pages": [
+            "info/concepts",
+            "info/fast",
+            "info/unikernels"
+          ]
+        },
+        {
+          "group": "Careers",
+          "pages": [
+            "careers/intro",
+            "careers/infra-engineer",
+            "careers/backend-engineer",
+            "careers/devrel-engineer",
+            "careers/engineer-new-grad"
+          ]
+        }
+      ]
+    },
+    {
+      "tab": "API Reference",
+      "openapi": "https://app.stainless.com/api/spec/documented/kernel/openapi.documented.yml"
+    }
+    ]
+  },
+  "logo": {
+    "light": "/logo/light.png",
+    "dark": "/logo/dark.png"
+  },
+  "background": {
+    "color": {
+      "light": "#f7f7f7",
+      "dark": "#1e1e1e"
+    }
+  },
+  "footer": {
+    "socials": {
+      "x": "https://x.com/onkernel",
+      "github": "https://github.com/orgs/onkernel",
+      "linkedin": "https://www.linkedin.com/company/onkernel"
+    }
+  }
+}

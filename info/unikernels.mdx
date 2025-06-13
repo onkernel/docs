@@ -1,0 +1,73 @@
+---
+title: "Browsers on Unikernels"
+---
+
+## Introduction
+
+At Kernel, we've [pioneered](https://news.ycombinator.com/item?id=43705144) a revolutionary approach to browser automation infrastructure: running Chromium browsers on lightweight unikernels. This architecture represents a significant departure from traditional solutions (warm pools / Kubernetes-orchestrated Docker containers), offering unique capabilities that set our platform apart.
+
+## Technical architecture
+Our platform consists of two key components:
+
+1. **Your app code**: we host your app code on isolated unikernel instances, providing isolation and security.
+2. **Browser runtime**: each app instance gets its own Chromium browser running on a dedicated Unikraft-based unikernel. Your app code connects to and runs alongside the browser in the cloud.
+
+Our approach co-locates your app code with the browser environment. This solves a number of issues that remote browsers have, including latency, errors due to unexpected disconnects, and bandwidth issues during data-intensive operations like screenshots.
+
+## Unikernels and browsers
+
+### Unikernels
+
+Unikernels represent a fundamentally different approach to operating system design. Unlike traditional operating systems that include drivers, services, and components for general-purpose computing, unikernels are specialized, single-purpose systems that include only the necessary components to run a specific application.
+
+### Browsers
+
+Browsers are inherently designed to run untrusted code from the internet. To handle this safely, browser architectures incorporate sophisticated isolation mechanisms — sandboxing processes, separating rendering engines from JavaScript execution, and implementing strict security boundaries.
+
+This existing security-focused architecture makes browsers exceptionally well-suited for unikernel deployments. While unikernels typically lack internal security boundaries, browsers compensate with their own robust isolation mechanisms. The browser's multi-process architecture and sandboxing capabilities effectively compensate for this limitation of unikernels.
+
+By combining these technologies, we get the best of both worlds: the minimal attack surface and resource efficiency of unikernels, complemented by the browser's battle-tested security architecture designed specifically for handling untrusted content. This creates an ideal environment for secure, efficient browser infrastructure.
+
+## Capabilities
+
+Our browsers-on-unikernels approach unlocks several capabilities unique to our platform:
+
+### Intelligent standby mode
+
+When your app isn't actively processing network traffic, our browsers automatically go into standby mode. This dramatically reduces resource consumption during idle periods.
+
+Unlike traditional "sleep" states, our standby mode preserves the entire browser state while consuming negligible resources, allowing you to maintain long-running sessions without the associated costs.
+
+### Persistent state through snapshots
+
+One of the most powerful features of our approach is the ability to create complete snapshots of the browser's state when entering standby mode. These snapshots capture everything:
+
+- Authentication cookies and session data
+- Loaded page content and DOM state
+- Browser window configuration and zoom level
+- Local storage
+- Active downloads and processes
+
+When the browser needs to be reactivated, the Kernel platform restores from these snapshots in milliseconds, allowing you to pick up exactly where you left off.
+
+### Sub-millisecond cold starts
+
+Traditional browser infrastructure takes several seconds to initialize a new browser instance. Our unikernel-based approach achieves cold start times of less than 20 milliseconds.
+
+This ultra-fast startup capability makes our platform ideal for event-driven scenarios where rapid response to triggers is essential. Your app can spring to life almost instantly when needed, then return to standby when idle.
+
+## Use cases
+
+Use our platform for anything that requires fast execution, low latency, or persistent browsers:
+
+- Long-running browser automation tasks with intermittent activity
+- Applications requiring persistent browser state across invocations
+- Event-driven scenarios demanding ultra-low latency response
+- Resource-intensive browser automation at scale
+- Security-critical browser automation where isolation is paramount
+
+## Getting started
+
+We're currently in private beta. Join our [waitlist](https://waitlist.onkernel.com/r/mZW2zz) or reach out on [Discord](https://discord.gg/FBrveQRcud)!
+
+Our core images are open source on [Github](https://github.com/onkernel/kernel-images).

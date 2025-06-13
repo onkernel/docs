@@ -1,0 +1,212 @@
+---
+title: "Invoking"
+---
+
+## Invoking via CLI
+
+Invoke an app action immediately via the CLI:
+
+```bash
+kernel invoke <app_name> <action_name>
+```
+
+## Payload parameter
+`--payload` allows you to invoke the action with specified parameters. This enables your action to receive and handle dynamic inputs at runtime. For example:
+```bash
+kernel invoke <app_name> <action_name> 
+    --payload '{"tshirt_size": "small", "color": "black", "shipping_address": "2 Mint Plz, San Francisco CA 94103"}'
+```
+
+See [developing](/build/develop#parameters) to learn how to access the payload in your action method.
+
+## Return values
+
+If your action specifies a [return value](/build/develop#return-values), the invocation returns its value to the command line once it completes.
+
+<Info>
+    Return payloads have a max response limit size of 64kb. Use an S3 bucket for larger data processing.
+</Info>
+
+## Invoking via API/SDK
+
+You can also run your app by making a `POST` request to Kernel's API:
+
+<CodeGroup>
+```typescript Typescript/Javascript
+const response = await fetch(`https://api.onkernel.com/invocations`, {
+    method: 'POST',
+    headers: {
+        'Authorization': `Bearer ${process.env.KERNEL_API_KEY}`,
+        'Content-Type': 'application/json'
+    },
+    body: {
+        JSON.stringify({
+            app_name: app_name,
+            action_name: action_name,
+            version: "latest",
+            // Optional flags
+            payload: {
+                tshirt_size: "small",
+                color: "black",
+                shipping_address: "2 Mint Plz, San Francisco CA 94103"
+            }
+        })
+    }
+});
+const { id, status, status_reason, output } = await response.json();
+```
+
+```python Python
+response = requests.post(
+    f"https://api.onkernel.com/apps/{app_name}/actions/{action_name}",
+    headers={
+        "Authorization": f"Bearer {os.environ.get('KERNEL_API_KEY')}",
+        "Content-Type": "application/json"
+    },
+    json={
+        "app_name": app_name,
+        "action_name": action_name,
+        "version": "latest",
+        "payload": { # Optional flags
+            "tshirt_size": "small",
+            "color": "black",
+            "shipping_address": "2 Mint Plz, San Francisco CA 94103"
+        }
+    }
+)
+
+# Parse the JSON response
+data = response.json()
+invocation_id, status, browser_live_view_urls = (
+    data["id"],
+    data["status"],
+    data["status_reason"],
+    data["output"]
+)
+```
+
+</CodeGroup>
+
+Or, invoke the function using Kernel's SDK:
+
+<CodeGroup>
+```typescript Typescript/Javascript
+import { Kernel } from '@onkernel/sdk';
+
+const {
+    id,
+    status,
+    status_reason
+    output
+} = await Kernel.invocations.create({
+    app_name: app_name,
+    action_name: action_name,
+    version: "latest"
+});
+```
+
+```python Python
+import kernel
+
+result = kernel.invocations.create({
+    "app_name": app_name,
+    "action_name": action_name,
+    "version": "latest"
+})
+invocation_id, status, browser_live_view_urls = (
+    result["id"],
+    result["status"],
+    result["status_reason"],
+    result["output"]
+)
+```
+
+</CodeGroup>
+
+### Asynchronous invocations
+For long running jobs, use asynchronous invocations to trigger Kernel actions without waiting for the result. You can then poll its [status](/observability/status) for the result.
+
+<Info>
+    Synchronous invocations time out after 100 seconds.
+</Info>
+
+<CodeGroup>
+```typescript Typescript/Javascript
+const response = await fetch(`https://api.onkernel.com/invocations`, {
+    method: 'POST',
+    headers: {
+        'Authorization': `Bearer ${process.env.KERNEL_API_KEY}`,
+        'Content-Type': 'application/json'
+    },
+    body: {
+        JSON.stringify({
+            app_name: "app_name",
+            action_name: "action_name",
+            version: "latest",
+            async: true, // Set this flag to specify asynchronous
+        })
+    }
+});
+const { id, status } = await response.json(); // status will be QUEUED
+```
+
+```python Python
+response = requests.post(
+    f"https://api.onkernel.com/apps/{app_name}/actions/{action_name}",
+    headers={
+        'Authorization': f"Bearer {os.environ.get('KERNEL_API_KEY')}",
+        'Content-Type': 'application/json'
+    },
+    json={
+        "app_name": app_name,
+        "action_name": action_name,
+        "version": "latest",
+        "async": True # Set this flag to specify asynchronous
+    }
+)
+
+# Parse the JSON response
+data = response.json()
+invocation_id, status, browser_live_view_urls = (
+    data["id"],
+    data["status"] # status will be QUEUED
+)
+```
+
+</CodeGroup>
+
+Or, invoke the function using Kernel's SDK:
+
+<CodeGroup>
+```typescript Typescript/Javascript
+import { Kernel } from '@onkernel/sdk';
+
+const {
+    id,
+    status, // status will be QUEUED
+} = await Kernel.invocations.create({
+    app_name: app_name,
+    action_name: action_name,
+    version: "latest",
+    async: true,
+});
+```
+
+```python Python
+import kernel
+
+result = kernel.invocations.create({
+    "app_name": app_name,
+    "action_name": action_name,
+    "version": "latest",
+    "async": True
+})
+invocation_id, status, browser_live_view_urls = (
+    result["id"],
+    result["status"] # status will be QUEUED
+)
+```
+
+</CodeGroup>
+
+See the [CLI reference](/reference/cli) for full details.

@@ -1,0 +1,68 @@
+---
+title: "Deploying"
+---
+
+Kernel's deployment process is as simple as it is fast. We take your code from local to production in 2 seconds or less: no configuration files to manage, no complex CI/CD pipelines to set up. Just deploy and go.
+
+Once you deploy an app on Kernel, you can schedule its actions on a job or run them from other contexts. You can also run actions multiple times in parallel by making multiple invocations as needed.
+
+
+## Deploy the app
+
+Use the CLI from the root directory of your project:
+```bash
+kernel deploy <entrypoint_file_name>
+```
+
+<Info>
+  To deploy a new version of your app, use the `--force` flag.
+</Info>
+
+## Environment variables
+
+You can set environment variables for your app using the `--env` flag. For example:
+
+<CodeGroup>
+```bash Typescript/Javascript
+kernel deploy my_app.ts --env MY_ENV_VAR=my_value # Can add multiple env vars delimited by space
+```
+
+```bash Python
+kernel deploy my_app.py --env MY_ENV_VAR=my_value # Can add multiple env vars delimited by space
+```
+</CodeGroup>
+
+## Deployment notes
+
+- The `entrypoint_file_name` is the file name where you [defined](/build/develop) your app.
+- Include a `.gitignore` file to exclude dependency folders like `node_modules` and `.venv`.
+- Kernel assumes the root directory contains at least this file structure:
+
+<CodeGroup>
+```bash Typescript/Javascript
+/project-root
+  |-- my_app.ts # Entrypoint file
+  |-- package.json
+  |-- tsconfig.json # If Typescript
+  ∟-- package-lock.json # Or bun.lock or pnpm-lock.yaml
+```
+
+```bash Python
+/project-root
+  |-- my_app.py # Entrypoint file
+  ∟-- requirements.txt # or pyproject.toml or uv.lock
+```
+</CodeGroup>
+
+```bash
+# Successful deployment CLI output
+SUCCESS  Compressed files
+SUCCESS  Deployment successful
+SUCCESS  App "my_app.ts" deployed with action(s): [my-action]
+INFO  Invoke with: kernel invoke my-app my-action --payload '{...}'
+SUCCESS  Total deployment time: 2.78s
+```
+
+Once deployed, you can [invoke](/launch/invoke) it from anywhere.
+
+See the [CLI reference](/reference/cli) for full details.

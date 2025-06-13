@@ -1,0 +1,54 @@
+---
+title: "Termination"
+---
+
+<Info>
+	This feature is coming soon!
+</Info>
+
+Kernel makes it possible to [persist](/launch/browser-persistence) and reuse the same browser state across multiple invocations. In between invocations, the browser goes into [standby](/launch/browser-standby), consuming no usage costs when they do. Browsers not marked for persistence are automatically terminated after your action calls `browser.close()`.
+
+To terminate a persisted browser, delete it using the browser ID that you specified when creating the browser [with persistence](/launch/browser-persistence):
+
+```bash
+kernel browser terminate <browser_id>
+```
+
+You can also do this by making a `DELETE` request to Kernel's API:
+<CodeGroup>
+
+```typescript Typescript/Javascript
+const response = await fetch(`https://api.onkernel.com/browsers/${browserId}`, {
+    method: 'DELETE',
+    headers: {
+        'Authorization': `Bearer ${process.env.KERNEL_API_KEY}`,
+        'Content-Type': 'application/json'
+    }
+});
+```
+
+```python Python
+response = requests.delete(
+    f"https://api.onkernel.com/browsers/{browser_id}",
+    headers={
+        'Authorization': f"Bearer {os.environ.get('KERNEL_API_KEY')}",
+        'Content-Type': 'application/json'
+    }
+)
+```
+</CodeGroup>
+
+Or via the SDK:
+<CodeGroup>
+```typescript Typescript/Javascript
+import { Kernel } from '@onkernel/sdk';
+
+await Kernel.browsers.delete(browserId);
+```
+
+```python Python
+import kernel
+
+kernel.browsers.delete(browser_id)
+```
+</CodeGroup>

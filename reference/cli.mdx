@@ -1,0 +1,49 @@
+---
+title: "Kernel CLI"
+---
+
+The Kernel CLI helps you deploy and run web automation apps on our platform.
+
+## Installation
+
+Install the Kernel CLI using your favorite package manager:
+
+```bash
+# Using brew
+brew install onkernel/tap/kernel
+
+# Using pnpm
+pnpm install -g onkernel/cli
+
+# Using npm
+npm install -g onkernel/cli
+```
+
+Then, set your Kernel API key for deployments
+```bash
+export KERNEL_API_KEY=<API_KEY>
+```
+
+## Verifying installation
+After installation, verify that Kernel CLI was installed correctly:
+
+```bash
+which kernel
+```
+
+## Commands
+
+| Command | Optional Flags | Description |
+|---------|-------------| -------------|
+| `kernel deploy <entrypoint_file_name>` | - | Deploys an app to Kernel from the current directory. |
+| | `--env <ENV_VAR=VAL>` | Adds environment variables to the app. Expects the form `ENV_VAR=VAL` delimited by spaces. Optional. |
+| | `--force` | Replaces an existing app by the same name if it exists (e.g. to deploy a newer version). Optional. |
+| `kernel invoke <app_name> <action_name>` | - | Invokes a specific app action by its name. Generates an Invocation. |
+| | `--payload <payload_data>` | Includes the specified parameters. Expects a stringified JSON object. Optional. |
+| `kernel logs <app_name>` | - | Prints the logs for the specified app. |
+| | `--follow` | Follows the logs. Optional. |
+| | `--log-level <log_level>` | Specify the log level to print: trace, debug, info, warn, error, fatal, print. Optional. |
+| | `--no-color` | Disables color output|
+| `kernel invocation info <invocation_id>` | - | Coming soon |
+| `kernel browser terminate <browser_id>` | - | Coming soon|
+| `kernel help [command]` | - | Displays help information about Kernel commands. |

@@ -1,0 +1,117 @@
+---
+title: "Quickstart"
+---
+
+This quickstart guide will help you create, deploy, and run your first app on Kernel. You'll launch a simple browser automation app using Playwright, Browser Use, Computer Use, or Stagehand.
+
+## Prerequisites
+
+- `brew` for the Kernel CLI
+- `npm` or `pnpm` to generate a sample Kernel app
+- A [Kernel account](/reference/api-keys) with an API key
+
+## 1. Download the sample app
+
+```bash
+npx @onkernel/create-kernel-app my-sample-app
+```
+
+## 2. Install the Kernel CLI
+
+```bash
+# Using brew
+brew install onkernel/tap/kernel
+
+# Using pnpm
+pnpm install -g @onkernel/cli
+
+# Using npm
+npm install -g @onkernel/cli
+```
+
+Verify the installation exists:
+
+```bash
+which kernel
+```
+
+## 3. Set your Kernel API key
+
+<Tip>
+    Request an early access API key [here](https://waitlist.onkernel.com/r/mZW2zz)!
+</Tip>
+
+Configure your environment with your Kernel API key:
+
+```bash
+export KERNEL_API_KEY=<YOUR_API_KEY>
+```
+
+## 4. Deploy the sample app on Kernel
+
+<CodeGroup>
+```bash Typescript / Javascript
+cd my-sample-app
+kernel deploy index.ts # --env ANTHROPIC_API_KEY=XXX if Stagehand or Computer Use
+```
+
+```bash Python
+cd my-sample-app
+kernel deploy main.py # --env ANTHROPIC_API_KEY=XXX if Browser Use or Computer Use
+```
+
+</CodeGroup>
+
+## 5. Invoke the app
+
+<CodeGroup>
+```bash Typescript / Javascript
+# Sample app
+kernel invoke ts-basic get-page-title --payload '{"url": "https://www.google.com"}'
+
+# Stagehand
+kernel invoke ts-stagehand stagehand-task --payload '{"query": "Best wired earbuds"}'
+
+# Computer Use
+kernel invoke ts-cu cu-task --payload '{"query": "Search for the top 3 restaurants in NYC according to Pete Wells"}'
+````
+
+```bash Python
+# Sample app
+kernel invoke python-basic get-page-title --payload '{"url": "https://www.google.com"}'
+
+# Browser Use
+kernel invoke python-bu bu-task --payload '{"task": "Compare the price of gpt-4o and DeepSeek-V3"}'
+
+# Computer Use
+kernel invoke python-cu cu-task --payload '{"query": "Search for the top 3 restaurants in NYC according to Pete Wells"}'
+````
+
+</CodeGroup>
+
+## Next steps
+
+Nice work! With Kernel, you:
+
+1. Developed an app that uses Playwright, Browser Use, Computer Use, or Stagehand
+2. Deployed and invoked it in the cloud
+
+Our instant deployment capabilities mean you can iterate rapidly and get the benefits of using Kernel's cloud platform without disrupting your development flow.
+
+From here, you can:
+
+- Explore [observability](/observability/logs) tools to monitor your invocations.
+- Learn about [browser configurations](/launch/browser-persistence) for advanced use cases.
+- Check out the [Kernel CLI](/reference/cli) for the full reference.
+
+## Sample apps reference
+
+These are the sample apps currently available when you run `npx @onkernel/create-kernel-app`:
+
+| Template               | Description                                               | Framework                  | Query Parameters |
+|------------------------|-----------------------------------------------------------|----------------------------|------------------|
+| **sample-app**         | Returns the page title of a specified URL                 | Playwright                 | `{ url }`        |
+| **browser-use**        | Completes a specified task                                | Browser Use                | `{ task }`       |
+| **stagehand**          | Returns the first result of a specified Google search     | Stagehand                  | `{ query }`      |
+| **advanced-sample**    | Implements sample apps using advanced Kernel configs      | Playwright                 | n/a              |
+| **computer-use**       | Implements a prompt loop                                  | Anthropic Computer Use API | `{ query }`      |
