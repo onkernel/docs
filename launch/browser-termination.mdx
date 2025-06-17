@@ -2,23 +2,19 @@
 title: "Termination"
 ---
 
-<Info>
-	This feature is coming soon!
-</Info>
-
-Kernel makes it possible to [persist](/launch/browser-persistence) and reuse the same browser state across multiple invocations. In between invocations, the browser goes into [standby](/launch/browser-standby), consuming no usage costs when they do. Browsers not marked for persistence are automatically terminated after your action calls `browser.close()`.
+Kernel makes it possible to [persist](/launch/browser-persistence) and reuse the same browser state across multiple invocations. In between invocations, the browser goes into [standby](/launch/browser-standby), consuming no usage costs when they do. Browsers not marked for persistence are automatically terminated after your action ends.
 
 To terminate a persisted browser, delete it using the browser ID that you specified when creating the browser [with persistence](/launch/browser-persistence):
 
 ```bash
-kernel browser terminate <browser_id>
+kernel browser delete <persistent_browser_id>
 ```
 
 You can also do this by making a `DELETE` request to Kernel's API:
 <CodeGroup>
 
 ```typescript Typescript/Javascript
-const response = await fetch(`https://api.onkernel.com/browsers/${browserId}`, {
+const response = await fetch(`https://api.onkernel.com/browsers?persistent_id=${browserId}`, {
     method: 'DELETE',
     headers: {
         'Authorization': `Bearer ${process.env.KERNEL_API_KEY}`,
@@ -26,10 +22,9 @@ const response = await fetch(`https://api.onkernel.com/browsers/${browserId}`, {
     }
 });
 ```
-
 ```python Python
 response = requests.delete(
-    f"https://api.onkernel.com/browsers/{browser_id}",
+    f"https://api.onkernel.com/browsers?persistent_id={browser_id}",
     headers={
         'Authorization': f"Bearer {os.environ.get('KERNEL_API_KEY')}",
         'Content-Type': 'application/json'
@@ -41,14 +36,23 @@ response = requests.delete(
 Or via the SDK:
 <CodeGroup>
 ```typescript Typescript/Javascript
-import { Kernel } from '@onkernel/sdk';
+import Kernel from '@onkernel/sdk';
 
-await Kernel.browsers.delete(browserId);
+const kernel = new Kernel();
+
+await kernel.browsers.delete({ persistent_id: 'persistent_id' });
 ```
 
 ```python Python
-import kernel
+from kernel import Kernel
 
-kernel.browsers.delete(browser_id)
+client = Kernel()
+
+client.browsers.delete(
+    persistent_id="persistent_id",
+)
 ```
 </CodeGroup>
+
+See the [CLI reference](/reference/cli) for full details.
+
