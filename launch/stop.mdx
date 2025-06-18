@@ -12,7 +12,7 @@ You can also do this by making a `DELETE` request to Kernel's API:
 <CodeGroup>
 
 ```typescript Typescript/Javascript
-const response = await fetch(`https://api.onkernel.com/invocations/${invocationId}`, {
+const response = await fetch(`https://api.onkernel.com/invocations/${invocationId}/browsers`, {
     method: 'DELETE',
     headers: {
         'Authorization': `Bearer ${process.env.KERNEL_API_KEY}`,
