@@ -1,0 +1,88 @@
+---
+title: "Remote Browsers"
+---
+
+Kernel [browsers](/info/unikernels) were designed to be lightweight, fast, and efficient for cloud-based browser automation at scale. They can be used as part of the Kernel [app platform](/build/develop) or connected a **remote service** with Chrome DevTools Protocol.
+
+Remote Kernel browsers have the same capabilities as on our app platform, including:
+- [Browser persistence](/launch/browser-persistence)
+- [Standby mode](/launch/browser-standby)
+- [Stealth mode](/launch/browser-stealth)
+- [Live debugging](/observability/live-view)
+
+
+<Info>
+    You don't need to pass an invocation ID in `browsers.create()` when creating remote Kernel browsers.
+</Info>
+
+### 1. Create a remote Kernel browser
+
+<CodeGroup>
+```typescript Typescript/Javascript
+import { Kernel } from '@onkernel/sdk';
+const kernel = new Kernel();
+const kernelBrowser = await kernel.browsers.create();
+```
+
+```Python Python
+import kernel
+client = Kernel()
+kernel_browser = client.browsers.create()
+```
+</CodeGroup>
+
+### 2. Connect to the browser with the Chrome DevTools Protocol
+
+Then, you can connect to the browser with any Chrome DevTools Protocol framework, such as Playwright or Puppeteer.
+
+<CodeGroup>
+
+```typescript Typescript/Javascript
+const browser = await chromium.connectOverCDP(kernelBrowser.cdp_ws_url);
+```
+
+```Python Python
+browser = playwright.chromium.connect_over_cdp(kernel_browser.cdp_ws_url)
+```
+</CodeGroup>
+
+### Full example
+
+Once you've connected to the Kernel browser, you can do anything with it.
+
+<CodeGroup>
+```typescript Typescript/Javascript
+import { Kernel } from '@onkernel/sdk';
+const kernel = new Kernel();
+
+const kernelBrowser = await kernel.browsers.create();
+const browser = await chromium.connectOverCDP(kernelBrowser.cdp_ws_url);
+try {
+    const context = await browser.newContext();
+    const page = await context.newPage();
+    await page.goto("https://www.google.com");
+    const title = await page.title();
+} catch (error) {
+    console.error(error);
+} finally {
+    await browser.close();
+}
+```
+
+```Python Python
+import kernel
+client = Kernel()
+
+kernel_browser = client.browsers.create()
+browser = playwright.chromium.connect_over_cdp(kernel_browser.cdp_ws_url)
+try:
+    context = await browser.new_context()
+    page = await context.new_page()
+    await page.goto(url)
+    title = await page.title()
+except Exception as e:
+    print(e)
+finally:
+    await browser.close()
+```
+</CodeGroup>

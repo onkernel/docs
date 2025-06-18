@@ -4,76 +4,29 @@ title: "Live View"
 
 Humans-in-the-loop can access in-progress invocations to observe browser-based automations in real-time, resolve errors, or take unscripted actions.
 
-To access Live View, print the `browser_live_view_url` to the console after you've invoked your app:
+To access Live View, access the `browser_live_view_url` provided when you create a Kernel browser:
 
 <CodeGroup>
 ```typescript Typescript/Javascript
 import { Kernel } from '@onkernel/sdk';
-import { chromium } from 'playwright';
-
 const kernel = new Kernel();
-const app = kernel.app('browser-automation');
-
-const playwrightScript = async (runtimeContext, payload) => {
-	const kernelBrowser = await kernel.browsers.create({ invocation_id: runtime_context.invocation_id });
-    // Add this line
-    console.log(kernelBrowser.browser_live_view_url);
-    
-	const browser = await chromium.connectOverCDP(kernelBrowser.cdp_ws_url);
-
-	try {
-		const context = await browser.newContext();
-		const page = await context.newPage();
-        await page.waitForTimeout(15000); // Pause for 15 seconds to visit the live view
-		await page.goto("https://www.google.com");
-		const title = await page.title();
-	} catch (error) {
-		console.error(error);
-	} finally {
-		await browser.close();
-	}
-};
-
-app.action("my-action-name", playwrightScript);
+const kernelBrowser = await kernel.browsers.create({ invocation_id: runtime_context.invocation_id });
+console.log(kernelBrowser.browser_live_view_url);
 ```
 
 ```python Python
 import kernel
-from playwright.async_api import async_playwright
-
 client = Kernel()
-app = kernel.App("browser-automation")
-
-@app.action("my-action-name")
-def playwright_script(runtime_context, payload):
-    async with async_playwright() as playwright:
-    	kernel_browser = await kernel.browsers.create(invocation_id=runtime_context.invocation_id)
-        # Add this line
-        print(kernel_browser.browser_live_view_url)
-    	browser = await playwright.chromium.connect_over_cdp(kernel_browser.cdp_ws_url)
-
-    	try:
-			context = await browser.new_context()
-      		page = await context.new_page()
-            await page.waitForTimeout(15000); # Pause for 15 seconds to visit the live view
-        	await page.goto(url)
-          	title = await page.title()
-		except Exception as e:
-			print(e)
-      	finally:
-			await browser.close()
+kernel_browser = client.browsers.create(invocation_id=runtime_context.invocation_id)
+print(kernel_browser.browser_live_view_url)
 ```
 </CodeGroup>
 
-In a separate terminal, tail the logs to print the live view URL:
+If using Kernel's [app platform](/build/develop), you can tail the logs to print the live view URL:
 
 ```bash
-kernel logs browser-automation --follow
+kernel logs <your-app>> --follow
 ```
-
-<Info>
-    There currently isn't a way to end a invocation from the live view.
-</Info>
 
 ## Browser persistence
 

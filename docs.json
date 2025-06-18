@@ -37,7 +37,8 @@
           "group": "Build",
           "pages": [
             "build/develop",
-            "build/browser-frameworks"
+            "build/browser-frameworks",
+            "build/remote-browsers"
           ]
         },
         {
@@ -90,7 +91,6 @@
           "group": "Info",
           "pages": [
             "info/concepts",
-            "info/fast",
             "info/unikernels"
           ]
         },

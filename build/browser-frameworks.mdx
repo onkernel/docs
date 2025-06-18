@@ -4,7 +4,7 @@ title: "Browser Frameworks"
 
 Kernel provides first-class support for **browser automation frameworks**, supporting CDP (Chrome DevTools Protocol) connections like Playwright and Puppeteer out of the box.
 
-Unlike other browsers-as-a-service platforms, Kernel **co-locates** your app code with the browser environment in the cloud. This solves common issues with remote browsers:
+When using Kernel's [app platform](/build/develop), we **co-locate** your code with the browser environment in the cloud. This solves common issues with remote browsers:
 
 - **Reduced latency**: Your code runs directly alongside the browser, reducing round-trip latency
 - **Improved reliability**: No unexpected disconnects between your code and browser
@@ -54,7 +54,7 @@ def playwright_script(runtime_context, payload):
 
 Within your action, use Kernel's `browsers.create()` method to generate a CDP websocket URL for your browser automation framework.
 
-`browsers.create()` requires the runtime's `invocation_id` to be passed. This is provided to you in the `runtimeContext` object generated during the invocation's lifecycle:
+`browsers.create()` requires the runtime's `invocation_id` when you deploy and launch your app on Kernel. This is provided to you in the `runtimeContext` object generated during the invocation's lifecycle:
 
 <CodeGroup>
 ```typescript Typescript/Javascript

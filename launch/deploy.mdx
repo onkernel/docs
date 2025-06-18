@@ -2,9 +2,9 @@
 title: "Deploying"
 ---
 
-Kernel's deployment process is as simple as it is fast. We take your code from local to production in 2 seconds or less: no configuration files to manage, no complex CI/CD pipelines to set up. Just deploy and go.
+Kernel's deployment process is as simple as it is fast. We take your code from local to production in seconds. There are no configuration files to manage or complex CI/CD pipelines.
 
-Once you deploy an app on Kernel, you can schedule its actions on a job or run them from other contexts. You can also run actions multiple times in parallel by making multiple invocations as needed.
+Once you deploy an app on Kernel, you can schedule its actions on a job or run them from other contexts. You can even run actions multiple times in parallel.
 
 
 ## Deploy the app
@@ -39,6 +39,7 @@ kernel deploy my_app.py --env MY_ENV_VAR=my_value # Can add multiple env vars de
 /project-root
   |-- my_app.ts # Entrypoint file
   |-- package.json
+  |-- .gitignore # Make sure to exclude dependency folders like node_modules
   |-- tsconfig.json # If Typescript
   ∟-- package-lock.json # Or bun.lock or pnpm-lock.yaml
 ```
@@ -46,6 +47,7 @@ kernel deploy my_app.py --env MY_ENV_VAR=my_value # Can add multiple env vars de
 ```bash Python
 /project-root
   |-- my_app.py # Entrypoint file
+  |-- .gitignore # Make sure to exclude dependency folders like .venv
   ∟-- requirements.txt # or pyproject.toml or uv.lock
 ```
 </CodeGroup>
