@@ -45,6 +45,7 @@
           "pages": [
             "launch/deploy",
             "launch/invoke",
+            "launch/stop",
             {
               "group": "Browsers",
               "pages": [

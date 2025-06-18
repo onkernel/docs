@@ -37,13 +37,14 @@ which kernel
 |---------|-------------| -------------|
 | `kernel deploy <entrypoint_file_name>` | - | Deploys an app to Kernel from the current directory. |
 | | `--env <ENV_VAR=VAL>` | Adds environment variables to the app. Expects the form `ENV_VAR=VAL` delimited by spaces. Optional. |
-| | `--force` | Replaces an existing app by the same name if it exists (e.g. to deploy a newer version). Optional. |
 | `kernel invoke <app_name> <action_name>` | - | Invokes a specific app action by its name. Generates an Invocation. |
 | | `--payload <payload_data>` | Includes the specified parameters. Expects a stringified JSON object. Optional. |
+| | `cmd-c` | Terminates the running invocation in your CLI. Also destroys any associated browsers. |
 | `kernel logs <app_name>` | - | Prints the logs for the specified app. |
 | | `--follow` | Follows the logs. Optional. |
 | | `--log-level <log_level>` | Specify the log level to print: trace, debug, info, warn, error, fatal, print. Optional. |
 | | `--no-color` | Disables color output|
-| `kernel invocation info <invocation_id>` | - | Coming soon |
-| `kernel browser terminate <browser_id>` | - | Coming soon|
+| `kernel browser delete <persistent_browser_id>` | - | Deletes the specified persistent browser |
 | `kernel help [command]` | - | Displays help information about Kernel commands. |
+
+This may not be the full list of available CLI commands. Use `kernel --help` in your command line.
