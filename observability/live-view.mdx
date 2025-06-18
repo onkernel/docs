@@ -2,9 +2,9 @@
 title: "Live View"
 ---
 
-Humans-in-the-loop can access in-progress invocations to observe browser-based automations in real-time, resolve errors, or take unscripted actions.
+Humans-in-the-loop can access the live view of Kernel browsers in real-time to resolve errors or take unscripted actions.
 
-To access Live View, access the `browser_live_view_url` provided when you create a Kernel browser:
+To access the live view, visit the `browser_live_view_url` provided when you create a Kernel browser:
 
 <CodeGroup>
 ```typescript Typescript/Javascript
@@ -32,4 +32,4 @@ kernel logs <your-app>> --follow
 
 If you [marked](/launch/browser-persistence) a browser for persistence, `browser_live_view_url` remains active after the invocation ends. It remains active until you [terminate the browser](/launch/browser-termination).
 
-For browsers *not* marked for persistence, `browser_live_view_url` becomes invalid once the invocation's status reaches a terminal state (`SUCCEEDED` or `FAILED`).
+For browsers *not* marked for persistence, `browser_live_view_url` becomes invalid once the invocation's status reaches a terminal state (`SUCCEEDED` or `FAILED`). In the case of [remote browsers](/build/remote-browsers), the live view remains active until you call `browser.close()`.

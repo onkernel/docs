@@ -2,7 +2,7 @@
 title: "Termination"
 ---
 
-Kernel makes it possible to [persist](/launch/browser-persistence) and reuse the same browser state across multiple invocations. In between invocations, the browser goes into [standby](/launch/browser-standby), consuming no usage costs when they do. Browsers not marked for persistence are automatically terminated after your action ends.
+Kernel makes it possible to persist and reuse browser sessions. Browsers not marked for persistence are automatically terminated after your [action](/build/develop) ends, or the you call `browser.close()` on a [remote browser](/build/remote-browsers).
 
 To terminate a persisted browser, delete it using the browser ID that you specified when creating the browser [with persistence](/launch/browser-persistence):
 
@@ -37,7 +37,6 @@ Or via the SDK:
 <CodeGroup>
 ```typescript Typescript/Javascript
 import Kernel from '@onkernel/sdk';
-
 const kernel = new Kernel();
 
 await kernel.browsers.delete({ persistent_id: 'persistent_id' });
@@ -45,7 +44,6 @@ await kernel.browsers.delete({ persistent_id: 'persistent_id' });
 
 ```python Python
 from kernel import Kernel
-
 client = Kernel()
 
 client.browsers.delete(
