@@ -2,7 +2,7 @@
 
 Please provide an explanation of the changes you've made:
 
-<!-- Describe what this PR does and why -->
+[Describe what this PR does and why]
 
 ## Implementation Checklist
 
@@ -21,19 +21,19 @@ Please provide an explanation of the changes you've made:
 
 Please provide a screenshot or video demonstrating that your changes work locally:
 
-<!-- Drag and drop your screenshot/video here or use the following format: -->
-<!-- ![Screenshot description](image-url) -->
+[Drag and drop your screenshot/video here or use the following format:]
+[![Screenshot description](image-url)]
 
 ## Related Issue
 
 Fixes [Github issue link]
 
-<!-- If this corresponds to a fix from another Kernel OSS repo, include this: -->
+[If this corresponds to a fix from another Kernel OSS repo, include this:]
 
 Fixes [Link to other repo]
 
-<!-- Replace with actual issue link, e.g., Fixes https://github.com/username/repo/issues/123 -->
+[Replace with actual issue link, e.g., Fixes https://github.com/username/repo/issues/123]
 
 ## Additional Notes
 
-<!-- Any additional context, concerns, or notes for reviewers -->
+[Any additional context, concerns, or notes for reviewers]
