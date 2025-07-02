@@ -52,6 +52,7 @@
               "pages": [
                 "launch/browser-persistence",
                 "launch/browser-authentication",
+                "launch/browser-headless",
                 "launch/browser-standby",
                 "launch/browser-stealth",
                 "launch/browser-termination"
