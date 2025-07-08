@@ -25,8 +25,12 @@ print(kernel_browser.browser_live_view_url)
 If using Kernel's [app platform](/build/develop), you can tail the logs to print the live view URL:
 
 ```bash
-kernel logs <your-app>> --follow
+kernel logs <your-app> --follow
 ```
+
+<Info>
+    Live view may experience slow performance when used with [stealth mode](/launch/browser-stealth.mdx). Avoid using stealth and live view together.
+</Info>
 
 ## Browser persistence
 
