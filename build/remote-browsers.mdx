@@ -50,6 +50,10 @@ browser = playwright.chromium.connect_over_cdp(kernel_browser.cdp_ws_url)
 
 Once you've connected to the Kernel browser, you can do anything with it.
 
+<Info>
+    Kernel browsers launch with a default context and page. Make sure to access the [existing context and page](https://playwright.dev/docs/api/class-browsertype#browser-type-connect-over-cdp) (`contexts()[0]` and `pages()[0]`), rather than trying to create a new one.
+</Info>
+
 <CodeGroup>
 ```typescript Typescript/Javascript
 import { Kernel } from '@onkernel/sdk';
@@ -58,8 +62,8 @@ const kernel = new Kernel();
 const kernelBrowser = await kernel.browsers.create();
 const browser = await chromium.connectOverCDP(kernelBrowser.cdp_ws_url);
 try {
-    const context = await browser.newContext();
-    const page = await context.newPage();
+    const context = await browser.contexts()[0] || (await browser.newContext());
+    const page = await context.pages()[0] || (await context.newPage());
     await page.goto("https://www.google.com");
     const title = await page.title();
 } catch (error) {
@@ -76,8 +80,8 @@ client = Kernel()
 kernel_browser = client.browsers.create()
 browser = playwright.chromium.connect_over_cdp(kernel_browser.cdp_ws_url)
 try:
-    context = await browser.new_context()
-    page = await context.new_page()
+    context = await browser.contexts()[0] or (await browser.new_context())
+    page = await context.pages()[0] or (await context.new_page())
     await page.goto(url)
     title = await page.title()
 except Exception as e:

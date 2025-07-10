@@ -1,83 +1,32 @@
 ---
 title: "Replays"
-description: "Learn how to replay app invocations"
+description: "Learn how to replay browser sessions"
 ---
 
+Replays show you exactly what happened in the browser window while a browser was live and active. It is generated as an MP4 file and available via URL.
+
+Replays start when you connect to the browser via CDP.
+
+Replays end when the browser is destroyed.
+
+- For non-persistent browsers (which is the default **unless** you specify [persistence](/launch/browser-persistence)), the browser is destroyed when you call `browser.close()`.
+
+- For persistent browsers, the browser is destroyed when you call `client.browsers.delete()`.
+
 <Info>
-	This feature is coming soon!
+    Use non-persistent browsers if you want to generate a replay for every invocation.
 </Info>
 
-Replays show you exactly what happened in the browser window while an invocation was running.
-
-## Retrieve replay
-
-You can retrieve the replay via the CLI. Once the invocation's `status` is `SUCCEEDED`, a url to the replay recording is returned. This url can be embedded in an iFrame if needed.
-
-```bash
-kernel invocation info <invocation_id>
-```
-
-The CLI will post the invocation_id if it succeeds, as well as the invocation's [status](/observability/status):
-```bash
-App Invocation:
-Running app...
-Success!
-Invocation ID: 026d6dad-7a9d-4622-9c5a-a02ec6825889
-Status: SUCCEEDED
-Browser_replay_urls: 
-    "https://api.onkernel.com/browsers/replay?jwt=eyJ0eXAi..."
-```
- 
-
-Recordings can also be retrieved by making a `GET` request to the Kernel API:
-
-<CodeGroup>
-
-```typescript Typescript/Javascript
-const response = await fetch(`https://api.onkernel.com/invocations/${invocation_id}`, {
-      headers: {
-        'Authorization': `Bearer ${process.env.KERNEL_API_KEY}`,
-        'Content-Type': 'application/json'
-      }
-  });
-const { browser_replay_urls } = await response.json();
-```
-
-```python Python
-response = requests.get(
-    f"https://api.onkernel.com/invocations/{invocation_id}",
-    headers={
-        "Authorization": f"Bearer {os.environ.get('KERNEL_API_KEY')}",
-        "Content-Type": "application/json"
-    }
-)
-
-# Parse the JSON response
-data = response.json()
-status, browser_live_view_urls = (
-    data["status"],
-    data["browser_replay_urls"]
-)
-```
-
-</CodeGroup>
-
-Or, use Kernel's SDK:
-
 <CodeGroup>
 ```typescript Typescript/Javascript
-import { Kernel } from '@onkernel/sdk';
+const browser = await client.browsers.create();
 
-const {
-    browser_replay_urls
-} = await Kernel.invocations.get(invocation_id);
+console.log(browser.replay_view_url);
 ```
 
-```python Python
-import kernel
+```Python Python
+browser = client.browsers.create()
 
-result = kernel.invocations.get(invocation_id)
-browser_live_view_urls = result["browser_live_view_urls"]
+print(browser.replay_view_url)
 ```
-
 </CodeGroup>

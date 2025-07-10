@@ -29,7 +29,11 @@ If your action specifies a [return value](/build/develop#return-values), the inv
 
 ## Invoking via API/SDK
 
-You can also run your app by making a `POST` request to Kernel's API:
+You can also run your app by making a `POST` request to Kernel's API.  **For automations and agents that take longer than 100 seconds, use [async invocations](/launch/invoke#asynchronous-invocations).**
+
+<Info>
+    Synchronous invocations time out after 100 seconds.
+</Info>
 
 <CodeGroup>
 ```typescript Typescript/Javascript
@@ -125,10 +129,6 @@ invocation_id, status, browser_live_view_urls = (
 
 ### Asynchronous invocations
 For long running jobs, use asynchronous invocations to trigger Kernel actions without waiting for the result. You can then poll its [status](/observability/status) for the result.
-
-<Info>
-    Synchronous invocations time out after 100 seconds.
-</Info>
 
 <CodeGroup>
 ```typescript Typescript/Javascript
