@@ -120,8 +120,8 @@ def playwright_script(runtime_context, payload):
     	browser = await playwright.chromium.connect_over_cdp(kernel_browser.cdp_ws_url)
 
     	try:
-			context = await browser.contexts()[0] or (await browser.new_context())
-      		page = await context.pages()[0] or (await context.new_page())
+			context = browser.contexts[0] if browser.contexts else await browser.new_context()
+        	page = context.pages[0] if context.pages else await context.new_page()
         	await page.goto(url)
           	title = await page.title()
 		except Exception as e:
