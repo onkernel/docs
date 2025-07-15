@@ -1,0 +1,138 @@
+---
+title: "MCP server"
+description: "Connect AI agents to Kernel’s managed MCP endpoint at https://mcp.onkernel.com/mcp"
+---
+
+The **Kernel Model Context Protocol (MCP) server** gives any compatible AI model or agent a **single, secure endpoint** for launching headless Chromium sessions, injecting context, evaluating JavaScript, and streaming DOM snapshots from the Kernel cloud.
+
+### Endpoint
+
+| Transport       | Endpoint                       | Notes                                             |
+| :-------------- | :----------------------------- | :------------------------------------------------ |
+| Streamable HTTP | `https://mcp.onkernel.com/mcp` | Primary (SSE is disabled due to Vercel timeouts). |
+
+**Important:** Older clients that only know SSE must be updated — the `/sse` endpoint is no longer served.
+
+## Setup Instructions
+
+If the handshake fails, restart the client or disable / re‑enable the Kernel server before opening a ticket. All examples below reference the HTTP endpoint `https://mcp.onkernel.com/mcp`.
+
+### Claude
+
+#### Team & Enterprise (Claude.ai)
+
+1. **Settings** → **Integrations** → **Add more**.
+2. Fill in:
+   - **Integration name:** `Kernel`
+   - **Integration URL:** `https://mcp.onkernel.com/mcp`
+3. Start a chat, enable **Tools**, and finish auth.
+
+#### Free & Pro (Claude desktop)
+
+Add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
+
+```
+{
+  "mcpServers": {
+    "kernel": {
+      "command": "npx",
+      "args": ["-y", "mcp-remote", "https://mcp.onkernel.com/mcp"]
+    }
+  }
+}
+```
+
+Restart Claude desktop.
+
+#### Claude Code CLI
+
+```
+claude mcp add --transport http kernel https://mcp.onkernel.com/mcp
+/mcp   # run inside a REPL to start auth
+```
+
+### Cursor
+
+Install via **Cursor → MCP tools**, or run:
+
+```
+npx -y mcp-remote https://mcp.onkernel.com/mcp
+```
+
+### Visual Studio Code
+
+In `settings.json`:
+
+```
+{
+  "mcpServers": {
+    "kernel": {
+      "command": "npx",
+      "args": ["-y", "mcp-remote", "https://mcp.onkernel.com/mcp"]
+    }
+  }
+}
+```
+
+Use **⌘/Ctrl\+P → MCP: Add Server** → **Command (stdio)**, paste the command, name it **Kernel**, and start via **MCP: List Servers**.
+
+### Windsurf
+
+1. **⌘/Ctrl ,** → **Cascade → MCP servers → Add custom server**.
+2. Paste:
+
+```
+{
+  "mcpServers": {
+    "kernel": {
+      "command": "npx",
+      "args": ["-y", "mcp-remote", "https://mcp.onkernel.com/mcp"]
+    }
+  }
+}
+```
+
+### Zed
+
+In `settings.json`:
+
+```
+{
+  "context_servers": {
+    "kernel": {
+      "command": {
+        "path": "npx",
+        "args": ["-y", "mcp-remote", "https://mcp.onkernel.com/mcp"],
+        "env": {}
+      },
+      "settings": {}
+    }
+  }
+}
+```
+
+### Goose
+
+```
+goose mcp add kernel https://mcp.onkernel.com/mcp
+```
+
+After adding, run `goose mcp ls` and `goose mcp auth kernel` to authenticate.
+
+### Others
+
+Most modern MCP‑capable tools accept:
+
+- **Command:** `npx`
+- **Arguments:** `-y mcp-remote https://mcp.onkernel.com/mcp`
+- **Environment:** _(none)_
+
+## FAQ
+
+**Is the server open source?** No — it’s a hosted Kernel service. An open-source implementation may come later.
+
+**Does Kernel store my data?** Only encrypted refresh tokens and minimal metadata required for auth; browser state lives in your Kernel workspace and never leaves your tenancy.
+
+**What scopes are requested?** `browser.session`, `dom.read`, and `js.eval` by default. Narrow scopes in your client during OAuth.
+
+**Where do I file bugs or feature requests?** Open an issue at `github.com/kernelxyz/mcp-feedback` or ping `#kernel‑mcp` on Discord.
