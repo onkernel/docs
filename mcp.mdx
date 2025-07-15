@@ -1,15 +1,19 @@
 ---
 title: "MCP server"
-description: "Connect AI agents to Kernel’s managed MCP endpoint at https://mcp.onkernel.com/mcp"
+description: "This guide walks you through connecting AI agents and developer tools to Kernel’s managed MCP server at https://mcp.onkernel.com/mcp for secure, low‑latency browser automation."
 ---
 
 The **Kernel Model Context Protocol (MCP) server** gives any compatible AI model or agent a **single, secure endpoint** for launching headless Chromium sessions, injecting context, evaluating JavaScript, and streaming DOM snapshots from the Kernel cloud.
+
+> **Open‑source & fully‑managed** — the full codebase is available at `github.com/onkernel/kernel-mcp-server`, and we still run the production instance so you don’t have to deploy anything.
 
 ### Endpoint
 
 | Transport       | Endpoint                       | Notes                                             |
 | :-------------- | :----------------------------- | :------------------------------------------------ |
 | Streamable HTTP | `https://mcp.onkernel.com/mcp` | Primary (SSE is disabled due to Vercel timeouts). |
+
+**Important:** Older clients that only know SSE must be updated — the `/sse` endpoint is no longer served.
 
 ## Setup Instructions
 
@@ -51,11 +55,15 @@ claude mcp add --transport http kernel https://mcp.onkernel.com/mcp
 
 ### Cursor
 
-Install via **Cursor → MCP tools**, or run:
+Install via **Cursor → MCP tools**, or click Install Kernel MCP server in Cursor.
 
-```
+Alternatively, run:
+
+````
 npx -y mcp-remote https://mcp.onkernel.com/mcp
-```
+```bash
+npx -y mcp-remote https://mcp.onkernel.com/mcp
+````
 
 ### Visual Studio Code
 
@@ -111,6 +119,8 @@ In `settings.json`:
 
 ### Goose
 
+Click Install Kernel MCP server in Goose or run:
+
 ```
 goose mcp add kernel https://mcp.onkernel.com/mcp
 ```
@@ -124,3 +134,15 @@ Most modern MCP‑capable tools accept:
 - **Command:** `npx`
 - **Arguments:** `-y mcp-remote https://mcp.onkernel.com/mcp`
 - **Environment:** _(none)_
+
+Upgrade the client if it errors on HTTP transport — SSE is no longer available.
+
+## FAQ
+
+**Is the server open source?** Yes — the code lives at `github.com/onkernel/kernel-mcp-server`. You’re welcome to self‑host, contribute, or just browse. We also provide a hosted instance at `https://mcp.onkernel.com/mcp` for convenience.
+
+**Does Kernel store my data?** Only encrypted refresh tokens and minimal metadata required for auth; browser state lives in your Kernel workspace and never leaves your tenancy.
+
+**What scopes are requested?** `browser.session`, `dom.read`, and `js.eval` by default. Narrow scopes in your client during OAuth.
+
+**Where do I file bugs or feature requests?** Open an issue at `github.com/kernelxyz/mcp-feedback` or ping `#kernel‑mcp` on Discord.
