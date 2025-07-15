@@ -3,6 +3,8 @@ title: "MCP server"
 description: "This guide walks you through connecting AI agents and developer tools to Kernel’s managed MCP server at https://mcp.onkernel.com/mcp for secure, low‑latency browser automation."
 ---
 
+---
+
 The **Kernel Model Context Protocol (MCP) server** gives any compatible AI model or agent a **single, secure endpoint** for launching headless Chromium sessions, injecting context, evaluating JavaScript, and streaming DOM snapshots from the Kernel cloud.
 
 > **Open‑source & fully‑managed** — the full codebase is available at `github.com/onkernel/kernel-mcp-server`, and we still run the production instance so you don’t have to deploy anything.
@@ -12,8 +14,6 @@ The **Kernel Model Context Protocol (MCP) server** gives any compatible AI model
 | Transport       | Endpoint                       | Notes                                             |
 | :-------------- | :----------------------------- | :------------------------------------------------ |
 | Streamable HTTP | `https://mcp.onkernel.com/mcp` | Primary (SSE is disabled due to Vercel timeouts). |
-
-**Important:** Older clients that only know SSE must be updated — the `/sse` endpoint is no longer served.
 
 ## Setup Instructions
 
