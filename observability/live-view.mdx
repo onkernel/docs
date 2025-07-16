@@ -20,6 +20,7 @@ client = Kernel()
 kernel_browser = client.browsers.create(invocation_id=runtime_context.invocation_id)
 print(kernel_browser.browser_live_view_url)
 ```
+
 </CodeGroup>
 
 If using Kernel's [app platform](/build/develop), you can tail the logs to print the live view URL:
@@ -28,12 +29,19 @@ If using Kernel's [app platform](/build/develop), you can tail the logs to print
 kernel logs <your-app> --follow
 ```
 
-<Info>
-    Live view may experience slow performance when used with [stealth mode](/launch/browser-stealth.mdx). Avoid using stealth and live view together.
-</Info>
+## Query parameters
+
+The `browser_live_view_url` supports additional query parameters to customize the live view:
+
+- `w` / `width` (num): sets the width of the VM's screen in pixels.
+- `h` / `height` (num): sets the height of the VM's screen in pixels.
+- `fr` (num): sets the live view frame rate. The default frame rate is 30 FPS.
+- `readOnly` (bool): when set to `true`, the view will be non-interactive.
+
+ Example `https://api.onkernel.com/browser/live?w=1024&h=768&fr=60readOnly=false&jwt=` 
 
 ## Browser persistence
 
 If you [marked](/launch/browser-persistence) a browser for persistence, `browser_live_view_url` remains active after the invocation ends. It remains active until you [terminate the browser](/launch/browser-termination).
 
-For browsers *not* marked for persistence, `browser_live_view_url` becomes invalid once the invocation's status reaches a terminal state (`SUCCEEDED` or `FAILED`). In the case of [remote browsers](/build/remote-browsers), the live view remains active until you call `browser.close()`.
+For browsers _not_ marked for persistence, `browser_live_view_url` becomes invalid once the invocation's status reaches a terminal state (`SUCCEEDED` or `FAILED`). In the case of [remote browsers](/build/remote-browsers), the live view remains active until you call `browser.close()`.
