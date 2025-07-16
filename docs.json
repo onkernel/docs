@@ -82,6 +82,12 @@
           ]
         },
         {
+          "group": "Integrations",
+          "pages": [
+            "integrations/vercel"
+          ]
+        },
+        {
           "group": "Community",
           "pages": [
             "community/github",

@@ -1,0 +1,110 @@
+---
+title: "Vercel Integration"
+description: "Deploy Kernel applications to Vercel with our official template"
+---
+
+# Vercel Integration
+
+Our official Vercel integration is coming soon! In the meantime, you can get started with Kernel on Vercel using our pre-configured template below.
+
+## Quick Start
+
+Clone the template and get started:
+
+```bash
+git clone https://github.com/onkernel/vercel-template.git
+cd vercel-template
+```
+
+## Setup
+
+1. **Sign up for Kernel** at [dashboard.onkernel.com](https://dashboard.onkernel.com)
+
+2. **Add your API keys** to the `.env` file in both `packages/agent` and `packages/web` directories:
+
+   ```bash
+   KERNEL_API_KEY=your-api-key
+   ANTHROPIC_API_KEY=your-api-key
+   ```
+
+3. **Deploy the agent to Kernel**:
+
+   ```bash
+   pnpm run deploy:agent
+   ```
+
+4. **Run the development server**:
+   ```bash
+   pnpm run dev:web
+   ```
+
+The web app will be available at `http://localhost:3000`.
+
+## Project Structure
+
+The template is organized as a monorepo with two main packages:
+
+```
+kernel-vercel-template/
+├── packages/
+│   ├── agent/     # Kernel agent (deployed as an action)
+│   └── web/       # Web app (Next.js frontend)
+```
+
+### Agent Package
+
+The agent is deployed as an [action](/info/concepts#action) in your Kernel app. It uses our [Claude Computer Use Playwright SDK](https://github.com/onkernel/cu-playwright-ts) to control the browser.
+
+**Monitor your agent:**
+
+```bash
+cd packages/agent
+pnpm run logs
+```
+
+### Web Package
+
+The web app provides the chat interface using:
+
+- [Next.js](https://nextjs.org/) for the framework
+- [AI SDK](https://ai-sdk.dev) for AI integration
+- [Assistant-UI](https://github.com/assistant-ui/assistant-ui) for the chat interface
+
+The chatbot is deployed as a [route](packages/web/app/api/chat/route.ts) and uses the `browserAgentTool` to control the browser. You can extend this to build custom chatbots with your own tools.
+
+## Features
+
+- **Web Agent Chatbot** - Ready-to-use AI agent that can browse the web
+- **Browser Automation** - Powered by Kernel's sandboxed Chrome browsers
+- **Live View Streaming** - Visual monitoring and remote control capabilities
+- **Chrome DevTools Integration** - Compatible with Playwright and Puppeteer
+- **TypeScript Support** - Full type safety throughout the application
+
+## What You Can Build
+
+With this template, you can:
+
+- Run automated browser-based workflows
+- Develop and test AI agents that use browsers
+- Build custom tools that require controlled browser environments
+- Create web scraping and automation solutions
+
+## Coming Soon
+
+Our official Vercel integration will include:
+
+- **One-click deployment** from the Kernel dashboard
+- **Built-in monitoring** and observability
+- **Advanced configuration options**
+- **Template marketplace** with pre-built solutions
+
+## Support
+
+For issues, questions, or feedback:
+
+- [Open an issue](https://github.com/onkernel/kernel-images/issues) on GitHub
+- Join our [Discord community](https://discord.gg/FBrveQRcud)
+
+## Next Steps
+
+Once deployed, explore our [Launch](/launch/deploy) and [Observability](/observability/status) guides to learn how to monitor and manage your Kernel applications.
