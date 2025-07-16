@@ -1,32 +1,118 @@
 ---
 title: "Replays"
-description: "Learn how to replay browser sessions"
+description: "Record and view browser sessions as mp4 videos"
 ---
 
-Replays show you exactly what happened in the browser window while a browser was live and active. It is generated as an MP4 file and available via URL.
+Replays capture browser sessions as video recordings that you can view or download later. You have full control over when replays start and stop, allowing you to capture specific interactions or workflows.
 
-Replays start when you connect to the browser via CDP.
+## Starting and stopping replays
 
-Replays end when the browser is destroyed.
+### Start a recording
 
-- For non-persistent browsers (which is the default **unless** you specify [persistence](/launch/browser-persistence)), the browser is destroyed when you call `browser.close()`.
-
-- For persistent browsers, the browser is destroyed when you call `client.browsers.delete()`.
-
-<Info>
-    Use non-persistent browsers if you want to generate a replay for every invocation.
-</Info>
+To start recording a browser session, use the replays API on an active browser:
 
 <CodeGroup>
 ```typescript Typescript/Javascript
-const browser = await client.browsers.create();
+import { Kernel } from '@onkernel/sdk';
 
-console.log(browser.replay_view_url);
+const kernel = new Kernel();
+const kernelBrowser = await kernel.browsers.create({
+    invocation_id: runtimeContext.invocation_id
+});
+
+// Start recording
+const replay = await kernel.browsers.replays.start(kernelBrowser.session_id);
+console.log(`Recording started with ID: ${replay.replay_id}`);
+
+// ... perform some automation ...
+
+// Stop the recording
+await kernel.browsers.replays.stop(kernelBrowser.session_id, replay.replay_id);
+console.log("Recording stopped and processing...");
 ```
 
-```Python Python
-browser = client.browsers.create()
+```python Python
+import kernel
 
-print(browser.replay_view_url)
+client = kernel.Kernel()
+kernel_browser = client.browsers.create(invocation_id=runtime_context.invocation_id)
+
+# Start recording
+replay = client.browsers.replays.start(kernel_browser.session_id)
+print(f"Recording started with ID: {replay.replay_id}")
+
+# ...perform some automation...
+
+# Stop the recording
+client.browsers.replays.stop(kernel_browser.session_id, replay.replay_id)
+print("Recording stopped and processing...")
+```
+
+</CodeGroup>
+
+### Multiple recordings per session
+
+You can create multiple replay recordings for a single browser session. Each recording gets its own unique `replay_id` and can be started and stopped independently:
+
+<CodeGroup>
+```typescript Typescript/Javascript
+// First recording
+const replay1 = await kernel.browsers.replays.start(kernelBrowser.session_id);
+// ... perform some automation ...
+await kernel.browsers.replays.stop(kernelBrowser.session_id, replay1.replay_id);
+
+// Second recording
+const replay2 = await kernel.browsers.replays.start(kernelBrowser.session_id);
+// ... perform different automation ...
+await kernel.browsers.replays.stop(kernelBrowser.session_id, replay2.replay_id);
+```
+
+```python Python
+# First recording
+replay1 = client.browsers.replays.start(kernel_browser.session_id)
+# ... perform some automation ...
+client.browsers.replays.stop(kernel_browser.session_id, replay1.replay_id)
+
+# Second recording
+replay2 = client.browsers.replays.start(kernel_browser.session_id)
+# ... perform different automation ...
+client.browsers.replays.stop(kernel_browser.session_id, replay2.replay_id)
+```
+</CodeGroup>
+
+## Downloading all replays
+
+To access all replays for a browser session, you can list and download them:
+
+<CodeGroup>
+```typescript Typescript/Javascript
+// List all replays for the session
+const replays = await kernel.browsers.replays.list(kernelBrowser.session_id);
+
+for (const replay of replays) {
+    console.log(`Replay ID: ${replay.replay_id}`);
+    console.log(`View URL: ${replay.replay_view_url}`);
+    
+    // Download the mp4 file
+    const videoData = await kernel.browsers.replays.download(
+        kernelBrowser.session_id, 
+        replay.replay_id
+    );
+}
+```
+
+```python Python
+# List all replays for the session
+replays = client.browsers.replays.list(kernel_browser.session_id)
+
+for replay in replays:
+    print(f"Replay ID: {replay.replay_id}")
+    print(f"View URL: {replay.replay_view_url}")
+    
+    # Download the mp4 file
+    video_data = client.browsers.replays.download(
+        kernel_browser.session_id, 
+        replay.replay_id
+    )
 ```
 </CodeGroup>
