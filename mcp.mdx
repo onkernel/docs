@@ -1,13 +1,13 @@
 ---
 title: "MCP server"
-description: "This guide walks you through connecting AI agents and developer tools to Kernel’s managed MCP server at https://mcp.onkernel.com/mcp for secure, low‑latency browser automation."
+description: "This guide walks you through connecting AI agents and developer tools to Kernel's managed MCP server at https://mcp.onkernel.com/mcp for secure, low-latency browser automation."
 ---
 
 ---
 
 The **Kernel Model Context Protocol (MCP) server** gives any compatible AI model or agent a **single, secure endpoint** for launching headless Chromium sessions, injecting context, evaluating JavaScript, and streaming DOM snapshots from the Kernel cloud.
 
-> **Open‑source & fully‑managed** — the full codebase is available at `github.com/onkernel/kernel-mcp-server`, and we still run the production instance so you don’t have to deploy anything.
+> **Open-source & fully-managed** — the full codebase is available at `github.com/onkernel/kernel-mcp-server`, and we still run the production instance so you don't have to deploy anything.
 
 ### Endpoint
 
@@ -17,23 +17,24 @@ The **Kernel Model Context Protocol (MCP) server** gives any compatible AI model
 
 ## Setup Instructions
 
-If the handshake fails, restart the client or disable / re‑enable the Kernel server before opening a ticket. All examples below reference the HTTP endpoint `https://mcp.onkernel.com/mcp`.
+Remote MCP connections are still early and we've found that the connection may fail or require multiple attempts. If you experience issues, try restarting your client or disabling and re-enabling the **Kernel** MCP server.
 
 ### Claude
 
 #### Team & Enterprise (Claude.ai)
 
-1. **Settings** → **Integrations** → **Add more**.
-2. Fill in:
+1. Navigate to **Settings** in the sidebar (web or desktop).
+2. Scroll to **Integrations** and click **Add more**.
+3. Fill in:
    - **Integration name:** `Kernel`
    - **Integration URL:** `https://mcp.onkernel.com/mcp`
-3. Start a chat, enable **Tools**, and finish auth.
+4. Start a chat, enable **Tools**, and finish auth.
 
 #### Free & Pro (Claude desktop)
 
-Add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
+Open `~/Library/Application Support/Claude/claude_desktop_config.json` and add:
 
-```
+```json
 {
   "mcpServers": {
     "kernel": {
@@ -44,32 +45,23 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
 }
 ```
 
-Restart Claude desktop.
+Restart the Claude desktop app.
 
-#### Claude Code CLI
+#### Claude Code CLI
 
-```
+```bash
 claude mcp add --transport http kernel https://mcp.onkernel.com/mcp
-/mcp   # run inside a REPL to start auth
+# then, inside the REPL:
+/mcp   # to run through auth
 ```
 
 ### Cursor
 
-Install via **Cursor → MCP tools**, or click Install Kernel MCP server in Cursor.
+[![Add to Cursor](https://cursor.com/deeplink/mcp-install-light.svg)](https://cursor.com/install-mcp?name=kernel&config=JTdCJTIydXJsJTIyJTNBJTIyaHR0cHMlM0ElMkYlMkZtY3Aub25rZXJuZWwuY29tJTJGbWNwJTIyJTdE)
 
-Alternatively, run:
+### Visual Studio Code
 
-````
-npx -y mcp-remote https://mcp.onkernel.com/mcp
-```bash
-npx -y mcp-remote https://mcp.onkernel.com/mcp
-````
-
-### Visual Studio Code
-
-In `settings.json`:
-
-```
+```json
 {
   "mcpServers": {
     "kernel": {
@@ -80,14 +72,22 @@ In `settings.json`:
 }
 ```
 
-Use **⌘/Ctrl\+P → MCP: Add Server** → **Command (stdio)**, paste the command, name it **Kernel**, and start via **MCP: List Servers**.
+1. Press **⌘/Ctrl P** → search **MCP: Add Server**.
+2. Select **Command (stdio)**.
+3. Enter:
+   ```bash
+   npx -y mcp-remote https://mcp.onkernel.com/mcp
+   ```
+4. Name the server **Kernel** and press Enter.
+5. Activate via **MCP: List Servers → Kernel → Start Server**.
 
 ### Windsurf
 
-1. **⌘/Ctrl ,** → **Cascade → MCP servers → Add custom server**.
-2. Paste:
+1. Press **⌘/Ctrl ,** to open settings.
+2. Navigate **Cascade → MCP servers** → **Add custom server**.
+3. Paste:
 
-```
+```json
 {
   "mcpServers": {
     "kernel": {
@@ -100,9 +100,9 @@ Use **⌘/Ctrl\+P → MCP: Add Server** → **Command (stdio)**, paste the comm
 
 ### Zed
 
-In `settings.json`:
+Open `settings.json` and add:
 
-```
+```json
 {
   "context_servers": {
     "kernel": {
@@ -117,32 +117,22 @@ In `settings.json`:
 }
 ```
 
-### Goose
-
-Click Install Kernel MCP server in Goose or run:
-
-```
-goose mcp add kernel https://mcp.onkernel.com/mcp
-```
-
-After adding, run `goose mcp ls` and `goose mcp auth kernel` to authenticate.
-
 ### Others
 
-Most modern MCP‑capable tools accept:
+Many other MCP-capable tools accept:
 
 - **Command:** `npx`
 - **Arguments:** `-y mcp-remote https://mcp.onkernel.com/mcp`
 - **Environment:** _(none)_
 
-Upgrade the client if it errors on HTTP transport — SSE is no longer available.
+Configure these values wherever the tool expects MCP server settings.
 
 ## FAQ
 
-**Is the server open source?** Yes — the code lives at `github.com/onkernel/kernel-mcp-server`. You’re welcome to self‑host, contribute, or just browse. We also provide a hosted instance at `https://mcp.onkernel.com/mcp` for convenience.
+**Is the server open source?** Yes — the code lives at `github.com/onkernel/kernel-mcp-server`. You're welcome to self-host, contribute, or just browse. We also provide a hosted instance at `https://mcp.onkernel.com/mcp` for convenience.
 
-**Does Kernel store my data?** Only encrypted refresh tokens and minimal metadata required for auth; browser state lives in your Kernel workspace and never leaves your tenancy.
+**Does Kernel store my data?** Only encrypted refresh tokens and minimal metadata required for auth; browser state lives in your Kernel workspace and never leaves your tenancy.
 
-**What scopes are requested?** `browser.session`, `dom.read`, and `js.eval` by default. Narrow scopes in your client during OAuth.
+**What scopes are requested?** `browser.session`, `dom.read`, and `js.eval` by default. Narrow scopes in your client during OAuth.
 
-**Where do I file bugs or feature requests?** Open an issue at `github.com/kernelxyz/mcp-feedback` or ping `#kernel‑mcp` on Discord.
+**Where do I file bugs or feature requests?** Open an issue at `github.com/kernelxyz/mcp-feedback` or ping `#kernel-mcp` on Discord.
