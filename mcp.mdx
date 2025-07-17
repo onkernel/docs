@@ -1,13 +1,11 @@
 ---
-title: "MCP server"
-description: "This guide walks you through connecting AI agents and developer tools to Kernel's managed MCP server at https://mcp.onkernel.com/mcp for secure, low-latency browser automation."
+title: "MCP Server"
+description: "Access Kernel's cloud-based browsers via MCP"
 ---
 
----
+The **Kernel Model Context Protocol (MCP) server** gives any compatible AI model or agent a **single, secure endpoint** for launching Chromium browsers, injecting context, evaluating JavaScript, and streaming DOM snapshots from Kernel's cloud platform.
 
-The **Kernel Model Context Protocol (MCP) server** gives any compatible AI model or agent a **single, secure endpoint** for launching headless Chromium sessions, injecting context, evaluating JavaScript, and streaming DOM snapshots from the Kernel cloud.
-
-> **Open-source & fully-managed** — the full codebase is available at `github.com/onkernel/kernel-mcp-server`, and we still run the production instance so you don't have to deploy anything.
+**Open-source & fully-managed** — the source code is available [here](https://github.com/onkernel/kernel-mcp-server). It allows you to connect to Kernel's cloud-basedbrowsers on-demand via MCP.
 
 ### Endpoint
 
@@ -17,11 +15,11 @@ The **Kernel Model Context Protocol (MCP) server** gives any compatible AI model
 
 ## Setup Instructions
 
-Remote MCP connections are still early and we've found that the connection may fail or require multiple attempts. If you experience issues, try restarting your client or disabling and re-enabling the **Kernel** MCP server.
+Remote MCP connections are still early and we've found that the connection may fail or require multiple attempts. If you experience issues, try restarting your client or disabling and re-enabling the Kernel MCP server.
 
-### Claude
+## Claude
 
-#### Team & Enterprise (Claude.ai)
+### Team & Enterprise (Claude.ai)
 
 1. Navigate to **Settings** in the sidebar (web or desktop).
 2. Scroll to **Integrations** and click **Add more**.
@@ -30,7 +28,7 @@ Remote MCP connections are still early and we've found that the connection may f
    - **Integration URL:** `https://mcp.onkernel.com/mcp`
 4. Start a chat, enable **Tools**, and finish auth.
 
-#### Free & Pro (Claude desktop)
+### Free & Pro (Claude desktop)
 
 Open `~/Library/Application Support/Claude/claude_desktop_config.json` and add:
 
@@ -47,7 +45,7 @@ Open `~/Library/Application Support/Claude/claude_desktop_config.json` and add:
 
 Restart the Claude desktop app.
 
-#### Claude Code CLI
+### Claude Code CLI
 
 ```bash
 claude mcp add --transport http kernel https://mcp.onkernel.com/mcp
@@ -55,11 +53,11 @@ claude mcp add --transport http kernel https://mcp.onkernel.com/mcp
 /mcp   # to run through auth
 ```
 
-### Cursor
+## Cursor
 
 [![Add to Cursor](https://cursor.com/deeplink/mcp-install-light.svg)](https://cursor.com/install-mcp?name=kernel&config=JTdCJTIydXJsJTIyJTNBJTIyaHR0cHMlM0ElMkYlMkZtY3Aub25rZXJuZWwuY29tJTJGbWNwJTIyJTdE)
 
-### Visual Studio Code
+## Visual Studio Code
 
 ```json
 {
@@ -81,7 +79,7 @@ claude mcp add --transport http kernel https://mcp.onkernel.com/mcp
 4. Name the server **Kernel** and press Enter.
 5. Activate via **MCP: List Servers → Kernel → Start Server**.
 
-### Windsurf
+## Windsurf
 
 1. Press **⌘/Ctrl ,** to open settings.
 2. Navigate **Cascade → MCP servers** → **Add custom server**.
@@ -98,7 +96,7 @@ claude mcp add --transport http kernel https://mcp.onkernel.com/mcp
 }
 ```
 
-### Zed
+## Zed
 
 Open `settings.json` and add:
 
@@ -117,7 +115,7 @@ Open `settings.json` and add:
 }
 ```
 
-### Others
+## Others
 
 Many other MCP-capable tools accept:
 
@@ -129,10 +127,18 @@ Configure these values wherever the tool expects MCP server settings.
 
 ## FAQ
 
-**Is the server open source?** Yes — the code lives at `github.com/onkernel/kernel-mcp-server`. You're welcome to self-host, contribute, or just browse. We also provide a hosted instance at `https://mcp.onkernel.com/mcp` for convenience.
+**Is the server open source?**
 
-**Does Kernel store my data?** Only encrypted refresh tokens and minimal metadata required for auth; browser state lives in your Kernel workspace and never leaves your tenancy.
+Yes — the source code is available [here](https://github.com/onkernel/kernel-mcp-server). You're welcome to self-host, contribute, or just browse.
 
-**What scopes are requested?** `browser.session`, `dom.read`, and `js.eval` by default. Narrow scopes in your client during OAuth.
+**Does Kernel store my data?**
 
-**Where do I file bugs or feature requests?** Open an issue at `github.com/kernelxyz/mcp-feedback` or ping `#kernel-mcp` on Discord.
+For the MCP server, only encrypted refresh tokens and minimal metadata required for auth. For information about we handle data for our managed services, see our [Privacy Policy](/privacy).
+
+**What scopes are required?**
+
+`browser.session`, `dom.read`, and `js.eval` by default. Narrow scopes in your client during OAuth.
+
+**Where do I file bugs or feature requests?**
+
+Open an issue at `https://github.com/onkernel/mcp-feedback` or message us on [Discord](https://discord.gg/FBrveQRcud).

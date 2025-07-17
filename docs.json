@@ -78,7 +78,8 @@
           "group": "API",
           "pages": [
             "reference/cli",
-            "reference/api-keys"
+            "reference/api-keys",
+            "mcp"
           ]
         },
         {
