@@ -78,8 +78,8 @@
           "group": "API",
           "pages": [
             "reference/cli",
-            "reference/api-keys",
-            "mcp"
+            "mcp",
+            "reference/api-keys"
           ]
         },
         {
@@ -93,8 +93,7 @@
           "group": "Info",
           "pages": [
             "info/concepts",
-            "info/unikernels",
-            "info/api-keys"
+            "info/unikernels"
           ]
         },
         {
