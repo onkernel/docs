@@ -38,7 +38,14 @@ Then, you can connect to the browser with any Chrome DevTools Protocol framework
 <CodeGroup>
 
 ```typescript Typescript/Javascript
+// Playwright
 const browser = await chromium.connectOverCDP(kernelBrowser.cdp_ws_url);
+
+// Puppeteer
+const browser = await puppeteer.connect({
+    browserWSEndpoint,
+    defaultViewport: null, // Optional: inherit viewport from the browser
+});
 ```
 
 ```Python Python
