@@ -27,7 +27,7 @@ console.log(`Recording started with ID: ${replay.replay_id}`);
 // ... perform some automation ...
 
 // Stop the recording
-await kernel.browsers.replays.stop(kernelBrowser.session_id, replay.replay_id);
+await kernel.browsers.replays.stop(replay.replay_id, { id: kernelBrowser.session_id });
 console.log("Recording stopped and processing...");
 ```
 
@@ -44,7 +44,7 @@ print(f"Recording started with ID: {replay.replay_id}")
 # ...perform some automation...
 
 # Stop the recording
-client.browsers.replays.stop(kernel_browser.session_id, replay.replay_id)
+client.browsers.replays.stop(replay_id=replay.replay_id, id=kernel_browser.session_id)
 print("Recording stopped and processing...")
 ```
 
@@ -59,24 +59,24 @@ You can create multiple replay recordings for a single browser session. Each rec
 // First recording
 const replay1 = await kernel.browsers.replays.start(kernelBrowser.session_id);
 // ... perform some automation ...
-await kernel.browsers.replays.stop(kernelBrowser.session_id, replay1.replay_id);
+await kernel.browsers.replays.stop(replay1.replay_id, { id: kernelBrowser.session_id });
 
 // Second recording
 const replay2 = await kernel.browsers.replays.start(kernelBrowser.session_id);
 // ... perform different automation ...
-await kernel.browsers.replays.stop(kernelBrowser.session_id, replay2.replay_id);
+await kernel.browsers.replays.stop(replay2.replay_id, { id: kernelBrowser.session_id });
 ```
 
 ```python Python
 # First recording
 replay1 = client.browsers.replays.start(kernel_browser.session_id)
 # ... perform some automation ...
-client.browsers.replays.stop(kernel_browser.session_id, replay1.replay_id)
+client.browsers.replays.stop(replay_id=replay1.replay_id, id=kernel_browser.session_id)
 
 # Second recording
 replay2 = client.browsers.replays.start(kernel_browser.session_id)
 # ... perform different automation ...
-client.browsers.replays.stop(kernel_browser.session_id, replay2.replay_id)
+client.browsers.replays.stop(replay_id=replay2.replay_id, id=kernel_browser.session_id)
 ```
 </CodeGroup>
 
