@@ -92,7 +92,8 @@
           "group": "Info",
           "pages": [
             "info/concepts",
-            "info/unikernels"
+            "info/unikernels",
+            "info/api-keys"
           ]
         },
         {
