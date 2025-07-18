@@ -5,13 +5,33 @@ description: "Access Kernel's cloud-based browsers via MCP"
 
 The **Kernel Model Context Protocol (MCP) server** gives any compatible AI model or agent a **single, secure endpoint** for launching Chromium browsers, injecting context, evaluating JavaScript, and streaming DOM snapshots from Kernel's cloud platform.
 
-**Open-source & fully-managed** — the source code is available [here](https://github.com/onkernel/kernel-mcp-server). It allows you to connect to Kernel's cloud-based browsers on-demand via MCP.
+**Open-source & fully-managed** — the source code is available [here](https://github.com/onkernel/kernel-mcp-server). It allows you to connect to Kernel's cloud-based browser infrastructure via MCP.
 
-### Endpoint
+## Endpoint
 
 | Transport       | Endpoint                       | Notes                                             |
 | :-------------- | :----------------------------- | :------------------------------------------------ |
-| Streamable HTTP | `https://mcp.onkernel.com/mcp` | Primary (SSE is disabled due to Vercel timeouts). |
+| Streamable HTTP | `https://mcp.onkernel.com/mcp` | Primary (SSE is disabled due to Vercel timeouts) |
+
+## Available Tools
+The server provides these tools for AI assistants:
+
+### Kernel Apps
+  - `list_apps` - List applications in your Kernel workspace
+  - `invoke_action` - Execute actions in Kernel applications
+  - `get_deployment` - Get deployment status and logs
+  - `list_deployments` - List all deployments
+  - `get_invocation` - Get action invocation details
+
+### Browser Automation
+  - `create_browser` - Launch a new browser session
+  - `get_browser` - Get browser session information
+  - `delete_browser` - Terminate a browser session
+  - `list_browsers` - List active browser sessions
+
+### Documentation & Search
+  - `search_docs` - Search Kernel platform documentation and guides
+
 
 ## Setup Instructions
 
@@ -191,4 +211,4 @@ For the MCP server, only encrypted refresh tokens and minimal metadata required 
 
 **Where do I file bugs or feature requests?**
 
-Open an issue at `https://github.com/onkernel/mcp-feedback` or message us on [Discord](https://discord.gg/FBrveQRcud).
+Open an issue at `https://github.com/onkernel/kernel-mcp-server` or message us on [Discord](https://discord.gg/FBrveQRcud).
