@@ -29,14 +29,22 @@ If using Kernel's [app platform](/build/develop), you can tail the logs to print
 kernel logs <your-app> --follow
 ```
 
-## Query parameters
+## Live view configuration
 
-The `browser_live_view_url` supports additional query parameters to customize the live view:
+Configuring the live view by setting query parameters on your `browser_live_view_url`.
+
+```
+https://api.onkernel.com/browser/live?w=1024&h=768&fr=60readOnly=false&jwt=
+```
 
 - `w` / `width` (num): sets the width of the VM's screen in pixels.
 - `h` / `height` (num): sets the height of the VM's screen in pixels.
-- `r` / `rate` (num): sets the live view frame rate in frames per second. The default is 30.
+- `r` / `rate` (num): sets the live view framerate in frames per second. The default is 30.
 - `readOnly` (bool): when set to `true`, the view will be non-interactive.
+
+### Framerate
+
+We support framerates between 30 - 60 fps on increments of 10.
 
 ## Browser persistence
 
