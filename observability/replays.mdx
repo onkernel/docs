@@ -86,6 +86,8 @@ To access all replays for a browser session, you can list and access them via ur
 
 <CodeGroup>
 ```typescript Typescript/Javascript
+import fs from 'fs';
+import { Buffer } from 'buffer';
 // List all replays for the session
 const replays = await kernel.browsers.replays.list(kernelBrowser.session_id);
 
@@ -95,13 +97,21 @@ for (const replay of replays) {
     
     // Download the mp4 file
     const videoData = await kernel.browsers.replays.download(
-        kernelBrowser.session_id, 
-        replay.replay_id
+        replay.replay_id,
+        { id: kernelBrowser.session_id }
     );
+
+    const content = await videoData.blob();
+    const buffer = Buffer.from(await content.arrayBuffer());
+
+    // Save to file
+    const filename = `replay-${replay.replay_id}-${kernelBrowser.session_id}.mp4`;
+    fs.writeFileSync(filename, buffer);
 }
 ```
 
 ```python Python
+import aiofiles
 # List all replays for the session
 replays = client.browsers.replays.list(kernel_browser.session_id)
 
@@ -111,8 +121,18 @@ for replay in replays:
     
     # Download the mp4 file
     video_data = client.browsers.replays.download(
-        kernel_browser.session_id, 
-        replay.replay_id
+        replay_id=replay.replay_id,
+        id=kernel_browser.session_id
     )
+    
+    # Get the content as bytes
+    content = video_data.read()
+    
+    # Save to file using aiofiles
+    filename = f"replay-{replay.replay_id}-{kernel_browser.session_id}.mp4"
+    async with aiofiles.open(filename, 'wb') as f:
+        await f.write(content)
+    
+    print(f"Saved replay to {filename}")
 ```
 </CodeGroup>
