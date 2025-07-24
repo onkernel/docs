@@ -53,9 +53,9 @@ which kernel
 
 | Command | Description |
 |---------|-------------|
-| `kernel login [--force] [--device]` | Initiates OAuth 2.0 authentication flow via browser. Use `--force` to re-authenticate when already logged in, `--device` for headless environments (not yet implemented) |
+| `kernel login [--force]` | Initiates OAuth 2.0 authentication flow via browser. Use `--force` to re-authenticate when already logged in |
 | `kernel logout` | Clears stored authentication tokens and logs out |
-| `kernel auth [--verbose]` | Displays current authentication status, user details, and token expiry. Use `--verbose` for detailed information including user ID and storage method |
+| `kernel auth` | Displays current authentication status, user details, and token expiry. Use `--log-level debug` for detailed information including user ID and storage method |
 
 ## App Management Commands
 
@@ -94,7 +94,7 @@ which kernel
    - Shows authentication method (OAuth vs API Key)
    - Displays user email and organization
    - Shows token expiry status and remaining time
-   - Use `--verbose` for additional details like storage method
+   - Use `--log-level debug` for additional details like storage method
 
 3. **Secure Storage**: Tokens are stored securely
    - macOS/Windows: OS Keychain
