@@ -19,7 +19,25 @@ pnpm install -g onkernel/cli
 npm install -g onkernel/cli
 ```
 
-Then, set your Kernel API key for deployments
+## Authentication
+
+The Kernel CLI supports two authentication methods:
+
+### OAuth 2.0 (Recommended)
+
+The preferred method is OAuth 2.0 with PKCE, which provides secure browser-based authentication:
+
+```bash
+# Login via browser
+kernel login
+```
+
+This opens your browser to complete the OAuth flow. Your tokens are securely stored in your system keychain (macOS/Windows) or a local file (Linux).
+
+### API Key
+
+You can also authenticate using an API key:
+
 ```bash
 export KERNEL_API_KEY=<API_KEY>
 ```
@@ -31,7 +49,15 @@ After installation, verify that Kernel CLI was installed correctly:
 which kernel
 ```
 
-## Commands
+## Authentication Commands
+
+| Command | Description |
+|---------|-------------|
+| `kernel login [--force] [--device]` | Initiates OAuth 2.0 authentication flow via browser. Use `--force` to re-authenticate when already logged in, `--device` for headless environments (not yet implemented) |
+| `kernel logout` | Clears stored authentication tokens and logs out |
+| `kernel auth [--verbose]` | Displays current authentication status, user details, and token expiry. Use `--verbose` for detailed information including user ID and storage method |
+
+## App Management Commands
 
 | Command | Optional Flags | Description |
 |---------|-------------| -------------|
@@ -44,7 +70,43 @@ which kernel
 | | `--follow` | Follows the logs. Optional. |
 | | `--log-level <log_level>` | Specify the log level to print: trace, debug, info, warn, error, fatal, print. Optional. |
 | | `--no-color` | Disables color output|
-| `kernel browser delete <persistent_browser_id>` | - | Deletes the specified persistent browser |
-| `kernel help [command]` | - | Displays help information about Kernel commands. |
 
-This may not be the full list of available CLI commands. Use `kernel --help` in your command line.
+## Browser Management Commands
+
+| Command | Description |
+|---------|-------------|
+| `kernel browser delete <persistent_browser_id>` | Deletes the specified persistent browser |
+
+## General Commands
+
+| Command | Description |
+|---------|-------------|
+| `kernel help [command]` | Displays help information about Kernel commands |
+
+## Authentication Flow
+
+1. **Login**: Run `kernel login` to authenticate via OAuth 2.0
+   - Opens your browser to complete the authentication
+   - Displays your organization after successful login
+   - If already logged in, shows current status (use `--force` to re-authenticate)
+
+2. **Check Status**: Use `kernel auth` to view your authentication details
+   - Shows authentication method (OAuth vs API Key)
+   - Displays user email and organization
+   - Shows token expiry status and remaining time
+   - Use `--verbose` for additional details like storage method
+
+3. **Secure Storage**: Tokens are stored securely
+   - macOS/Windows: OS Keychain
+   - Linux: Local file (~/.config/kernel/credentials)
+   - Automatic token refresh when needed
+
+4. **Logout**: Use `kernel logout` to clear stored credentials
+   - Shows which organization you're logging out from
+   - Removes all stored authentication tokens
+
+The CLI supports both OAuth and API key authentication, with OAuth being the recommended approach for interactive use.
+
+<Info>
+This may not be the full list of available CLI commands. Use `kernel --help` in your command line for the most up-to-date command reference.
+</Info>

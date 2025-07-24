@@ -8,7 +8,7 @@ This quickstart guide will help you create, deploy, and run your first app on Ke
 
 - `brew` for the Kernel CLI
 - `npm` or `pnpm` to generate a sample Kernel app
-- A [Kernel account](/reference/api-keys) with an API key
+- A [Kernel account](/reference/api-keys)
 
 > **Note:** You can also deploy and invoke apps using the [Kernel MCP server](/mcp) from AI assistants (Cursor, Goose, Claude, etc.).
 
@@ -37,13 +37,27 @@ Verify the installation exists:
 which kernel
 ```
 
-## 3. Set your Kernel API key
+## 3. Authenticate with Kernel
 
-Configure your environment with your Kernel API key:
+### Option A: OAuth Login (Recommended)
+
+The easiest way to authenticate is using OAuth:
+
+```bash
+kernel login
+```
+
+This will open your browser to complete the authentication flow. Your credentials will be securely stored and automatically refreshed.
+
+### Option B: API Key
+
+Alternatively, you can use an API key for authentication:
 
 ```bash
 export KERNEL_API_KEY=<YOUR_API_KEY>
 ```
+
+You can create an API key from the [Kernel dashboard](https://dashboard.onkernel.com).
 
 ## 4. Deploy the sample app on Kernel
 
