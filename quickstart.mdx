@@ -39,8 +39,6 @@ which kernel
 
 ## 3. Authenticate with Kernel
 
-### Option A: OAuth Login (Recommended)
-
 The easiest way to authenticate is using OAuth:
 
 ```bash
@@ -49,8 +47,7 @@ kernel login
 
 This will open your browser to complete the authentication flow. Your credentials will be securely stored and automatically refreshed.
 
-### Option B: API Key
-
+<Info>
 Alternatively, you can use an API key for authentication:
 
 ```bash
@@ -58,6 +55,7 @@ export KERNEL_API_KEY=<YOUR_API_KEY>
 ```
 
 You can create an API key from the [Kernel dashboard](https://dashboard.onkernel.com).
+</Info>
 
 ## 4. Deploy the sample app on Kernel
 
