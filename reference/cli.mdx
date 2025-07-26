@@ -13,13 +13,31 @@ Install the Kernel CLI using your favorite package manager:
 brew install onkernel/tap/kernel
 
 # Using pnpm
-pnpm install -g onkernel/cli
+pnpm install -g @onkernel/cli
 
 # Using npm
-npm install -g onkernel/cli
+npm install -g @onkernel/cli
 ```
 
-Then, set your Kernel API key for deployments
+## Authentication
+
+The Kernel CLI supports two authentication methods:
+
+### OAuth 2.0 (Recommended)
+
+The preferred method is OAuth 2.0 with PKCE, which provides secure browser-based authentication:
+
+```bash
+# Login via browser
+kernel login
+```
+
+This opens your browser to complete the OAuth flow. Your tokens are securely stored in your system keychain (macOS/Windows) or a local file (Linux).
+
+### API Key
+
+You can also authenticate using an API key:
+
 ```bash
 export KERNEL_API_KEY=<API_KEY>
 ```
@@ -31,20 +49,61 @@ After installation, verify that Kernel CLI was installed correctly:
 which kernel
 ```
 
-## Commands
+## Global Flags
+
+| Flag | Description |
+|------|-------------|
+| `--version`, `-v` | Print the CLI version |
+| `--no-color` | Disable color output |
+| `--log-level <level>` | Set the log level (trace, debug, info, warn, error, fatal, print) |
+
+## Authentication Commands
+
+| Command | Description |
+|---------|-------------|
+| `kernel login [--force]` | Initiates OAuth 2.0 authentication flow via browser. Use `--force` to re-authenticate when already logged in |
+| `kernel logout` | Clears stored authentication tokens and logs out |
+| `kernel auth` | Displays current authentication status, user details, and token expiry. Use `--log-level debug` for detailed information including user ID and storage method |
+
+## App Management Commands
 
 | Command | Optional Flags | Description |
 |---------|-------------| -------------|
 | `kernel deploy <entrypoint_file_name>` | - | Deploys an app to Kernel from the current directory. |
-| | `--env <ENV_VAR=VAL>` | Adds environment variables to the app. Expects the form `ENV_VAR=VAL` delimited by spaces. Optional. |
+| | `--version <version>` | Specify a version for the app (default: latest). Optional. |
+| | `--force` | Allow overwrite of an existing version with the same name. Optional. |
+| | `--env <ENV_VAR=VAL>`, `-e` | Adds environment variables to the app. Expects the form `ENV_VAR=VAL` delimited by spaces. May be specified multiple times. Optional. |
+| | `--env-file <file>` | Read environment variables from a file (.env format). May be specified multiple times. Optional. |
 | `kernel invoke <app_name> <action_name>` | - | Invokes a specific app action by its name. Generates an Invocation. |
-| | `--payload <payload_data>` | Includes the specified parameters. Expects a stringified JSON object. Optional. |
+| | `--version <version>`, `-v` | Specify a version of the app to invoke (default: latest). Optional. |
+| | `--payload <payload_data>`, `-p` | Includes the specified parameters. Expects a stringified JSON object. Optional. |
+| | `--sync`, `-s` | Invoke synchronously (default false). A synchronous invocation opens a long-lived HTTP POST that times out after 60 seconds. Optional. |
 | | `ctrl-c` | Terminates the running invocation in your CLI. Also destroys any associated browsers. |
+| `kernel app list` | - | List deployed application versions. |
+| | `--name <app_name>` | Filter by application name. Optional. |
+| | `--version <version>` | Filter by version label. Optional. |
+| `kernel app history <app_name>` | - | Show deployment history for an application. |
 | `kernel logs <app_name>` | - | Prints the logs for the specified app. |
-| | `--follow` | Follows the logs. Optional. |
-| | `--log-level <log_level>` | Specify the log level to print: trace, debug, info, warn, error, fatal, print. Optional. |
-| | `--no-color` | Disables color output|
-| `kernel browser delete <persistent_browser_id>` | - | Deletes the specified persistent browser |
-| `kernel help [command]` | - | Displays help information about Kernel commands. |
+| | `--version <version>` | Specify a version of the app (default: latest). Optional. |
+| | `--follow`, `-f` | Follow logs in real-time (stream continuously). Optional. |
+| | `--since <time>`, `-s` | How far back to retrieve logs (e.g., 5m, 1h). Defaults to 5m if not following, 5s if following. Optional. |
+| | `--with-timestamps` | Include timestamps in each log line. Optional. |
 
-This may not be the full list of available CLI commands. Use `kernel --help` in your command line.
+## Browser Management Commands
+
+| Command | Description |
+|---------|-------------|
+| `kernel browsers list` | List running or persistent browsers |
+| `kernel browsers delete` | Delete a browser. Must specify either `--by-persistent-id` or `--by-id` |
+| | `--by-persistent-id <id>` | Delete browser by persistent ID |
+| | `--by-id <id>` | Delete browser by session ID |
+| | `--yes`, `-y` | Skip confirmation prompt |
+| `kernel browsers view` | Get the live view URL for a browser. Must specify either `--by-persistent-id` or `--by-id` |
+| | `--by-persistent-id <id>` | View browser by persistent ID |
+| | `--by-id <id>` | View browser by session ID |
+
+## General Commands
+
+| Command | Description |
+|---------|-------------|
+| `kernel help [command]` | Displays help information about Kernel commands |
