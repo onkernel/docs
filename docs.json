@@ -50,11 +50,11 @@
             {
               "group": "Browsers",
               "pages": [
-                "launch/browser-persistence",
-                "launch/browser-authentication",
                 "launch/browser-headless",
-                "launch/browser-standby",
+                "launch/browser-persistence",
                 "launch/browser-stealth",
+                "launch/browser-authentication",
+                "launch/browser-standby",
                 "launch/browser-termination"
               ]
             }
@@ -99,6 +99,7 @@
           "group": "Info",
           "pages": [
             "info/concepts",
+            "info/pricing",
             "info/unikernels"
           ]
         },

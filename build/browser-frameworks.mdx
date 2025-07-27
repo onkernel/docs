@@ -15,10 +15,6 @@ When using Kernel's [app platform](/build/develop), we **co-locate** your code w
 
 To create a browser automation app with Kernel, simply define an app and action that creates a Kernel browser.
 
-<Tip>
-  Install our [sample apps](/quickstart#1-download-the-sample-app) to get up and running with Playwright, Browser Use, Computer Use, or Stagehand!
-</Tip>
-
 ### 1. Create an app and define a browser action
 
 Start by creating your app and defining an action for your browser automation:
@@ -135,13 +131,6 @@ def playwright_script(runtime_context, payload):
 	Make sure to call `browser.close()` at the end of your action to ensure the browser connection is properly closed.
 </Info>
 
-## Browser frameworks: environment variables
+## Web agent frameworks: environment variables
 
-Browser frameworks sometimes require environment variables (e.g. LLM API keys). Set them when [deploying](/launch/deploy#environment-variables) your app.
-
-## Next steps
-
-Once you've created your browser automation app:
-1. [Deploy](/launch/deploy) it on Kernel's cloud platform
-2. Learn how to [invoke](/launch/invoke) your app's actions
-3. Explore [browser configuration options](/launch/browser-persistence) for advanced use cases
+Web agent frameworks sometimes require environment variables (e.g. LLM API keys). Set them when [deploying](/launch/deploy#environment-variables) your app.
