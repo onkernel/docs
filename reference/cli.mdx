@@ -111,3 +111,63 @@ which kernel
 | Command | Description |
 |---------|-------------|
 | `kernel help [command]` | Displays help information about Kernel commands |
+
+## Examples
+
+### Deploy with environment variables
+
+```bash
+# Set individual variables
+kernel deploy index.ts --env API_KEY=abc123 --env DEBUG=true
+
+# Load from .env file
+kernel deploy index.ts --env-file .env
+
+# Combine both methods
+kernel deploy index.ts --env-file .env --env OVERRIDE_VAR=value
+```
+
+### Invoke with payload
+
+```bash
+# Simple invoke
+kernel invoke my-scraper scrape-page
+
+# With JSON payload
+kernel invoke my-scraper scrape-page --payload '{"url": "https://example.com"}'
+
+# Synchronous invoke (wait for completion)
+kernel invoke my-scraper quick-task --sync
+```
+
+### Follow logs in real-time
+
+```bash
+# Follow logs
+kernel logs my-app --follow
+
+# Show recent logs with timestamps
+kernel logs my-app --since 1h --with-timestamps
+```
+
+### Browser management
+
+```bash
+# List all browsers
+kernel browsers list
+
+# Create a new browser session
+kernel browsers create
+
+# Create a persistent browser session
+kernel browsers create --persistence-id my-browser-session
+
+# Create a headless browser in stealth mode
+kernel browsers create --headless --stealth
+
+# Delete a persistent browser
+kernel browsers delete --by-persistent-id my-browser-session --yes
+
+# Get live view URL
+kernel browsers view --by-id browser123
+```
