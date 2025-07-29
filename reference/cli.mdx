@@ -94,6 +94,10 @@ which kernel
 | Command | Description |
 |---------|-------------|
 | `kernel browsers list` | List running or persistent browsers |
+| `kernel browsers create` | Create a new browser session |
+| | `--persistence-id <id>` | Unique identifier for browser session persistence. Optional. |
+| | `--stealth` | Launch browser in stealth mode to avoid detection. Optional. |
+| | `--headless` | Launch browser without GUI access. Optional. |
 | `kernel browsers delete` | Delete a browser. Must specify either `--by-persistent-id` or `--by-id` |
 | | `--by-persistent-id <id>` | Delete browser by persistent ID |
 | | `--by-id <id>` | Delete browser by session ID |
