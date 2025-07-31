@@ -21,6 +21,23 @@
       "claude"
     ]
   },
+  "navbar": {
+    "primary": {
+      "type": "button",
+      "label": "Sign up",
+      "href": "https://dashboard.onkernel.com/sign-up"
+    },
+    "links": [
+      {
+        "label": "Dashboard",
+        "href": "https://dashboard.onkernel.com"
+      },
+      {
+        "label": "Book a demo",
+        "href": "https://calendly.com/d/cwr7-xxq-m45"
+      }
+    ]
+  },
   "navigation": {
     "tabs": [
       {
