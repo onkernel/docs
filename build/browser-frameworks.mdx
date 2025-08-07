@@ -93,7 +93,19 @@ const playwrightScript = async (runtimeContext, payload) => {
 const kernelBrowser = await kernel.browsers.create({ invocation_id: runtimeContext.invocation_id });
 const browser = await chromium.connectOverCDP(kernelBrowser.cdp_ws_url);
 
-    try {
+	const kernelBrowser = await kernel.browsers.create({ invocation_id: runtimeContext.invocation_id });
+	const browser = await chromium.connectOverCDP(kernelBrowser.cdp_ws_url);
+
+	try {
+		const context = await browser.contexts()[0] || (await browser.newContext());
+		const page = await context.pages()[0] || (await context.newPage());
+		await page.goto("https://www.google.com");
+		const title = await page.title();
+	} catch (error) {
+		console.error(error);
+	} finally {
+		await browser.close();
+	}
     	const context = await browser.contexts()[0] || (await browser.newContext());
 
 const page = await context.pages()[0] || (await context.newPage());
