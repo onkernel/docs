@@ -12,7 +12,7 @@ To reuse a browser over multiple invocations, specify `persist` settings in the 
 <CodeGroup>
 ```typescript Typescript/Javascript
 const playwrightScript = async (runtimeContext, payload) => {
-	const kernelBrowser = await Kernel.browsers.create({
+	const kernelBrowser = await kernel.browsers.create({
 		invocation_id: runtimeContext.invocation_id,
 		persistence: { id: "unique-browser-id-for-persistence" },
 	});
@@ -24,7 +24,7 @@ const playwrightScript = async (runtimeContext, payload) => {
 ```python Python
 def playwright_script(runtime_context, payload):
     async with async_playwright() as playwright:
-    	kernel_browser = await Kernel.browsers.create(
+    	kernel_browser = await kernel.browsers.create(
 			invocation_id=runtime_context.invocation_id,
 			persistence={"id": "unique-browser-id-for-persistence"}
     	browser = await playwright.chromium.connect_over_cdp(kernel_browser.cdp_ws_url)

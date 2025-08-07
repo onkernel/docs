@@ -27,11 +27,12 @@ const kernel = new Kernel();
 const app = kernel.app('browser-automation');
 
 const playwrightScript = async (runtimeContext, payload) => {
-	// ...
+// ...
 };
 
 app.action("my-action-name", playwrightScript);
-```
+
+````
 
 ```Python Python
 import kernel
@@ -43,7 +44,8 @@ app = kernel.App("browser-automation")
 def playwright_script(runtime_context, payload):
 	# ...
 	pass
-```
+````
+
 </CodeGroup>
 
 ### 2. Connect to a browser in your action
@@ -55,7 +57,7 @@ Within your action, use Kernel's `browsers.create()` method to generate a CDP we
 <CodeGroup>
 ```typescript Typescript/Javascript
 const playwrightScript = async (runtimeContext, payload) => {
-	const kernelBrowser = await Kernel.browsers.create({ invocation_id: runtimeContext.invocation_id });
+	const kernelBrowser = await kernel.browsers.create({ invocation_id: runtimeContext.invocation_id });
 	const browser = await chromium.connectOverCDP(kernelBrowser.cdp_ws_url);
 	// ...
 };
@@ -67,12 +69,16 @@ def playwright_script(runtime_context, payload):
 	browser = playwright.chromium.connect_over_cdp(kernel_browser.cdp_ws_url)
 	#...
 ```
+
 </CodeGroup>
 
 ### 3. Complete example
 
 <Info>
-    Kernel browsers launch with a default context and page. Make sure to access the [existing context and page](https://playwright.dev/docs/api/class-browsertype#browser-type-connect-over-cdp) (`contexts()[0]` and `pages()[0]`), rather than trying to create a new one.
+  Kernel browsers launch with a default context and page. Make sure to access
+  the [existing context and
+  page](https://playwright.dev/docs/api/class-browsertype#browser-type-connect-over-cdp)
+  (`contexts()[0]` and `pages()[0]`), rather than trying to create a new one.
 </Info>
 
 <CodeGroup>
@@ -84,23 +90,25 @@ const kernel = new Kernel();
 const app = kernel.app('browser-automation');
 
 const playwrightScript = async (runtimeContext, payload) => {
-	const kernelBrowser = await Kernel.browsers.create({ invocation_id: runtimeContext.invocation_id });
-	const browser = await chromium.connectOverCDP(kernelBrowser.cdp_ws_url);
+const kernelBrowser = await kernel.browsers.create({ invocation_id: runtimeContext.invocation_id });
+const browser = await chromium.connectOverCDP(kernelBrowser.cdp_ws_url);
 
-	try {
-		const context = await browser.contexts()[0] || (await browser.newContext());
-  		const page = await context.pages()[0] || (await context.newPage());
-		await page.goto("https://www.google.com");
-		const title = await page.title();
-	} catch (error) {
-		console.error(error);
-	} finally {
-		await browser.close();
-	}
+    try {
+    	const context = await browser.contexts()[0] || (await browser.newContext());
+
+const page = await context.pages()[0] || (await context.newPage());
+await page.goto("https://www.google.com");
+const title = await page.title();
+} catch (error) {
+console.error(error);
+} finally {
+await browser.close();
+}
 };
 
 app.action("my-action-name", playwrightScript);
-```
+
+````
 
 ```python Python
 import kernel
@@ -124,11 +132,13 @@ def playwright_script(runtime_context, payload):
 			print(e)
       	finally:
 			await browser.close()
-```
+````
+
 </CodeGroup>
 
 <Info>
-	Make sure to call `browser.close()` at the end of your action to ensure the browser connection is properly closed.
+  Make sure to call `browser.close()` at the end of your action to ensure the
+  browser connection is properly closed.
 </Info>
 
 ## Web agent frameworks: environment variables
