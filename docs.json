@@ -72,7 +72,8 @@
                   "launch/browser-stealth",
                   "launch/browser-authentication",
                   "launch/browser-standby",
-                  "launch/browser-termination"
+                  "launch/browser-termination",
+                  "launch/file-io"
                 ]
               }
             ]
