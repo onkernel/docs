@@ -43,98 +43,99 @@
       {
         "tab": "Guides",
         "groups": [
-        {
-          "group": "Get Started",
-          "pages": [
-            "introduction",
-            "quickstart"
-          ]
-        },
-        {
-          "group": "Build",
-          "pages": [
-            "build/develop",
-            "build/browser-frameworks",
-            "build/remote-browsers"
-          ]
-        },
-        {
-          "group": "Launch",
-          "pages": [
-            "launch/deploy",
-            "launch/invoke",
-            "launch/stop",
-            {
-              "group": "Browsers",
-              "pages": [
-                "launch/browser-headless",
-                "launch/browser-persistence",
-                "launch/browser-stealth",
-                "launch/browser-authentication",
-                "launch/browser-standby",
-                "launch/browser-termination"
-              ]
-            }
-          ]
-        },
-        {
-          "group": "Observability",
-          "pages": [
-            "observability/status",
-            "observability/logs",
-            {
-              "group": "Browsers",
-              "pages": [
-                "observability/live-view",
-                "observability/replays"
-              ]
-            }
-          ]
-        },
-        {
-          "group": "API",
-          "pages": [
-            "reference/cli",
-            "mcp-server",
-            "reference/api-keys"
-          ]
-        },
-        {
-          "group": "Integrations",
-          "pages": [
-            "integrations/vercel"
-          ]
-        },
-        {
-          "group": "Community",
-          "pages": [
-            "community/github",
-            "community/discord"
-          ]
-        },
-        {
-          "group": "Info",
-          "pages": [
-            "info/concepts",
-            "info/pricing",
-            "info/unikernels"
-          ]
-        },
-        {
-          "group": "Careers",
-          "pages": [
-            "careers/intro",
-            "careers/infra-engineer",
-            "careers/backend-engineer",
-            "careers/engineer-new-grad"
-          ]
-        }
-      ]
-    },
-    {
-      "tab": "API Reference",
-      "openapi": "https://app.stainless.com/api/spec/documented/kernel/openapi.documented.yml"
-    }
+          {
+            "group": "Get Started",
+            "pages": [
+              "introduction",
+              "quickstart"
+            ]
+          },
+          {
+            "group": "Build",
+            "pages": [
+              "build/develop",
+              "build/browser-frameworks",
+              "build/remote-browsers"
+            ]
+          },
+          {
+            "group": "Launch",
+            "pages": [
+              "launch/deploy",
+              "launch/invoke",
+              "launch/stop",
+              {
+                "group": "Browsers",
+                "pages": [
+                  "launch/browser-headless",
+                  "launch/browser-persistence",
+                  "launch/browser-stealth",
+                  "launch/browser-authentication",
+                  "launch/browser-standby",
+                  "launch/browser-termination",
+                  "launch/file-io"
+                ]
+              }
+            ]
+          },
+          {
+            "group": "Observability",
+            "pages": [
+              "observability/status",
+              "observability/logs",
+              {
+                "group": "Browsers",
+                "pages": [
+                  "observability/live-view",
+                  "observability/replays"
+                ]
+              }
+            ]
+          },
+          {
+            "group": "API",
+            "pages": [
+              "reference/cli",
+              "mcp-server",
+              "reference/api-keys"
+            ]
+          },
+          {
+            "group": "Integrations",
+            "pages": [
+              "integrations/vercel"
+            ]
+          },
+          {
+            "group": "Community",
+            "pages": [
+              "community/github",
+              "community/discord"
+            ]
+          },
+          {
+            "group": "Info",
+            "pages": [
+              "info/concepts",
+              "info/pricing",
+              "info/unikernels"
+            ]
+          },
+          {
+            "group": "Careers",
+            "pages": [
+              "careers/intro",
+              "careers/infra-engineer",
+              "careers/backend-engineer",
+              "careers/engineer-new-grad"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "openapi": "https://app.stainless.com/api/spec/documented/kernel/openapi.documented.yml"
+      }
     ]
   },
   "logo": {
