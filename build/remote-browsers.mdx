@@ -5,14 +5,15 @@ title: "Remote Browsers"
 Kernel browsers were designed to be lightweight, fast, and efficient for cloud-based browser automation at scale. They can be used as part of the Kernel [app platform](/build/develop) or connected to a **remote service** with Chrome DevTools Protocol.
 
 Remote Kernel browsers have the same capabilities as on our app platform, including:
+
 - [Browser persistence](/launch/browser-persistence)
 - [Standby mode](/launch/browser-standby)
 - [Stealth mode](/launch/browser-stealth)
 - [Live debugging](/observability/live-view)
 
-
 <Info>
-    You don't need to pass an invocation ID in `browsers.create()` when creating remote Kernel browsers.
+  You don't need to pass an invocation ID in `browsers.create()` when creating
+  remote Kernel browsers.
 </Info>
 
 ### 1. Create a remote Kernel browser
@@ -29,6 +30,7 @@ import kernel
 client = Kernel()
 kernel_browser = client.browsers.create()
 ```
+
 </CodeGroup>
 
 ### 2. Connect to the browser with the Chrome DevTools Protocol
@@ -43,22 +45,49 @@ const browser = await chromium.connectOverCDP(kernelBrowser.cdp_ws_url);
 
 // Puppeteer
 const browser = await puppeteer.connect({
-    browserWSEndpoint,
-    defaultViewport: null, // Optional: inherit viewport from the browser
+  browserWSEndpoint,
+  defaultViewport: null, // Optional: inherit viewport from the browser
 });
 ```
 
 ```Python Python
 browser = playwright.chromium.connect_over_cdp(kernel_browser.cdp_ws_url)
 ```
+
 </CodeGroup>
+
+### 3. Tear it down
+
+When you're finished with the browser, you can delete it:
+
+<CodeGroup>
+```typescript Typescript/Javascript 
+await client.browsers.deleteByID(kernel_browser.session_id)
+```
+
+```Python Python
+client.browsers.delete_by_id(kernel_browser.session_id)
+```
+
+</CodeGroup>
+
+If you don't delete the browser, deletion will happen automatically after a configurable `timeout` (default 60 seconds). If the browser does not see a CDP or live view connection within that timeout, then it is automatically deleted.
+
+<Info>
+  You can set a custom timeout of up to 24 hours via the
+  [API](/api-reference/browsers/create-a-browser-session) when you create a
+  browser.
+</Info>
 
 ### Full example
 
 Once you've connected to the Kernel browser, you can do anything with it.
 
 <Info>
-    Kernel browsers launch with a default context and page. Make sure to access the [existing context and page](https://playwright.dev/docs/api/class-browsertype#browser-type-connect-over-cdp) (`contexts()[0]` and `pages()[0]`), rather than trying to create a new one.
+  Kernel browsers launch with a default context and page. Make sure to access
+  the [existing context and
+  page](https://playwright.dev/docs/api/class-browsertype#browser-type-connect-over-cdp)
+  (`contexts()[0]` and `pages()[0]`), rather than trying to create a new one.
 </Info>
 
 <CodeGroup>
@@ -69,16 +98,18 @@ const kernel = new Kernel();
 const kernelBrowser = await kernel.browsers.create();
 const browser = await chromium.connectOverCDP(kernelBrowser.cdp_ws_url);
 try {
-    const context = await browser.contexts()[0] || (await browser.newContext());
-    const page = await context.pages()[0] || (await context.newPage());
-    await page.goto("https://www.google.com");
-    const title = await page.title();
+const context = await browser.contexts()[0] || (await browser.newContext());
+const page = await context.pages()[0] || (await context.newPage());
+await page.goto("https://www.google.com");
+const title = await page.title();
 } catch (error) {
-    console.error(error);
+console.error(error);
 } finally {
-    await browser.close();
+await browser.close();
+await kernel.browsers.deleteByID(kernelBrowser.session_id);
 }
-```
+
+````
 
 ```Python Python
 import kernel
@@ -95,5 +126,7 @@ except Exception as e:
     print(e)
 finally:
     await browser.close()
-```
+    await client.browsers.delete_by_id(kernel_browser.session_id)
+````
+
 </CodeGroup>
