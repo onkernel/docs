@@ -11,13 +11,11 @@ This is the documentation for the Kernel platform. It's connected to [docs.onker
 
 ## Code Snippets
 
-In order to sync our code snippets in our docs ( not playground ) with the OpenAPI spec, we use a GitHub Action. You can run it locally to see the changes that will be made.
+In order to sync our code snippets in our docs ( not playground ) with the OpenAPI spec, we put `<OpenAPICodeGroup>[get|put|post|delete] [path]` in the docs.
 
-```bash
-bun run .github/scripts/generate_code_samples.ts
-```
+For example, if we want to add a code snippet for the `GET /api/v1/users` endpoint, we would put `<OpenAPICodeGroup>get /api/v1/users` in the docs.
 
-When deploying, we generate the changes in a github action and push that to a branch called `gh_action_generated_docs`. Mintlify will then deploy the docs from that branch.
+We then use a GitHub Action to generate the code snippets from the docs and push them to the `gh_action_generated_docs` branch. Mintlify will then deploy the docs from that branch.
 
 ## Local Development
 
