@@ -87,13 +87,24 @@ async function processFile(file: string, spec: any) {
   let content = await readFile(file, "utf8");
 
   // Matches {{ get /path }} or {{ post /path }} or {{ /path }}
-  const regex =
+  const mustacheRegex =
     /\{\{\s*(?:(get|post|put|delete|patch|options|head)\s+)?(\/[^\s}]+)\s*\}\}/gi;
 
+  // Matches <OpenAPICodeGroup>get /path</OpenAPICodeGroup>
+  // or <OpenAPICodeGroup>/path</OpenAPICodeGroup>
+  const tagRegex =
+    /<OpenAPICodeGroup>\s*(?:(get|post|put|delete|patch|options|head)\s+)?(\/[^\s<]+)\s*<\/OpenAPICodeGroup>/gi;
+
   let changed = false;
-  content = content.replace(regex, (_, method, endpoint) => {
+  content = content.replace(mustacheRegex, (_, method, endpoint) => {
     changed = true;
     return extractCodeSamples(spec, endpoint, method);
+  });
+
+  content = content.replace(tagRegex, (_, method, endpoint) => {
+    changed = true;
+    const blocks = extractCodeSamples(spec, endpoint, method).trim();
+    return `<CodeGroup>\n${blocks}\n</CodeGroup>`;
   });
 
   if (changed) {
