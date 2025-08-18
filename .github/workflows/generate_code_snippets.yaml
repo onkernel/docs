@@ -3,19 +3,20 @@ name: Update Docs with Code Samples from OpenAPI
 on:
   push:
     branches:
-      - christian/docs_deployment_step_for_gen
+      - "christian/docs_deployment_step_for_gen"
 
 permissions:
-  contents: write  # allow pushing commits back to the PR branch
+  contents: write
 
 jobs:
   update-docs:
     runs-on: ubuntu-latest
+    if: github.actor != 'github-actions[bot]' # prevent infinite loop
     steps:
-      - name: Checkout PR branch
+      - name: Checkout branch
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.head_ref }}
+          ref: ${{ github.ref_name }}
           fetch-depth: 0
 
       - name: Install Bun
@@ -33,4 +34,4 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add .
           git commit -m "docs: update code samples from OpenAPI" || echo "No changes"
-          git push origin HEAD:${{ github.head_ref }}
+          git push origin HEAD:${{ github.ref_name }}
