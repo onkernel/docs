@@ -42,6 +42,7 @@
     "tabs": [
       {
         "tab": "Guides",
+        "icon": "book-open",
         "groups": [
           {
             "group": "Get Started",
@@ -74,13 +75,6 @@
               "apps/stop",
               "apps/status",
               "apps/logs"
-            ]
-          },
-          {
-            "group": "API",
-            "pages": [
-              "reference/cli",
-              "reference/mcp-server"
             ]
           },
           {
@@ -117,7 +111,22 @@
       },
       {
         "tab": "API Reference",
+        "icon": "code",
         "openapi": "https://app.stainless.com/api/spec/documented/kernel/openapi.documented.yml"
+      },
+      {
+        "tab": "MCP",
+        "icon": "code-fork",
+        "pages": [
+          "reference/mcp-server"
+        ]
+      },
+      {
+        "tab": "CLI",
+        "icon": "terminal",
+        "pages": [
+          "reference/cli"
+        ]
       }
     ]
   },
