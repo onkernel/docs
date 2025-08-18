@@ -31,7 +31,7 @@ kernel deploy my_app.py --env MY_ENV_VAR=my_value # Can add multiple env vars de
 
 ## Deployment notes
 
-- The `entrypoint_file_name` is the file name where you [defined](/build/develop) your app.
+- The `entrypoint_file_name` is the file name where you [defined](/apps/develop) your app.
 - Include a `.gitignore` file to exclude dependency folders like `node_modules` and `.venv`.
 - Kernel assumes the root directory contains at least this file structure:
 
@@ -62,4 +62,4 @@ INFO  Invoke with: kernel invoke my-app my-action --payload '{...}'
 SUCCESS  Total deployment time: 2.78s
 ```
 
-Once deployed, you can [invoke](/launch/invoke) your app from anywhere.
+Once deployed, you can [invoke](/apps/invoke) your app from anywhere.

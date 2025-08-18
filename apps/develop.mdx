@@ -56,7 +56,7 @@ app.action("my-action-name", myActionMethod);
 Action methods receive two parameters:
 
 - `runtimeContext`: Contextual information provided by Kernel during execution
-- `payload`: Optional runtime data that you provide when invoking the action. [Read more](/launch/invoke#payload-parameter)
+- `payload`: Optional runtime data that you provide when invoking the action. [Read more](/apps/invoke#payload-parameter)
 
 <CodeGroup>
 ```typescript Typescript/Javascript
@@ -79,7 +79,7 @@ def my_action_method(runtime_context, payload):
 
 ## Environment variables
 
-You can set environment variables when [deploying](/launch/deploy#environment-variables) your app. They then can be accessed in the usual way:
+You can set environment variables when [deploying](/apps/deploy#environment-variables) your app. They then can be accessed in the usual way:
 
 <CodeGroup>
 ```typescript Typescript/Javascript
@@ -100,7 +100,7 @@ def my_action_method(runtime_context, payload):
 
 ## Return values
 
-Action methods can return values, which will be returned in its [invocation's](/launch/invoke#return-values) final response.
+Action methods can return values, which will be returned in its [invocation's](/apps/invoke#return-values) final response.
 
 <CodeGroup>
 ```typescript Typescript/Javascript
@@ -196,9 +196,9 @@ def playwright_script(runtime_context, payload):
 </CodeGroup>
 
 <Info>
-  Web agent frameworks sometimes require environment variables (e.g. LLM API keys). Set them when [deploying](/launch/deploy#environment-variables) your app.
+  Web agent frameworks sometimes require environment variables (e.g. LLM API keys). Set them when [deploying](/apps/deploy#environment-variables) your app.
 </Info>
 
 ## Next steps
 
-Once you're happy with your app, follow [these steps](/launch/deploy) to deploy and invoke it on the Kernel platform.
+Once you're happy with your app, follow [these steps](/apps/deploy) to deploy and invoke it on the Kernel platform.

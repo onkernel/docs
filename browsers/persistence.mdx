@@ -8,11 +8,11 @@ Kernel's platform provides multiple ways to persist and reuse state and browser 
 
 ## 1. Persisting a browser
 
-With Kernel, you can specify a browser to be persisted and then reuse that exact browser instance again. Using [standby mode](/launch/browser-standby), we put the browser to sleep in between connections, so you don't pay for idle clock time.
+With Kernel, you can specify a browser to be persisted and then reuse that exact browser instance again. Using [standby mode](/browsers/standby), we put the browser to sleep in between connections, so you don't pay for idle clock time.
 
 Since we return the exact same browser instance upon subsequent connections, all browser state is preserved: web page, cookies, session auth, even the exact zoom settings on the page.
 
-Persisted browsers exist indefinitely until you [delete them](/launch/browser-termination). See [here](/info/pricing) for plan limits on persistence.
+Persisted browsers exist indefinitely until you [delete them](/browsers/termination). See [here](/info/pricing) for plan limits on persistence.
 
 To specify a browser for persistence, specify its `persistence` settings in the `browsers.create()` method:
 
