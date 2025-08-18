@@ -20,7 +20,7 @@ kernel_browser = client.browsers.create(invocation_id=ctx.invocation_id, stealth
 </CodeGroup>
 
 <Info>
-    [Anthropic Computer Use](/quickstart#sample-apps-reference) stops when it runs into a CAPTCHA. Use Kernel's auto-captcha solver by adding this prompt to the end of your `query` payload when running `kernel invoke`:
+    [Anthropic Computer Use](/quickstart#sample-apps-reference) stops when it runs into a CAPTCHA. Use Kernel's auto-captcha solver by adding this to your prompt:
     
     `"If you see a CAPTCHA or similar test, just wait for it to get solved automatically by the browser."`
 </Info>

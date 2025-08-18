@@ -1,0 +1,46 @@
+---
+title: "Persistence"
+---
+
+Persistence allows you to reuse a browser's state, including cookies, session auth, cache, and any other state that lives on a browser. This can be used to minimize CAPTCHAs and login flows.
+
+Kernel's platform provides multiple ways to persist and reuse state and browser sessions.
+
+## 1. Persisting a browser
+
+With Kernel, you can specify a browser to be persisted and then reuse that exact browser instance again. Using [standby mode](/browsers/standby), we put the browser to sleep in between connections, so you don't pay for idle clock time.
+
+Since we return the exact same browser instance upon subsequent connections, all browser state is preserved: web page, cookies, session auth, even the exact zoom settings on the page.
+
+Persisted browsers exist indefinitely until you [delete them](/browsers/termination). See [here](/info/pricing) for plan limits on persistence.
+
+To specify a browser for persistence, specify its `persistence` settings in the `browsers.create()` method:
+
+<CodeGroup>
+```typescript Typescript/Javascript
+const kernelBrowser = await kernel.browsers.create({
+	persistence: { id: "unique-browser-id-for-persistence" },
+});
+```
+
+```python Python
+kernel_browser = await kernel.browsers.create(
+	persistence={"id": "unique-browser-id-for-persistence"}
+)
+```
+
+</CodeGroup>
+
+During runtime, Kernel will search for a browser with the specified `id`:
+
+- If a browser with the specified `persistence id` is found, the existing browser will be returned.
+- If a browser with the specified `persistence id` is _not_ found, a new browser instance will be created and assigned the specified `persistence id` for future reuse.
+- Reusing an existing browser restores its exact state and stealth configurations—stealth configs cannot be changed for an existing browser.
+
+The browser's `persistence id` can be any string. You can set it to an identifier in your system to match it to a user, environment, website, or something else.
+
+## 2. Persisting browser cookies
+
+<Info>
+  This feature is coming soon
+</Info>

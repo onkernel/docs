@@ -5,9 +5,7 @@ description: "Record and view browser sessions as mp4 videos"
 
 Replays capture browser sessions as video recordings that you can view or download later. You have full control over when replays start and stop, allowing you to capture specific interactions or workflows.
 
-## Starting and stopping replays
-
-### Start a recording
+## Starting and stopping recordings
 
 To start recording a browser session, use the replays API on an active browser:
 
@@ -16,9 +14,7 @@ To start recording a browser session, use the replays API on an active browser:
 import { Kernel } from '@onkernel/sdk';
 
 const kernel = new Kernel();
-const kernelBrowser = await kernel.browsers.create({
-    invocation_id: runtimeContext.invocation_id
-});
+const kernelBrowser = await kernel.browsers.create();
 
 // Start recording
 const replay = await kernel.browsers.replays.start(kernelBrowser.session_id);
@@ -35,7 +31,7 @@ console.log("Recording stopped and processing...");
 import kernel
 
 client = kernel.Kernel()
-kernel_browser = client.browsers.create(invocation_id=runtime_context.invocation_id)
+kernel_browser = client.browsers.create()
 
 # Start recording
 replay = client.browsers.replays.start(kernel_browser.session_id)
@@ -50,9 +46,9 @@ print("Recording stopped and processing...")
 
 </CodeGroup>
 
-### Multiple recordings per session
+## Multiple recordings per session
 
-You can create multiple replay recordings for a single browser session. Each recording gets its own unique `replay_id` and can be started and stopped independently:
+You can create multiple replay recordings for a single browser session. Each recording gets a unique `replay_id` and can be started and stopped independently:
 
 <CodeGroup>
 ```typescript Typescript/Javascript
@@ -82,7 +78,7 @@ client.browsers.replays.stop(replay_id=replay2.replay_id, id=kernel_browser.sess
 
 ## Downloading all replays
 
-To access all replays for a browser session, you can list and access them via url or as downloads:
+To access all replays for a browser session, list and access them via url or as downloads:
 
 <CodeGroup>
 ```typescript Typescript/Javascript

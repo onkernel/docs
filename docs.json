@@ -51,53 +51,36 @@
             ]
           },
           {
-            "group": "Build",
+            "group": "Browsers",
             "pages": [
-              "build/develop",
-              "build/browser-frameworks",
-              "build/remote-browsers"
+              "browsers/create-a-browser",
+              "browsers/headless",
+              "browsers/stealth",
+              "browsers/standby",
+              "browsers/persistence",
+              "browsers/termination",
+              "browsers/file-io",
+              "browsers/live-view",
+              "browsers/replays"
             ]
           },
           {
-            "group": "Launch",
+            "group": "App Platform",
             "pages": [
-              "launch/deploy",
-              "launch/invoke",
-              "launch/stop",
-              {
-                "group": "Browsers",
-                "pages": [
-                  "launch/browser-headless",
-                  "launch/browser-persistence",
-                  "launch/browser-stealth",
-                  "launch/browser-authentication",
-                  "launch/browser-standby",
-                  "launch/browser-termination",
-                  "launch/file-io"
-                ]
-              }
-            ]
-          },
-          {
-            "group": "Observability",
-            "pages": [
-              "observability/status",
-              "observability/logs",
-              {
-                "group": "Browsers",
-                "pages": [
-                  "observability/live-view",
-                  "observability/replays"
-                ]
-              }
+              "apps/develop",
+              "apps/secrets",
+              "apps/deploy",
+              "apps/invoke",
+              "apps/stop",
+              "apps/status",
+              "apps/logs"
             ]
           },
           {
             "group": "API",
             "pages": [
               "reference/cli",
-              "mcp-server",
-              "reference/api-keys"
+              "reference/mcp-server"
             ]
           },
           {

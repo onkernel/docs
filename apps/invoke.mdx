@@ -1,0 +1,109 @@
+---
+title: "Invoking"
+---
+
+## Via API
+
+You can invoke your app by making a `POST` request to Kernel's API.  **For automations and agents that take longer than 100 seconds, use [async invocations](/apps/invoke#asynchronous-invocations).**
+
+<Info>
+    Synchronous invocations time out after 100 seconds.
+</Info>
+
+<CodeGroup>
+```typescript Typescript/Javascript
+import { Kernel } from '@onkernel/sdk';
+
+const {
+    id,
+    status,
+    status_reason,
+    output
+} = await Kernel.invocations.create({
+    app_name: app_name,
+    action_name: action_name,
+    version: "latest"
+});
+```
+
+```python Python
+import kernel
+
+result = kernel.invocations.create({
+    "app_name": app_name,
+    "action_name": action_name,
+    "version": "latest"
+})
+invocation_id, status, status_reason, output = (
+    result["id"],
+    result["status"],
+    result["status_reason"],
+    result["output"]
+)
+    result["id"],
+    result["status"],
+    result["status_reason"],
+    result["output"]
+)
+```
+
+</CodeGroup>
+
+### Asynchronous invocations
+For long running jobs, use asynchronous invocations to trigger Kernel actions without waiting for the result. You can then poll its [status](/apps/status) for the result.
+
+<CodeGroup>
+```typescript Typescript/Javascript
+import { Kernel } from '@onkernel/sdk';
+
+const {
+    id,
+    status, // status will be QUEUED
+} = await Kernel.invocations.create({
+    app_name: app_name,
+    action_name: action_name,
+    version: "latest",
+    async: true,
+});
+```
+
+```python Python
+import kernel
+
+result = kernel.invocations.create({
+    "app_name": app_name,
+    "action_name": action_name,
+    "version": "latest",
+    "async": True
+})
+invocation_id, status = (
+    result["id"],
+    result["status"]  # status will be QUEUED
+)
+    result["id"],
+    result["status"] # status will be QUEUED
+)
+```
+
+</CodeGroup>
+
+## Via CLI
+
+Invoke an app action immediately via the CLI:
+
+```bash
+kernel invoke <app_name> <action_name>
+```
+
+### Payload parameter
+`--payload` allows you to invoke the action with specified parameters. This enables your action to receive and handle dynamic inputs at runtime. For example:
+```bash
+kernel invoke <app_name> <action_name> 
+    --payload '{"tshirt_size": "small", "color": "black", "shipping_address": "2 Mint Plz, San Francisco CA 94103"}'
+```
+
+See [here](/apps/develop#parameters) to learn how to access the payload in your action method.
+
+### Return values
+
+If your action specifies a [return value](/apps/develop#return-values), the invocation returns its value once it completes. (The Kernel CLI uses asynchronous invocations under the hood)

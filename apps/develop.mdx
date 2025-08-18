@@ -1,0 +1,204 @@
+---
+title: "Developing"
+---
+
+In addition to our browser API, Kernel provides a code execution platform for deploying and invoking code. Typically, Kernel's code execution platform is used for deploying and invoking browser automations or web agents.
+
+When using Kernel's code execution platform, we co-locate your code with any Kernel browser environments you instantiate in your app. This solves common issues with browser connections over CDP:
+- **Reduced latency:** Your code runs directly alongside the browser, reducing round-trip latency
+- **Improved reliability:** Fewer unexpected disconnects between your code and browser
+- **Higher throughput:** Eliminates bandwidth bottlenecks during data-intensive operations like screenshots
+
+## Apps, Actions, and Invocations
+
+An `App` is a codebase deployed on Kernel. You can deploy any codebase in Typescript or Python on Kernel.
+
+An `Action` is an invokable method within an app. Actions allow your to register entry points or functions that can be triggered on-demand. Actions can call non-action methods. Apps can have multiple actions.
+
+An `Invocation` is a single execution of an action. Invocations can be triggered via API, scheduled as a job, or run on-demand.
+
+## Getting started: create an app
+
+First, install the Kernel SDK and create an app.
+
+<CodeGroup>
+```typescript Typescript/Javascript
+import { Kernel } from '@onkernel/sdk';
+
+const kernel = new Kernel();
+const app = kernel.app('my-app-name');
+```
+
+```Python Python
+import kernel
+
+client = Kernel()
+app = kernel.App("my-app-name")
+```
+</CodeGroup>
+
+Then, define and register an action that you want to invoke:
+
+<CodeGroup>
+```typescript Typescript/Javascript
+// Define a method called `myActionMethod` and register it as an action
+app.action("my-action-name", myActionMethod);
+```
+
+```python Python
+# Define a method called `myActionMethod` and register it as an action
+@app.action("my-action-name")
+```
+</CodeGroup>
+
+## Parameters
+
+Action methods receive two parameters:
+
+- `runtimeContext`: Contextual information provided by Kernel during execution
+- `payload`: Optional runtime data that you provide when invoking the action. [Read more](/apps/invoke#payload-parameter)
+
+<CodeGroup>
+```typescript Typescript/Javascript
+const myActionMethod = async (runtimeContext, payload) => {
+  const { tshirt_size, color, shipping_address } = payload;
+  // ...
+};
+```
+
+```python Python
+def my_action_method(runtime_context, payload):
+    tshirt_size, color, shipping_address = (
+        payload["tshirt_size"],
+        payload["color"],
+        payload["shipping_address"]
+    )
+    # ...
+```
+</CodeGroup>
+
+## Environment variables
+
+You can set environment variables when [deploying](/apps/deploy#environment-variables) your app. They then can be accessed in the usual way:
+
+<CodeGroup>
+```typescript Typescript/Javascript
+const ENV_VAR = process.env.ENV_VAR;
+const myActionMethod = async (runtimeContext, payload) => {
+  // ...
+};
+```
+
+```python Python
+import os
+
+ENV_VAR = os.getenv("ENV_VAR")
+def my_action_method(runtime_context, payload):
+    # ...
+```
+</CodeGroup>
+
+## Return values
+
+Action methods can return values, which will be returned in its [invocation's](/apps/invoke#return-values) final response.
+
+<CodeGroup>
+```typescript Typescript/Javascript
+const myActionMethod = async (runtimeContext, payload) => {
+  const { tshirt_size, color, shipping_address } = payload;
+  // ...
+  return {
+    order_id: "example-order-id",
+  }
+};
+```
+
+```python Python
+def my_action_method(runtime_context, payload):
+    tshirt_size, color, shipping_address = (
+        payload["tshirt_size"],
+        payload["color"],
+        payload["shipping_address"]
+    )
+    # ...
+    return {"order_id": "example-order-id"}
+```
+</CodeGroup>
+
+## Building browser automations with Kernel apps
+
+To implement a browser automation or web agent, instantiate an app and define an action that creates a Kernel browser.
+
+<Info>
+  Kernel browsers launch with a default context and page. Make sure to access
+  the [existing context and
+  page](https://playwright.dev/docs/api/class-browsertype#browser-type-connect-over-cdp)
+  (`contexts()[0]` and `pages()[0]`), rather than trying to create a new one.
+</Info>
+
+<CodeGroup>
+```typescript
+import { Kernel } from '@onkernel/sdk';
+import { chromium } from 'playwright';
+
+const kernel = new Kernel();
+const app = kernel.app('browser-automation');
+
+const playwrightScript = async (runtimeContext, payload) => {
+  // When using Kernel's app platform, pass runtimeContext.invocation_id to browsers.create()
+  const kernelBrowser = await kernel.browsers.create({ invocation_id: runtimeContext.invocation_id });
+  const browser = await chromium.connectOverCDP(kernelBrowser.cdp_ws_url);
+
+  try {
+    const context = await browser.contexts()[0] || (await browser.newContext());
+    const page = await context.pages()[0] || (await context.newPage());
+    await page.goto("https://www.google.com");
+    const title = await page.title();
+    return title;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  } finally {
+    await browser.close();
+    await kernel.browsers.deleteByID(kernelBrowser.session_id);
+  }
+};
+
+app.action("my-action-name", playwrightScript);
+```
+
+```python Python
+import kernel
+from playwright.async_api import async_playwright
+
+client = Kernel()
+app = kernel.App("browser-automation")
+
+@app.action("my-action-name")
+def playwright_script(runtime_context, payload):
+    # When using Kernel's app platform, pass runtime_context.invocation_id to browsers.create()
+    async with async_playwright() as playwright:
+    	kernel_browser = await kernel.browsers.create(invocation_id=runtime_context.invocation_id)
+    	browser = await playwright.chromium.connect_over_cdp(kernel_browser.cdp_ws_url)
+
+    	try:
+			context = browser.contexts[0] if browser.contexts else await browser.new_context()
+        	page = context.pages[0] if context.pages else await context.new_page()
+        	await page.goto(url)
+          	title = await page.title()
+		except Exception as e:
+			print(e)
+      	finally:
+			await browser.close()
+      await client.browsers.delete_by_id(kernel_browser.session_id)
+```
+
+</CodeGroup>
+
+<Info>
+  Web agent frameworks sometimes require environment variables (e.g. LLM API keys). Set them when [deploying](/apps/deploy#environment-variables) your app.
+</Info>
+
+## Next steps
+
+Once you're happy with your app, follow [these steps](/apps/deploy) to deploy and invoke it on the Kernel platform.
