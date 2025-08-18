@@ -23,7 +23,7 @@ jobs:
         uses: oven-sh/setup-bun@v1
 
       - name: Run update script
-        run: bun run scripts/generate_code_samples.ts
+        run: bun run .github/scripts/generate_code_samples.ts
 
       - name: Commit changes
         run: |
