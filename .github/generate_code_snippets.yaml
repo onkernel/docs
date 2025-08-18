@@ -11,8 +11,6 @@ permissions:
 jobs:
   update-docs:
     runs-on: ubuntu-latest
-    env:
-      OPENAPI_URL: ${{ secrets.OPENAPI_URL }} # set this in repo secrets
     steps:
       - name: Checkout PR branch
         uses: actions/checkout@v4
