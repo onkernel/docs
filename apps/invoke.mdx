@@ -34,7 +34,12 @@ result = kernel.invocations.create({
     "action_name": action_name,
     "version": "latest"
 })
-invocation_id, status, browser_live_view_urls = (
+invocation_id, status, status_reason, output = (
+    result["id"],
+    result["status"],
+    result["status_reason"],
+    result["output"]
+)
     result["id"],
     result["status"],
     result["status_reason"],
