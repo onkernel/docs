@@ -4,11 +4,14 @@ import { readdir, readFile, writeFile } from "fs/promises";
 import path from "path";
 import yaml from "js-yaml"; // for YAML support
 
-const OPENAPI_URL = process.env.OPENAPI_URL;
-if (!OPENAPI_URL) {
-  console.error("❌ Missing OPENAPI_URL environment variable");
-  process.exit(1);
-}
+// const OPENAPI_URL = process.env.OPENAPI_URL;
+// if (!OPENAPI_URL) {
+//   console.error("❌ Missing OPENAPI_URL environment variable");
+//   process.exit(1);
+// }
+
+const OPENAPI_URL =
+  "https://app.stainless.com/api/spec/documented/kernel/openapi.documented.yml";
 
 const TARGET_DIRS = ["browsers", "apps"]; // adjust as needed
 
