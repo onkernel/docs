@@ -76,7 +76,10 @@ result = kernel.invocations.create({
     "version": "latest",
     "async": True
 })
-invocation_id, status, browser_live_view_urls = (
+invocation_id, status = (
+    result["id"],
+    result["status"]  # status will be QUEUED
+)
     result["id"],
     result["status"] # status will be QUEUED
 )
