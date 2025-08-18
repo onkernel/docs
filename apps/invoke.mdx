@@ -9,7 +9,66 @@ You can invoke your app by making a `POST` request to Kernel's API. **For automa
 <Info>Synchronous invocations time out after 100 seconds.</Info>
 
 <CodeGroup>
-{{ post /invocations }}
+
+```typescript Typescript
+import Kernel from '@onkernel/sdk';
+
+const client = new Kernel({
+  apiKey: 'My API Key',
+});
+
+const invocation = await client.invocations.create({
+  action_name: 'analyze',
+  app_name: 'my-app',
+  version: '1.0.0',
+});
+
+console.log(invocation.id);
+```
+
+
+```python Python
+from kernel import Kernel
+
+client = Kernel(
+    api_key="My API Key",
+)
+invocation = client.invocations.create(
+    action_name="analyze",
+    app_name="my-app",
+    version="1.0.0",
+)
+print(invocation.id)
+```
+
+
+```go Go
+package main
+
+import (
+  "context"
+  "fmt"
+
+  "github.com/onkernel/kernel-go-sdk"
+  "github.com/onkernel/kernel-go-sdk/option"
+)
+
+func main() {
+  client := kernel.NewClient(
+    option.WithAPIKey("My API Key"),
+  )
+  invocation, err := client.Invocations.New(context.TODO(), kernel.InvocationNewParams{
+    ActionName: "analyze",
+    AppName: "my-app",
+    Version: "1.0.0",
+  })
+  if err != nil {
+    panic(err.Error())
+  }
+  fmt.Printf("%+v\n", invocation.ID)
+}
+```
+
 </CodeGroup>
 
 ### Asynchronous invocations
