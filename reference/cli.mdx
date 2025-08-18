@@ -2,7 +2,7 @@
 title: "Kernel CLI"
 ---
 
-The Kernel CLI helps you deploy and run web automation apps on our platform.
+The Kernel CLI helps you access and manage your Kernel resources.
 
 ## Installation
 
@@ -28,7 +28,6 @@ The Kernel CLI supports two authentication methods:
 The preferred method is OAuth 2.0 with PKCE, which provides secure browser-based authentication:
 
 ```bash
-# Login via browser
 kernel login
 ```
 
@@ -65,6 +64,23 @@ which kernel
 | `kernel logout` | Clears stored authentication tokens and logs out |
 | `kernel auth` | Displays current authentication status, user details, and token expiry. Use `--log-level debug` for detailed information including user ID and storage method |
 
+## Browser Management Commands
+
+| Command | Description |
+|---------|-------------|
+| `kernel browsers list` | List running or persistent browsers |
+| `kernel browsers create` | Create a new browser session |
+| | `--persistence-id <id>` | Unique identifier for browser session persistence. Optional. |
+| | `--stealth` | Launch browser in stealth mode to avoid detection. Optional. |
+| | `--headless` | Launch browser without GUI access. Optional. |
+| `kernel browsers delete` | Delete a browser. Must specify either `--by-persistent-id` or `--by-id` |
+| | `--by-persistent-id <id>` | Delete browser by persistent ID |
+| | `--by-id <id>` | Delete browser by session ID |
+| | `--yes`, `-y` | Skip confirmation prompt |
+| `kernel browsers view` | Get the live view URL for a browser. Must specify either `--by-persistent-id` or `--by-id` |
+| | `--by-persistent-id <id>` | View browser by persistent ID |
+| | `--by-id <id>` | View browser by session ID |
+
 ## App Management Commands
 
 | Command | Optional Flags | Description |
@@ -89,85 +105,8 @@ which kernel
 | | `--since <time>`, `-s` | How far back to retrieve logs (e.g., 5m, 1h). Defaults to 5m if not following, 5s if following. Optional. |
 | | `--with-timestamps` | Include timestamps in each log line. Optional. |
 
-## Browser Management Commands
-
-| Command | Description |
-|---------|-------------|
-| `kernel browsers list` | List running or persistent browsers |
-| `kernel browsers create` | Create a new browser session |
-| | `--persistence-id <id>` | Unique identifier for browser session persistence. Optional. |
-| | `--stealth` | Launch browser in stealth mode to avoid detection. Optional. |
-| | `--headless` | Launch browser without GUI access. Optional. |
-| `kernel browsers delete` | Delete a browser. Must specify either `--by-persistent-id` or `--by-id` |
-| | `--by-persistent-id <id>` | Delete browser by persistent ID |
-| | `--by-id <id>` | Delete browser by session ID |
-| | `--yes`, `-y` | Skip confirmation prompt |
-| `kernel browsers view` | Get the live view URL for a browser. Must specify either `--by-persistent-id` or `--by-id` |
-| | `--by-persistent-id <id>` | View browser by persistent ID |
-| | `--by-id <id>` | View browser by session ID |
-
 ## General Commands
 
 | Command | Description |
 |---------|-------------|
 | `kernel help [command]` | Displays help information about Kernel commands |
-
-## Examples
-
-### Deploy with environment variables
-
-```bash
-# Set individual variables
-kernel deploy index.ts --env API_KEY=abc123 --env DEBUG=true
-
-# Load from .env file
-kernel deploy index.ts --env-file .env
-
-# Combine both methods
-kernel deploy index.ts --env-file .env --env OVERRIDE_VAR=value
-```
-
-### Invoke with payload
-
-```bash
-# Simple invoke
-kernel invoke my-scraper scrape-page
-
-# With JSON payload
-kernel invoke my-scraper scrape-page --payload '{"url": "https://example.com"}'
-
-# Synchronous invoke (wait for completion)
-kernel invoke my-scraper quick-task --sync
-```
-
-### Follow logs in real-time
-
-```bash
-# Follow logs
-kernel logs my-app --follow
-
-# Show recent logs with timestamps
-kernel logs my-app --since 1h --with-timestamps
-```
-
-### Browser management
-
-```bash
-# List all browsers
-kernel browsers list
-
-# Create a new browser session
-kernel browsers create
-
-# Create a persistent browser session
-kernel browsers create --persistence-id my-browser-session
-
-# Create a headless browser in stealth mode
-kernel browsers create --headless --stealth
-
-# Delete a persistent browser
-kernel browsers delete --by-persistent-id my-browser-session --yes
-
-# Get live view URL
-kernel browsers view --by-id browser123
-```

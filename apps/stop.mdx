@@ -1,0 +1,30 @@
+---
+title: "Stopping"
+---
+
+You can terminate an invocation that's running. You can use this to stop automations or agents stuck in an infinite loop.
+
+<Info>
+Terminating an invocation also destroys any browsers associated with it.
+</Info>
+
+## Via API
+You can also do this by making a `DELETE` request to Kernel's API:
+
+<CodeGroup>
+```typescript Typescript/Javascript
+import { Kernel } from '@onkernel/sdk';
+
+await Kernel.invocations.delete(invocationId);
+```
+
+```python Python
+import kernel
+
+kernel.invocations.delete(invocation_id)
+```
+</CodeGroup>
+
+
+## Via CLI
+Use `ctrl-c` in the terminal tab where you launched the invocation.

@@ -2,14 +2,15 @@
 title: "Concepts"
 ---
 
+## Browser
+A `Browser` is a cloud-based browser managed by Kernel. They accept Chrome DevTools Protocol connections and can be used to run browser automations or web agents.
+
+
 ## App
-An `App` is the codebase deployed on Kernel. You can use Kernel for a variety of use cases, including web automation, data processing, AI agents, and more.
+An `App` is a codebase deployed on Kernel. You can use Kernel for a variety of use cases, including web automations, data processing, and more.
 
 ## Action
 An `Action` is an invokable method within an app. Actions allow your to register entry points or functions that can be triggered on-demand. Actions can call non-action methods. Apps can have multiple actions.
 
 ## Invocation
-An `Invocation` is a single execution of an action. Invocations can be triggered via API, scheduled as a job, or run on-demand. Invocations currently have a 2 minute TTL.
-
-## Browser
-A `Browser` is a browser, which can be defined to run alongside the action's invoked code.
+An `Invocation` is a single execution of an action. Invocations can be triggered via API, scheduled as a job, or run on-demand.

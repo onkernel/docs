@@ -1,30 +1,13 @@
 ---
 title: "Introduction"
-description: "Infrastructure as-a-service for browser automations, web agents, and more"
+description: "Browsers-as-a-service API for web agents, automations, and more"
 ---
 
-Kernel is a powerful serverless platform that enables developers to deploy and scale browser automations without worrying about infrastructure.
+Kernel is a developer platform that provides Crazy Fast Browser Infrastructure for browser automations and web agents. Our API and MCP server allow you to instantly launch browsers in the cloud without managing infrastructure.
 
-- **Integrated browser environment** - Seamlessly create and connect your web agent to our cloud-based browsers on-demand
-- **Parallel scaling** - Run concurrent browsers on-demand; we scale with you
-- **Securely isolated** - Kernel browsers are sandboxed in individual isolated virtual machines
-- **State persistence** - Maintain browser sessions across invocations, preserving cookies, auth tokens, and history
-- **Live debugging** - View and interact with browser sessions in real-time using our Live View
-- **Replays** - Review past browser session videos
-- **Simple, predictable pricing** - Pay only for the resources you use without pre-defining infrastructure requirements
+## kernel.browsers.create()
 
-## How to use Kernel
-
-There are two ways to use the Kernel platform:
-### 1. Deploy and invoke your web agent on our platform
-
-Kernel's platform allows you to to [deploy](/launch/deploy) your app's code to our cloud. This allows you to co-locate your browser automation or web agent directly alongside the browser it controls in the cloud, minimizing latency and connection issues common with other platforms.
-
-Follow our [quickstart guide](/quickstart) to get started.
-
-### 2. Connect to remote browsers via Chrome DevTools Protocol
-
-For developers who already have browsers automations in production but want to use Kernel's cloud-based browsers, you can quickly spin up [remote browsers](/build/remote-browsers) and connect to them with the Chrome DevTools Protocol:
+If you are already familiar with browser vendors, you can immediately start using our browsers with `kernel.browsers.create()`. We return a CDP url that you can connect any Playwright or Puppeteer automation to.
 
 <CodeGroup>
 
@@ -42,3 +25,19 @@ kernel_browser = client.browsers.create()
 browser = await chromium.connectOverCDP(kernel_browser.cdp_ws_url)
 ```
 </CodeGroup>
+
+## Kernel app platform
+
+If you're new to building web agents or browser automations, our platform provides a full-featured code execution platform for hosting and invoking your automations in production. Follow our [quickstart guide](/quickstart#getting-started) to get started.
+
+## Why Kernel?
+
+Developers love our platform for its performance, developer experience, and all the other niceties that would otherwise be impractical to homeroll yourself:
+
+- **Serverless browsers** - Connect your web automation to our cloud-based browsers without managing infrastructure
+- **Persistence** - Securely reuse auth cookies and session state—we offer multiple ways to reuse browser sessions across hours or days with minimal effort
+- **Live view** - Support human-in-the-loop workflows
+- **Replays** - Review past browser sessions as video replays
+- **Full isolation** - Kernel browsers are sandboxed in individual, isolated virtual machines
+- **Parallel scaling** - Run hundreds or thousands of concurrent browsers at scale
+- **Simple, predictable pricing** - We only charge for active browser time

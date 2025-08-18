@@ -1,22 +1,12 @@
 ---
-title: "Remote Browsers"
+title: "Create a Browser"
 ---
 
-Kernel browsers were designed to be lightweight, fast, and efficient for cloud-based browser automation at scale. They can be used as part of the Kernel [app platform](/build/develop) or connected to a **remote service** with Chrome DevTools Protocol.
+Kernel browsers were designed to be lightweight, fast, and efficient for cloud-based browser automations at scale. They can be used as part of the Kernel [app platform](/build/develop) or connected to from another service with the Chrome DevTools Protocol.
 
-Remote Kernel browsers have the same capabilities as on our app platform, including:
+## 1. Create a Kernel browser
 
-- [Browser persistence](/launch/browser-persistence)
-- [Standby mode](/launch/browser-standby)
-- [Stealth mode](/launch/browser-stealth)
-- [Live debugging](/observability/live-view)
-
-<Info>
-  You don't need to pass an invocation ID in `browsers.create()` when creating
-  remote Kernel browsers.
-</Info>
-
-### 1. Create a remote Kernel browser
+Use our SDK to create a browser:
 
 <CodeGroup>
 ```typescript Typescript/Javascript
@@ -33,7 +23,7 @@ kernel_browser = client.browsers.create()
 
 </CodeGroup>
 
-### 2. Connect to the browser with the Chrome DevTools Protocol
+## 2. Connect to the browser with the Chrome DevTools Protocol
 
 Then, you can connect to the browser with any Chrome DevTools Protocol framework, such as Playwright or Puppeteer.
 
@@ -56,13 +46,13 @@ browser = playwright.chromium.connect_over_cdp(kernel_browser.cdp_ws_url)
 
 </CodeGroup>
 
-### 3. Tear it down
+## 3. Tear it down
 
 When you're finished with the browser, you can delete it:
 
 <CodeGroup>
 ```typescript Typescript/Javascript 
-await client.browsers.deleteByID(kernel_browser.session_id)
+await client.browsers.deleteByID(kernel_browser.session_id);
 ```
 
 ```Python Python
@@ -71,15 +61,9 @@ client.browsers.delete_by_id(kernel_browser.session_id)
 
 </CodeGroup>
 
-If you don't delete the browser, deletion will happen automatically after a configurable `timeout` (default 60 seconds). If the browser does not see a CDP or live view connection within that timeout, then it is automatically deleted.
-
-<Info>
-  You can set a custom timeout of up to 24 hours via the
-  [API](/api-reference/browsers/create-a-browser-session) when you create a
-  browser.
-</Info>
-
-### Full example
+You can also delete the browser by [specifiying a timeout](/launch/browser-termination#timeouts-for-non-persisted-browsers) when you create the browser.
+w
+## Full example
 
 Once you've connected to the Kernel browser, you can do anything with it.
 
@@ -109,7 +93,7 @@ await browser.close();
 await kernel.browsers.deleteByID(kernelBrowser.session_id);
 }
 
-````
+```
 
 ```Python Python
 import kernel
@@ -127,6 +111,6 @@ except Exception as e:
 finally:
     await browser.close()
     await client.browsers.delete_by_id(kernel_browser.session_id)
-````
+```
 
 </CodeGroup>

@@ -2,17 +2,19 @@
 title: "Quickstart"
 ---
 
-This quickstart guide will help you deploy and invoke your first browser automation on Kernel. You'll launch a simple app using Playwright, Computer Use, or a web agent framework like Browser Use.
-
 <Info>
-    If you're looking to quickly swap your existing browser provider with Kernel browsers, follow the instructions [here](/build/remote-browsers).
+If you are already familiar with browser vendors and are looking to quickly switch to Kernel browsers, follow the instructions [here](/build/remote-browsers).
 </Info>
+
+## Getting started
+
+This quickstart guide will help you deploy and invoke your first browser automation on Kernel. You'll create a simple automation using Playwright, Computer Use, or a web agent framework like Browser Use.
 
 ## Prerequisites
 
 - `brew` for the Kernel CLI
 - `npm` or `pnpm` to generate a sample Kernel app
-- A [Kernel account](https://dashboard.onkernel.com)
+- A [Kernel account](https://dashboard.onkernel.com/sign-up)
 
 > **Note:** You can also deploy and invoke apps using the [Kernel MCP server](/mcp) from AI assistants (Cursor, Goose, Claude, etc.).
 
@@ -51,16 +53,6 @@ kernel login
 
 This will open your browser to complete the authentication flow. Your credentials will be securely stored and automatically refreshed.
 
-<Info>
-Alternatively, you can use an API key for authentication:
-
-```bash
-export KERNEL_API_KEY=<YOUR_API_KEY>
-```
-
-You can create an API key from the [Kernel dashboard](https://dashboard.onkernel.com).
-</Info>
-
 ## 4. Deploy the sample app on Kernel
 
 <CodeGroup>
@@ -76,8 +68,6 @@ kernel deploy main.py # --env ANTHROPIC_API_KEY=XXX if Browser Use or Computer U
 
 </CodeGroup>
 
-> **Note:** Apps can also be deployed via the [Kernel MCP server](/mcp) from your AI assistant.
-
 ## 5. Invoke the app
 
 <CodeGroup>
@@ -90,7 +80,7 @@ kernel invoke ts-stagehand stagehand-task --payload '{"query": "Best wired earbu
 
 # Computer Use
 kernel invoke ts-cu cu-task --payload '{"query": "Search for the top 3 restaurants in NYC according to Pete Wells"}'
-````
+```
 
 ```bash Python
 # Sample app
@@ -101,11 +91,9 @@ kernel invoke python-bu bu-task --payload '{"task": "Compare the price of gpt-4o
 
 # Computer Use
 kernel invoke python-cu cu-task --payload '{"query": "Search for the top 3 restaurants in NYC according to Pete Wells"}'
-````
+```
 
 </CodeGroup>
-
-> **Note:** Apps can also be invoked via the [Kernel MCP server](/mcp) from your AI assistant.
 
 ## Next steps
 
@@ -113,12 +101,6 @@ Nice work! With Kernel, you:
 
 1. Developed an app that uses Playwright, Computer Use, or a web agent framework like Browser Use
 2. Deployed and invoked it in the cloud
-
-From here, you can:
-
-- Explore [observability](/observability/logs) tools to monitor your invocations.
-- Learn about [browser configurations](/launch/browser-persistence) for advanced use cases.
-- Check out the [Kernel CLI](/reference/cli) for the full reference.
 
 ## Sample apps reference
 

@@ -3,15 +3,11 @@ title: "MCP Server"
 description: "Access Kernel's cloud-based browsers via MCP"
 ---
 
-The **Kernel Model Context Protocol (MCP) server** gives any compatible AI model or agent a **single, secure endpoint** for launching Chromium browsers, injecting context, evaluating JavaScript, and streaming DOM snapshots from Kernel's cloud platform.
-
-**Open-source & fully-managed** — the source code is available [here](https://github.com/onkernel/kernel-mcp-server). It allows you to connect to Kernel's cloud-based browser infrastructure via MCP.
-
-🌐 **Use instantly** at `https://mcp.onkernel.com/mcp` — no installation required!
+Our Model Context Protocol (MCP) server gives any compatible AI model or agent a single, secure endpoint for launching Chromium browsers, injecting context, evaluating JavaScript, and streaming DOM snapshots from Kernel's cloud platform.
 
 ## First Time? Start Here!
 
-**Ready to try Kernel but don't see any apps yet?** Perfect! Here's how to get started:
+Ready to try Kernel but don't have a browser automation yet? Perfect! Here's how to get started:
 
 ### Step 1: Install Kernel MCP Server
 
@@ -41,24 +37,14 @@ Then test it:
 "Run my app and get the title from onkernel.com"
 ```
 
-### Why This Approach?
-
-- ✅ **Always up-to-date** - Your AI assistant fetches the latest docs
-- ✅ **Interactive guidance** - Get help customized to your setup  
-- ✅ **Learn MCP tools** - Experience the power of `search_docs`, `deploy_app`, and `invoke_action`
-- ✅ **End-to-end workflow** - From local development to cloud deployment to execution
-
-### What You'll Experience
-
-Your AI assistant will help you:
-- Download and understand sample apps (`search_docs`)
-- Deploy your local code to the cloud (`deploy_app`)  
-- Run actions and see results (`invoke_action`)
-- Create browser sessions in the cloud (`create_browser`)
-- Monitor deployments (`list_deployments`, `get_deployment`)
-
 ## Available Tools
 The server provides these tools for AI assistants:
+
+### Browser Automation
+- `create_browser` - Launch a new browser session
+- `get_browser` - Get browser session information
+- `delete_browser` - Terminate a browser session
+- `list_browsers` - List active browser sessions
 
 ### App Management
 - `deploy_app` - Deploy TypeScript or Python apps to Kernel
@@ -68,18 +54,12 @@ The server provides these tools for AI assistants:
 - `list_deployments` - List all deployments
 - `get_invocation` - Get action invocation details
 
-### Browser Automation
-- `create_browser` - Launch a new browser session
-- `get_browser` - Get browser session information
-- `delete_browser` - Terminate a browser session
-- `list_browsers` - List active browser sessions
-
 ### Documentation & Search
 - `search_docs` - Search Kernel platform documentation and guides
 
 ## Setup Instructions
 
-Add the Kernel MCP server to your favorite MCP-compatible client using `https://mcp.onkernel.com/mcp`. Here are setup instructions for popular clients:
+Add the Kernel MCP server to your favorite MCP-compatible client using `https://mcp.onkernel.com/mcp`.
 
 ## Claude
 
@@ -264,21 +244,3 @@ Human: Create a stealth browser session that I can reuse for testing login flows
 Assistant: I'll create a persistent, stealth-enabled browser that maintains state between uses.
 [Uses create_browser tool with persistence and stealth options]
 ```
-
-## FAQ
-
-**Is the server open source?**
-
-Yes — the source code is available [here](https://github.com/onkernel/kernel-mcp-server). You're welcome to self-host, contribute, or browse the code.
-
-**Does Kernel store my data?**
-
-Only encrypted refresh tokens and minimal metadata required for auth; browser state lives in your Kernel organization and never leaves your tenancy.
-
-**What if the handshake fails?**
-
-Restart your MCP client or disable/re-enable the Kernel server before opening a support ticket. Most connection issues resolve with a simple restart.
-
-**Where do I file bugs or feature requests?**
-
-Open an issue at `https://github.com/onkernel/kernel-mcp-server` or message us on [Discord](https://discord.gg/FBrveQRcud).
