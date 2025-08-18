@@ -7,8 +7,25 @@
   <a href="https://x.com/rfgarcia"><img src="https://img.shields.io/twitter/follow/rfgarcia" alt="Follow @rfgarcia"></a>
 </p>
 
-
 This is the documentation for the Kernel platform. It's connected to [docs.onkernel.com](https://docs.onkernel.com).
+
+## Code Snippets
+
+In order to sync our code snippets in our docs ( not playground ) with the OpenAPI spec, we use a GitHub Action. You can run it locally to see the changes that will be made.
+
+```bash
+bun run .github/scripts/generate_code_samples.ts
+```
+
+When deploying, we generate the changes in a github action and push that to a branch called `gh_action_generated_docs`. Mintlify will then deploy the docs from that branch.
+
+## Local Development
+
+To run the docs locally, you can use the following command:
+
+```bash
+mintlify dev
+```
 
 ## Contributing
 
