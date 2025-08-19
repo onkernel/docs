@@ -37,19 +37,19 @@ kernel deploy my_app.py --env MY_ENV_VAR=my_value # Can add multiple env vars de
 
 <CodeGroup>
 ```bash Typescript/Javascript
-/project-root
-  |-- my_app.ts # Entrypoint file
-  |-- package.json
-  |-- .gitignore # Make sure to exclude dependency folders like node_modules
-  |-- tsconfig.json # If Typescript
-  ∟-- package-lock.json # Or bun.lock or pnpm-lock.yaml
+project-root/
+  ├─ .gitignore # Exclude dependency folders like node_modules
+  ├─ my_app.ts # Entrypoint file
+  ├─ package.json
+  ├─ tsconfig.json # If using TypeScript
+  └─ bun.lock | package-lock.json | pnpm-lock.yaml # One of these lockfiles
 ```
 
 ```bash Python
-/project-root
-  |-- my_app.py # Entrypoint file
-  |-- .gitignore # Make sure to exclude dependency folders like .venv
-  ∟-- requirements.txt # or pyproject.toml or uv.lock
+project-root/
+  ├─ .gitignore # Exclude dependency folders like .venv
+  ├─ my_app.py # Entrypoint file
+  └─ pyproject.toml
 ```
 </CodeGroup>
 
