@@ -1,0 +1,32 @@
+<CodeGroup dropdown>
+```typescript index.ts
+import Kernel from '@onkernel/sdk';
+
+const client = new Kernel({
+  apiKey: 'My API Key',
+});
+
+const response = await client.browsers.replays.download('replay_id', { id: 'id' });
+
+console.log(response);
+
+const content = await response.blob();
+console.log(content);
+```
+
+
+```python main.py
+from kernel import Kernel
+
+client = Kernel(
+    api_key="My API Key",
+)
+response = client.browsers.replays.download(
+    replay_id="replay_id",
+    id="id",
+)
+print(response)
+content = response.read()
+print(content)
+```
+</CodeGroup>

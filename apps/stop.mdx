@@ -9,21 +9,11 @@ Terminating an invocation also destroys any browsers associated with it.
 </Info>
 
 ## Via API
-You can also do this by making a `DELETE` request to Kernel's API:
+You can also do this via the API:
 
-<CodeGroup>
-```typescript Typescript/Javascript
-import { Kernel } from '@onkernel/sdk';
+import StopInvocation from '/snippets/openapi/patch-invocations-id.mdx';
 
-await Kernel.invocations.delete(invocationId);
-```
-
-```python Python
-import kernel
-
-kernel.invocations.delete(invocation_id)
-```
-</CodeGroup>
+<StopInvocation />
 
 
 ## Via CLI

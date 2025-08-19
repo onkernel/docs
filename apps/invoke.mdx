@@ -2,53 +2,22 @@
 title: "Invoking"
 ---
 
+import SynchronousInvocation from '/snippets/openapi/post-invocations.mdx';
+import AsyncInvocation from '/snippets/openapi/post-invocations-async.mdx';
+
 ## Via API
 
 You can invoke your app by making a `POST` request to Kernel's API. **For automations and agents that take longer than 100 seconds, use [async invocations](/apps/invoke#asynchronous-invocations).**
 
 <Info>Synchronous invocations time out after 100 seconds.</Info>
 
-<OpenAPICodeGroup>post /invocations</OpenAPICodeGroup>
+<SynchronousInvocation />
 
 ### Asynchronous invocations
 
 For long running jobs, use asynchronous invocations to trigger Kernel actions without waiting for the result. You can then poll its [status](/apps/status) for the result.
 
-<CodeGroup>
-```typescript Typescript/Javascript
-import { Kernel } from '@onkernel/sdk';
-
-const {
-id,
-status, // status will be QUEUED
-} = await Kernel.invocations.create({
-app_name: app_name,
-action_name: action_name,
-version: "latest",
-async: true,
-});
-
-````
-
-```python Python
-import kernel
-
-result = kernel.invocations.create({
-    "app_name": app_name,
-    "action_name": action_name,
-    "version": "latest",
-    "async": True
-})
-invocation_id, status = (
-    result["id"],
-    result["status"]  # status will be QUEUED
-)
-    result["id"],
-    result["status"] # status will be QUEUED
-)
-````
-
-</CodeGroup>
+<AsyncInvocation />
 
 ## Via CLI
 

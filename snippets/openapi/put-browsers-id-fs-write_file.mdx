@@ -1,0 +1,25 @@
+<CodeGroup dropdown>
+```typescript index.ts
+import Kernel from '@onkernel/sdk';
+
+const client = new Kernel({
+  apiKey: 'My API Key',
+});
+
+await client.browsers.fs.writeFile('id', fs.createReadStream('path/to/file'), { path: '/J!' });
+```
+
+
+```python main.py
+from kernel import Kernel
+
+client = Kernel(
+    api_key="My API Key",
+)
+client.browsers.fs.write_file(
+    id="id",
+    contents=b"raw file contents",
+    path="/J!",
+)
+```
+</CodeGroup>

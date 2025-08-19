@@ -1,0 +1,26 @@
+<CodeGroup dropdown>
+```typescript index.ts
+import Kernel from '@onkernel/sdk';
+
+const client = new Kernel({
+  apiKey: 'My API Key',
+});
+
+const deployment = await client.deployments.retrieve('id');
+
+console.log(deployment.id);
+```
+
+
+```python main.py
+from kernel import Kernel
+
+client = Kernel(
+    api_key="My API Key",
+)
+deployment = client.deployments.retrieve(
+    "id",
+)
+print(deployment.id)
+```
+</CodeGroup>
