@@ -24,8 +24,8 @@ function normalizeLang(input: string): SupportedLanguage {
 }
 
 function renderFenceInfo(lang: SupportedLanguage, rawLang: string): string {
-  if (lang === "typescript" || lang === "javascript") return "typescript index.ts";
-  if (lang === "python") return "python main.py";
+  if (lang === "typescript" || lang === "javascript") return "typescript Typescript/Javascript";
+  if (lang === "python") return "python Python";
   return `${lang} ${toTitleCase(rawLang)}`;
 }
 
@@ -92,6 +92,10 @@ function injectParamsIntoObjectLiteral(
       }
     }
   }
+  // For JS/TS single-line objects, remove any trailing comma before the closing brace
+  if (lang !== "python") {
+    updated = updated.replace(/,\s*}/, " }");
+  }
   return updated;
 }
 
@@ -136,29 +140,67 @@ function applyOverridesToSource(
   overrides?: Record<string, unknown>
 ): string {
   if (!overrides || Object.keys(overrides).length === 0) return src;
-  // Heuristic: find the first object literal in a create(...) call and inject params
-  const createCall = /(invocations\.(create|new)\()([\s\S]*?)(\))/m;
-  const match = src.match(createCall);
-  if (!match) return src;
-  const before = src.slice(0, match.index ?? 0);
-  const after = src.slice((match.index ?? 0) + match[0].length);
-  const inside = match[3] ?? "";
-  const objectMatch = inside.match(/\{[\s\S]*?\}/m);
-  if (objectMatch) {
-    const objBefore = inside.slice(0, objectMatch.index!);
-    const obj = objectMatch[0];
-    const objAfter = inside.slice((objectMatch.index || 0) + objectMatch[0].length);
-    const injected = injectParamsIntoObjectLiteral(lang, obj, overrides);
-    const newInside = objBefore + injected + objAfter;
-    return before + match[1] + newInside + match[4] + after;
+  let transformed = src;
+
+  // Heuristic: find the first object literal in a X.create(...) call and inject params (excluding special keys like 'log')
+  const { log: _logOverride, ...injectionOverrides } = overrides as Record<string, unknown>;
+  if (Object.keys(injectionOverrides).length > 0) {
+    const createCall = /(\b\w+\.(create|new)\()([\s\S]*?)(\))/m;
+    const match = transformed.match(createCall);
+    if (match) {
+      const before = transformed.slice(0, match.index ?? 0);
+      const after = transformed.slice((match.index ?? 0) + match[0].length);
+      const inside = match[3] ?? "";
+      const objectMatch = inside.match(/\{[\s\S]*?\}/m);
+      if (objectMatch) {
+        const objBefore = inside.slice(0, objectMatch.index!);
+        const obj = objectMatch[0];
+        const objAfter = inside.slice((objectMatch.index || 0) + objectMatch[0].length);
+        const injected = injectParamsIntoObjectLiteral(lang, obj, injectionOverrides);
+        const newInside = objBefore + injected + objAfter;
+        transformed = before + match[1] + newInside + match[4] + after;
+      } else if (lang === "python") {
+        const injectedArgs = injectParamsIntoPythonArgs(inside, injectionOverrides);
+        const needsNewlineBeforeParen = /\n/.test(injectedArgs) && !/\n\s*$/.test(injectedArgs);
+        const joiner = needsNewlineBeforeParen ? "\n" : "";
+        transformed = before + match[1] + injectedArgs + joiner + match[4] + after;
+      } else {
+        // JS/TS with no object literal: insert one and inject
+        const injectedObj = injectParamsIntoObjectLiteral(lang, "{}", injectionOverrides);
+        transformed = before + match[1] + injectedObj + match[4] + after;
+      }
+    }
   }
-  if (lang === "python") {
-    const injectedArgs = injectParamsIntoPythonArgs(inside, overrides);
-    const needsNewlineBeforeParen = /\n/.test(injectedArgs) && !/\n\s*$/.test(injectedArgs);
-    const joiner = needsNewlineBeforeParen ? "\n" : "";
-    return before + match[1] + injectedArgs + joiner + match[4] + after;
+
+  // Apply log override if present: replace argument of the last console.log/print call
+  const logExpr = (overrides as Record<string, unknown>)?.log;
+  if (typeof logExpr === "string" && logExpr.trim().length > 0) {
+    if (lang === "python") {
+      const regex = /print\(([^\)]*)\)/g;
+      let lastMatch: RegExpExecArray | null = null;
+      let m: RegExpExecArray | null;
+      while ((m = regex.exec(transformed)) !== null) lastMatch = m;
+      if (lastMatch) {
+        const start = lastMatch.index;
+        const end = start + lastMatch[0].length;
+        transformed =
+          transformed.slice(0, start) + `print(${logExpr})` + transformed.slice(end);
+      }
+    } else {
+      const regex = /console\.log\(([^\)]*)\)/g;
+      let lastMatch: RegExpExecArray | null = null;
+      let m: RegExpExecArray | null;
+      while ((m = regex.exec(transformed)) !== null) lastMatch = m;
+      if (lastMatch) {
+        const start = lastMatch.index;
+        const end = start + lastMatch[0].length;
+        transformed =
+          transformed.slice(0, start) + `console.log(${logExpr})` + transformed.slice(end);
+      }
+    }
   }
-  return src;
+
+  return transformed;
 }
 
 function parseOverridesString(raw: string): Record<string, unknown> | undefined {
@@ -318,7 +360,7 @@ function slugifyEndpoint(method: string, endpoint: string): string {
 async function writeSnippetFile(filePath: string, blocks: string) {
   const dir = path.dirname(filePath);
   await mkdir(dir, { recursive: true });
-  const content = `<CodeGroup dropdown>\n${blocks.trim()}\n</CodeGroup>\n`;
+  const content = `<CodeGroup>\n${blocks.trim()}\n</CodeGroup>\n`;
   await writeFile(filePath, content, "utf8");
 }
 
@@ -403,7 +445,7 @@ async function processFile(file: string, spec: any) {
       if (inline) overrides = { ...(overrides || {}), ...inline };
     }
     const blocks = extractCodeSamples(spec, endpoint, method, overrides).trim();
-    return `<CodeGroup dropdown>\n${blocks}\n</CodeGroup>`;
+    return `<CodeGroup>\n${blocks}\n</CodeGroup>`;
   });
 
   if (changed) {

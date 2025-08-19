@@ -2,13 +2,14 @@
 title: "Create a Browser"
 ---
 
+import CreateBrowserSnippet from '/snippets/openapi/post-browsers.mdx';
+import DeleteBrowserSnippet from '/snippets/openapi/delete-browsers-id.mdx';
+
 Kernel browsers were designed to be lightweight, fast, and efficient for cloud-based browser automations at scale. They can be used as part of the Kernel [app platform](/apps/develop) or connected to from another service with the Chrome DevTools Protocol.
 
 ## 1. Create a Kernel browser
 
 Use our SDK to create a browser:
-
-import CreateBrowserSnippet from '/snippets/openapi/post-browsers.mdx';
 
 <CreateBrowserSnippet />
 
@@ -38,8 +39,6 @@ browser = playwright.chromium.connect_over_cdp(kernel_browser.cdp_ws_url)
 ## 3. Tear it down
 
 When you're finished with the browser, you can delete it:
-
-import DeleteBrowserSnippet from '/snippets/openapi/delete-browsers-id.mdx';
 
 <DeleteBrowserSnippet />
 

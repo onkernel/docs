@@ -6,7 +6,9 @@ const client = new Kernel({
   apiKey: 'My API Key',
 });
 
-await client.browsers.delete({ persistent_id: 'persistent_id' });
+const browser = await client.browsers.create();
+
+console.log(browser.browser_live_view_url);
 ```
 
 
@@ -16,8 +18,7 @@ from kernel import Kernel
 client = Kernel(
     api_key="My API Key",
 )
-client.browsers.delete(
-    persistent_id="persistent_id",
-)
+browser = client.browsers.create()
+print(browser.browser_live_view_url)
 ```
 </CodeGroup>

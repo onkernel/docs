@@ -2,13 +2,14 @@
 title: "Termination & Timeouts"
 ---
 
+import DeleteBrowser from '/snippets/openapi/delete-browsers-id.mdx';
+import CreateBrowserTimeout from '/snippets/openapi/post-browsers-timeout.mdx';
+
 Kernel browsers should be terminated after you're done with them.
 
 ## Via API
 
 You can delete a browser by making a `DELETE` request to Kernel's API:
-
-import DeleteBrowser from '/snippets/openapi/delete-browsers-id.mdx';
 
 <DeleteBrowser />
 
@@ -17,7 +18,5 @@ import DeleteBrowser from '/snippets/openapi/delete-browsers-id.mdx';
 If you don't manually delete a `non-persisted` browser, deletion will happen automatically after a configurable `timeout` (default 60 seconds). If the browser does not see a CDP or live view connection within that timeout, then it is automatically deleted.
 
 You can set a custom timeout of up to 24 hours via the API:
-
-import CreateBrowserTimeout from '/snippets/openapi/post-browsers.mdx';
 
 <CreateBrowserTimeout />

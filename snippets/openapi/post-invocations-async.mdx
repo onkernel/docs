@@ -1,5 +1,5 @@
-<CodeGroup dropdown>
-```typescript index.ts
+<CodeGroup>
+```typescript Typescript/Javascript
 import Kernel from '@onkernel/sdk';
 
 const client = new Kernel({
@@ -10,14 +10,13 @@ const invocation = await client.invocations.create({
   async: true,
   action_name: 'analyze',
   app_name: 'my-app',
-  version: '1.0.0',
-});
+  version: '1.0.0' });
 
 console.log(invocation.id);
 ```
 
 
-```python main.py
+```python Python
 from kernel import Kernel
 
 client = Kernel(
