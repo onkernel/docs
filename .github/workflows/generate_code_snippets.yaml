@@ -2,7 +2,7 @@ name: Update Docs with Code Samples from OpenAPI
 
 on:
   push:
-    branches:
+    branches-ignore:
       - main
 
 permissions:
