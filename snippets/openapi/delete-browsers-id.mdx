@@ -1,0 +1,23 @@
+<CodeGroup>
+```typescript Typescript/Javascript
+import Kernel from '@onkernel/sdk';
+
+const client = new Kernel({
+  apiKey: 'My API Key',
+});
+
+await client.browsers.deleteByID('htzv5orfit78e1m2biiifpbv');
+```
+
+
+```python Python
+from kernel import Kernel
+
+client = Kernel(
+    api_key="My API Key",
+)
+client.browsers.delete_by_id(
+    "id",
+)
+```
+</CodeGroup>

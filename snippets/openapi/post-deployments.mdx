@@ -1,0 +1,30 @@
+<CodeGroup>
+```typescript Typescript/Javascript
+import Kernel from '@onkernel/sdk';
+
+const client = new Kernel({
+  apiKey: 'My API Key',
+});
+
+const deployment = await client.deployments.create({
+  entrypoint_rel_path: 'src/app.py',
+  file: fs.createReadStream('path/to/file'),
+});
+
+console.log(deployment.id);
+```
+
+
+```python Python
+from kernel import Kernel
+
+client = Kernel(
+    api_key="My API Key",
+)
+deployment = client.deployments.create(
+    entrypoint_rel_path="src/app.py",
+    file=b"raw file contents",
+)
+print(deployment.id)
+```
+</CodeGroup>

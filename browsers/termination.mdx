@@ -2,37 +2,16 @@
 title: "Termination & Timeouts"
 ---
 
+import DeleteBrowser from '/snippets/openapi/delete-browsers-id.mdx';
+import CreateBrowserTimeout from '/snippets/openapi/post-browsers-timeout.mdx';
+
 Kernel browsers should be terminated after you're done with them.
 
 ## Via API
 
 You can delete a browser by making a `DELETE` request to Kernel's API:
 
-<CodeGroup>
-```typescript Typescript/Javascript
-import Kernel from '@onkernel/sdk';
-const kernel = new Kernel();
-
-// Delete a persisted browser
-await kernel.browsers.delete({ persistent_id: 'persistent_id' });
-
-// Delete a non-persisted browser
-await kernel.browsers.deleteByID('htzv5orfit78e1m2biiifpbv');
-```
-
-```python Python
-from kernel import Kernel
-client = Kernel()
-
-# Delete a persisted browser
-client.browsers.delete(
-    persistent_id="persistent_id",
-)
-
-# Delete a non-persisted browser
-client.browsers.delete_by_id('htzv5orfit78e1m2biiifpbv')
-```
-</CodeGroup>
+<DeleteBrowser />
 
 ## Timeouts for non-persisted browsers
 
@@ -40,16 +19,4 @@ If you don't manually delete a `non-persisted` browser, deletion will happen aut
 
 You can set a custom timeout of up to 24 hours via the API:
 
-<CodeGroup>
-```typescript Typescript/Javascript
-import { Kernel } from '@onkernel/sdk';
-const kernel = new Kernel();
-const kernelBrowser = await kernel.browsers.create({ timeout_seconds: 300 });
-```
-
-```python Python
-import kernel
-client = Kernel()
-kernel_browser = client.browsers.create(timeout_seconds=300)
-```
-</CodeGroup>
+<CreateBrowserTimeout />

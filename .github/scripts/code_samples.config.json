@@ -1,0 +1,11 @@
+{
+	"variants": {
+		"post /invocations": [
+			{ "name": "async", "overrides": { "async": true } }
+		],
+		"post /browsers": [
+			{ "name": "timeout", "overrides": { "timeout_seconds": 300 } },
+			{ "name": "live-view", "overrides": { "log": "browser.browser_live_view_url" } }
+		]
+	}
+}

@@ -1,0 +1,34 @@
+name: Update Docs with Code Samples from OpenAPI
+
+on:
+  push:
+    branches-ignore:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  update-docs:
+    runs-on: ubuntu-latest
+    if: github.actor != 'github-actions[bot]' # prevent infinite loop
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0
+
+      - name: Install Bun
+        uses: oven-sh/setup-bun@v1
+
+      - name: Run update script
+        run: bun run .github/scripts/generate_code_samples.ts
+
+      - name: Commit changes
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add .
+          git commit -m "docs: update code samples from OpenAPI" || echo "No changes"
+          git push origin "HEAD:${{ github.ref }}"

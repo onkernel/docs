@@ -2,26 +2,13 @@
 title: "Live View"
 ---
 
+import CreateBrowserForLiveView from '/snippets/openapi/post-browsers-live-view.mdx';
+
 Humans-in-the-loop can access the live view of Kernel browsers in real-time to resolve errors or take unscripted actions.
 
 To access the live view, visit the `browser_live_view_url` provided when you create a Kernel browser:
 
-<CodeGroup>
-```typescript Typescript/Javascript
-import { Kernel } from '@onkernel/sdk';
-const kernel = new Kernel();
-const kernelBrowser = await kernel.browsers.create();
-console.log(kernelBrowser.browser_live_view_url);
-```
-
-```python Python
-import kernel
-client = Kernel()
-kernel_browser = client.browsers.create()
-print(kernel_browser.browser_live_view_url)
-```
-
-</CodeGroup>
+<CreateBrowserForLiveView />
 
 ## Query parameters
 

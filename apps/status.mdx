@@ -2,41 +2,11 @@
 title: "Status"
 ---
 
+import GetInvocationStatus from '/snippets/openapi/get-invocations-id.mdx';
+
 Once you've [deployed](/apps/deploy) an app and invoked it, you can check its status.
 
-<CodeGroup>
-```typescript Typescript/Javascript
-import { Kernel } from '@onkernel/sdk';
-
-const {
-    id,
-    app_name,
-    action_name,
-    payload,
-    output,
-    started_at,
-    finished_at,
-    status,
-    status_reason
-} = await Kernel.invocations.get(invocation_id);
-```
-
-```python Python
-import kernel
-
-data = kernel.invocations.get(invocation_id)
-invocation_id = data["id"]
-app_name = data["app_name"]
-action_name = data["action_name"]
-payload = data["payload"]
-output = data["output"]
-started_at = data["started_at"]
-finished_at = data["finished_at"]
-status = data["status"]
-status_reason = data["status_reason"]
-```
-
-</CodeGroup>
+<GetInvocationStatus />
 
 <Info>
   An invocation ends once its code execution finishes.

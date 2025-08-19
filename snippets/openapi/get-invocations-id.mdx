@@ -1,0 +1,26 @@
+<CodeGroup>
+```typescript Typescript/Javascript
+import Kernel from '@onkernel/sdk';
+
+const client = new Kernel({
+  apiKey: 'My API Key',
+});
+
+const invocation = await client.invocations.retrieve('rr33xuugxj9h0bkf1rdt2bet');
+
+console.log(invocation.id);
+```
+
+
+```python Python
+from kernel import Kernel
+
+client = Kernel(
+    api_key="My API Key",
+)
+invocation = client.invocations.retrieve(
+    "id",
+)
+print(invocation.id)
+```
+</CodeGroup>

@@ -1,0 +1,24 @@
+<CodeGroup>
+```typescript Typescript/Javascript
+import Kernel from '@onkernel/sdk';
+
+const client = new Kernel({
+  apiKey: 'My API Key',
+});
+
+const browsers = await client.browsers.list();
+
+console.log(browsers);
+```
+
+
+```python Python
+from kernel import Kernel
+
+client = Kernel(
+    api_key="My API Key",
+)
+browsers = client.browsers.list()
+print(browsers)
+```
+</CodeGroup>
