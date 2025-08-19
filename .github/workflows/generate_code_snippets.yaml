@@ -27,6 +27,8 @@ jobs:
 
       - name: Commit changes
         run: |
+          git config --global user.name "Kernel Docs Bot"
+          git config --global user.email "kernel@onkernel.com"
           git add .
           git commit -m "docs: update code samples from OpenAPI" || echo "No changes"
           git push origin "HEAD:${{ github.ref }}"
