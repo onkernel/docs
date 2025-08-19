@@ -1,0 +1,26 @@
+<CodeGroup dropdown>
+```typescript index.ts
+import Kernel from '@onkernel/sdk';
+
+const client = new Kernel({
+  apiKey: 'My API Key',
+});
+
+const response = await client.browsers.replays.start('id');
+
+console.log(response.replay_id);
+```
+
+
+```python main.py
+from kernel import Kernel
+
+client = Kernel(
+    api_key="My API Key",
+)
+response = client.browsers.replays.start(
+    id="id",
+)
+print(response.replay_id)
+```
+</CodeGroup>

@@ -1,0 +1,7 @@
+{
+	"variants": {
+		"post /invocations": [
+			{ "name": "async", "overrides": { "async": true } }
+		]
+	}
+}

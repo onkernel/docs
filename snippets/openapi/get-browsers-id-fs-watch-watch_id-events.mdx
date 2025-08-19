@@ -1,0 +1,27 @@
+<CodeGroup dropdown>
+```typescript index.ts
+import Kernel from '@onkernel/sdk';
+
+const client = new Kernel({
+  apiKey: 'My API Key',
+});
+
+const response = await client.browsers.fs.watch.events('watch_id', { id: 'id' });
+
+console.log(response.path);
+```
+
+
+```python main.py
+from kernel import Kernel
+
+client = Kernel(
+    api_key="My API Key",
+)
+response = client.browsers.fs.watch.events(
+    watch_id="watch_id",
+    id="id",
+)
+print(response.path)
+```
+</CodeGroup>

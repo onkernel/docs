@@ -8,20 +8,9 @@ Kernel browsers were designed to be lightweight, fast, and efficient for cloud-b
 
 Use our SDK to create a browser:
 
-<CodeGroup>
-```typescript Typescript/Javascript
-import { Kernel } from '@onkernel/sdk';
-const kernel = new Kernel();
-const kernelBrowser = await kernel.browsers.create();
-```
+import CreateBrowserSnippet from '/snippets/openapi/post-browsers.mdx';
 
-```Python Python
-import kernel
-client = Kernel()
-kernel_browser = client.browsers.create()
-```
-
-</CodeGroup>
+<CreateBrowserSnippet />
 
 ## 2. Connect to the browser with the Chrome DevTools Protocol
 
@@ -50,16 +39,9 @@ browser = playwright.chromium.connect_over_cdp(kernel_browser.cdp_ws_url)
 
 When you're finished with the browser, you can delete it:
 
-<CodeGroup>
-```typescript Typescript/Javascript 
-await client.browsers.deleteByID(kernel_browser.session_id);
-```
+import DeleteBrowserSnippet from '/snippets/openapi/delete-browsers-id.mdx';
 
-```Python Python
-client.browsers.delete_by_id(kernel_browser.session_id)
-```
-
-</CodeGroup>
+<DeleteBrowserSnippet />
 
 You can also delete the browser by [specifiying a timeout](/browsers/termination#timeouts-for-non-persisted-browsers) when you create the browser.
 ## Full example
