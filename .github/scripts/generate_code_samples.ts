@@ -12,24 +12,38 @@ const SNIPPETS_ROOT = path.resolve("snippets/openapi");
 
 // Only emit code samples for these languages (normalized): e.g., ["typescript", "python"]
 const TARGET_LANGUAGES = ["typescript", "python"] as const;
-type SupportedLanguage = (typeof TARGET_LANGUAGES)[number] | "javascript" | "go";
+type SupportedLanguage =
+  | (typeof TARGET_LANGUAGES)[number]
+  | "javascript"
+  | "go";
 
 function normalizeLang(input: string): SupportedLanguage {
   const lc = (input || "").toLowerCase();
   if (lc === "ts" || lc === "typescript") return "typescript";
   if (lc === "py" || lc === "python") return "python";
-  if (lc === "js" || lc === "javascript" || lc === "node" || lc === "node.js" || lc === "nodejs") return "javascript";
+  if (
+    lc === "js" ||
+    lc === "javascript" ||
+    lc === "node" ||
+    lc === "node.js" ||
+    lc === "nodejs"
+  )
+    return "javascript";
   if (lc === "go" || lc === "golang") return "go";
   return lc as SupportedLanguage;
 }
 
 function renderFenceInfo(lang: SupportedLanguage, rawLang: string): string {
-  if (lang === "typescript" || lang === "javascript") return "typescript Typescript/Javascript";
+  if (lang === "typescript" || lang === "javascript")
+    return "typescript Typescript/Javascript";
   if (lang === "python") return "python Python";
   return `${lang} ${toTitleCase(rawLang)}`;
 }
 
-function renderValueForLanguage(lang: SupportedLanguage, value: unknown): string {
+function renderValueForLanguage(
+  lang: SupportedLanguage,
+  value: unknown
+): string {
   const type = typeof value;
   if (type === "boolean") {
     const b = value as boolean;
@@ -84,7 +98,7 @@ function injectParamsIntoObjectLiteral(
           : `${key}: ${valueStr}, `;
         if (isMultiline) {
           // Normalize to a single newline after '{' then insert our line
-          updated = updated.replace(/\{\s*/, '{\n');
+          updated = updated.replace(/\{\s*/, "{\n");
           updated = updated.replace(/\{\n/, `{\n${insertion}`);
         } else {
           updated = updated.replace(/\{\s*/, (m) => m + insertion);
@@ -120,7 +134,8 @@ function injectParamsIntoPythonArgs(
         if (isMultiline) {
           const firstArgIndentMatch = updated.match(/^([ \t]+)[A-Za-z_]/m);
           const lastLineIndentMatch = updated.match(/\n([ \t]*)[^\n]*$/);
-          const indent = firstArgIndentMatch?.[1] ?? lastLineIndentMatch?.[1] ?? "    ";
+          const indent =
+            firstArgIndentMatch?.[1] ?? lastLineIndentMatch?.[1] ?? "    ";
           const prefix = updated.replace(/\s*$/, "");
           const commaPrefix = hasTrailingComma ? prefix : `${prefix},`;
           updated = `${commaPrefix}\n${indent}${key}=${valueStr},`;
@@ -143,7 +158,10 @@ function applyOverridesToSource(
   let transformed = src;
 
   // Heuristic: find the first object literal in a X.create(...) call and inject params (excluding special keys like 'log')
-  const { log: _logOverride, ...injectionOverrides } = overrides as Record<string, unknown>;
+  const { log: _logOverride, ...injectionOverrides } = overrides as Record<
+    string,
+    unknown
+  >;
   if (Object.keys(injectionOverrides).length > 0) {
     const createCall = /(\b\w+\.(create|new)\()([\s\S]*?)(\))/m;
     const match = transformed.match(createCall);
@@ -155,18 +173,33 @@ function applyOverridesToSource(
       if (objectMatch) {
         const objBefore = inside.slice(0, objectMatch.index!);
         const obj = objectMatch[0];
-        const objAfter = inside.slice((objectMatch.index || 0) + objectMatch[0].length);
-        const injected = injectParamsIntoObjectLiteral(lang, obj, injectionOverrides);
+        const objAfter = inside.slice(
+          (objectMatch.index || 0) + objectMatch[0].length
+        );
+        const injected = injectParamsIntoObjectLiteral(
+          lang,
+          obj,
+          injectionOverrides
+        );
         const newInside = objBefore + injected + objAfter;
         transformed = before + match[1] + newInside + match[4] + after;
       } else if (lang === "python") {
-        const injectedArgs = injectParamsIntoPythonArgs(inside, injectionOverrides);
-        const needsNewlineBeforeParen = /\n/.test(injectedArgs) && !/\n\s*$/.test(injectedArgs);
+        const injectedArgs = injectParamsIntoPythonArgs(
+          inside,
+          injectionOverrides
+        );
+        const needsNewlineBeforeParen =
+          /\n/.test(injectedArgs) && !/\n\s*$/.test(injectedArgs);
         const joiner = needsNewlineBeforeParen ? "\n" : "";
-        transformed = before + match[1] + injectedArgs + joiner + match[4] + after;
+        transformed =
+          before + match[1] + injectedArgs + joiner + match[4] + after;
       } else {
         // JS/TS with no object literal: insert one and inject
-        const injectedObj = injectParamsIntoObjectLiteral(lang, "{}", injectionOverrides);
+        const injectedObj = injectParamsIntoObjectLiteral(
+          lang,
+          "{}",
+          injectionOverrides
+        );
         transformed = before + match[1] + injectedObj + match[4] + after;
       }
     }
@@ -184,7 +217,9 @@ function applyOverridesToSource(
         const start = lastMatch.index;
         const end = start + lastMatch[0].length;
         transformed =
-          transformed.slice(0, start) + `print(${logExpr})` + transformed.slice(end);
+          transformed.slice(0, start) +
+          `print(${logExpr})` +
+          transformed.slice(end);
       }
     } else {
       const regex = /console\.log\(([^\)]*)\)/g;
@@ -195,7 +230,9 @@ function applyOverridesToSource(
         const start = lastMatch.index;
         const end = start + lastMatch[0].length;
         transformed =
-          transformed.slice(0, start) + `console.log(${logExpr})` + transformed.slice(end);
+          transformed.slice(0, start) +
+          `console.log(${logExpr})` +
+          transformed.slice(end);
       }
     }
   }
@@ -203,19 +240,11 @@ function applyOverridesToSource(
   return transformed;
 }
 
-function parseOverridesString(raw: string): Record<string, unknown> | undefined {
-  const trim = raw.trim();
-  // Strip one layer of surrounding braces if present
-  let inner = trim;
-  if (inner.startsWith("{") && inner.endsWith("}")) {
-    inner = inner.slice(1, -1).trim();
-  }
-  // If wrapped as {{ ... }}, strip outer again
-  if (inner.startsWith("{") && inner.endsWith("}")) {
-    inner = inner.slice(1, -1).trim();
-  }
+function parseOverridesString(
+  raw: string
+): Record<string, unknown> | undefined {
   // Rebuild as JSON object string; heuristically quote keys
-  let jsonish = `{ ${inner} }`;
+  let jsonish = `{ ${raw} }`;
   // Quote unquoted keys (simple heuristic)
   jsonish = jsonish.replace(/([,{\s])([A-Za-z_][A-Za-z0-9_]*)\s*:/g, '$1"$2":');
   // Normalize single quotes to double quotes
@@ -227,19 +256,21 @@ function parseOverridesString(raw: string): Record<string, unknown> | undefined 
   }
 }
 
-function extractOverridesFromAttributes(attrs: string | undefined): Record<string, unknown> | undefined {
+function extractOverridesFromAttributes(
+  attrs: string | undefined
+): Record<string, unknown> | undefined {
   if (!attrs) return undefined;
   const idx = attrs.indexOf("overrides=");
   if (idx === -1) return undefined;
   // Find first '{' after 'overrides='
-  const start = attrs.indexOf('{', idx);
+  const start = attrs.indexOf("{", idx);
   if (start === -1) return undefined;
   let depth = 0;
   let end = -1;
   for (let i = start; i < attrs.length; i++) {
     const ch = attrs[i];
-    if (ch === '{') depth++;
-    else if (ch === '}') {
+    if (ch === "{") depth++;
+    else if (ch === "}") {
       depth--;
       if (depth === 0) {
         end = i;
@@ -320,8 +351,13 @@ function extractCodeSamples(
       for (const sample of op["x-codeSamples"]) {
         const rawLang = typeof sample.lang === "string" ? sample.lang : "";
         const normalized = normalizeLang(rawLang);
-        const allowedNormalized = ["typescript", "javascript", "python"] as const;
-        if (!(allowedNormalized as readonly string[]).includes(normalized)) continue;
+        const allowedNormalized = [
+          "typescript",
+          "javascript",
+          "python",
+        ] as const;
+        if (!(allowedNormalized as readonly string[]).includes(normalized))
+          continue;
         const displayLang: "typescript" | "python" =
           normalized === "python" ? "python" : "typescript";
 
@@ -376,16 +412,25 @@ async function generateSnippets(spec: any) {
         const baseSlug = slugifyEndpoint(method, endpoint);
         const baseFile = path.join(SNIPPETS_ROOT, `${baseSlug}.mdx`);
         await writeSnippetFile(baseFile, baseBlocks);
-        console.log(`🧩 Wrote snippet: ${path.relative(process.cwd(), baseFile)}`);
+        console.log(
+          `🧩 Wrote snippet: ${path.relative(process.cwd(), baseFile)}`
+        );
       }
       const variants = config.variants?.[key] || [];
       for (const variant of variants) {
-        const vBlocks = extractCodeSamples(spec, endpoint, method, variant.overrides).trim();
+        const vBlocks = extractCodeSamples(
+          spec,
+          endpoint,
+          method,
+          variant.overrides
+        ).trim();
         if (!vBlocks.startsWith("⚠️ ")) {
           const vSlug = `${slugifyEndpoint(method, endpoint)}-${variant.name}`;
           const vFile = path.join(SNIPPETS_ROOT, `${vSlug}.mdx`);
           await writeSnippetFile(vFile, vBlocks);
-          console.log(`🧩 Wrote snippet: ${path.relative(process.cwd(), vFile)}`);
+          console.log(
+            `🧩 Wrote snippet: ${path.relative(process.cwd(), vFile)}`
+          );
         }
       }
     }
@@ -402,7 +447,9 @@ async function cleanupOldSnippets() {
     for (const name of stale) {
       const full = path.join(SNIPPETS_ROOT, name);
       await unlink(full);
-      console.log(`🧹 Removed stale snippet: ${path.relative(process.cwd(), full)}`);
+      console.log(
+        `🧹 Removed stale snippet: ${path.relative(process.cwd(), full)}`
+      );
     }
   } catch {
     // ignore if folder doesn't exist yet
@@ -412,41 +459,32 @@ async function cleanupOldSnippets() {
 async function processFile(file: string, spec: any) {
   let content = await readFile(file, "utf8");
 
-  // Matches {{ get /path }} or {{ post /path }} or {{ /path }}
-  const mustacheRegex =
-    /\{\{\s*(?:(get|post|put|delete|patch|options|head)\s+)?(\/[^\s}]+)(?:\s+(\{[\s\S]*?\}))?\s*\}\}/gi;
-
   // Matches <OpenAPICodeGroup>get /path</OpenAPICodeGroup>
   // or <OpenAPICodeGroup>/path</OpenAPICodeGroup>
   const tagRegex =
     /<OpenAPICodeGroup([^>]*)>\s*(?:(get|post|put|delete|patch|options|head)\s+)?(\/[^\s<]+)(?:\s+(\{[\s\S]*?\}))?\s*<\/OpenAPICodeGroup>/gi;
 
   let changed = false;
-  content = content.replace(mustacheRegex, (_, method, endpoint, jsonOverrides) => {
-    changed = true;
-    let overrides: Record<string, unknown> | undefined = undefined;
-    if (jsonOverrides) {
-      try {
-        overrides = JSON.parse(jsonOverrides);
-      } catch {
-        console.warn(`Failed to parse overrides JSON in ${file} for ${endpoint}`);
+  content = content.replace(
+    tagRegex,
+    (_, attrs, method, endpoint, jsonOverrides) => {
+      changed = true;
+      let overrides: Record<string, unknown> | undefined = undefined;
+      const attrOverrides = extractOverridesFromAttributes(attrs);
+      if (attrOverrides) overrides = { ...attrOverrides };
+      if (jsonOverrides) {
+        const inline = parseOverridesString(jsonOverrides);
+        if (inline) overrides = { ...(overrides || {}), ...inline };
       }
+      const blocks = extractCodeSamples(
+        spec,
+        endpoint,
+        method,
+        overrides
+      ).trim();
+      return `<CodeGroup>\n${blocks}\n</CodeGroup>`;
     }
-    return extractCodeSamples(spec, endpoint, method, overrides);
-  });
-
-  content = content.replace(tagRegex, (_, attrs, method, endpoint, jsonOverrides) => {
-    changed = true;
-    let overrides: Record<string, unknown> | undefined = undefined;
-    const attrOverrides = extractOverridesFromAttributes(attrs);
-    if (attrOverrides) overrides = { ...attrOverrides };
-    if (jsonOverrides) {
-      const inline = parseOverridesString(jsonOverrides);
-      if (inline) overrides = { ...(overrides || {}), ...inline };
-    }
-    const blocks = extractCodeSamples(spec, endpoint, method, overrides).trim();
-    return `<CodeGroup>\n${blocks}\n</CodeGroup>`;
-  });
+  );
 
   if (changed) {
     console.log(`✏️ Updating ${file}`);
