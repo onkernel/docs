@@ -126,17 +126,15 @@ Click [here](goose://extension?cmd=npx&arg=-y&arg=mcp-remote&arg=https%3A%2F%2Fm
 
 ### Goose Desktop
 
-1. Click `...` in the top right corner of the Goose Desktop.
-2. Select `Advanced Settings` from the menu.
-3. Under `Extensions`, click `Add custom extension`.
-4. On the `Add custom extension` modal, enter:
-   - **Type**: `Streaming HTTP`
-   - **ID**: `kernel`
-   - **Name**: `Kernel`
+1. Click `Extensions` in the sidebar of the Goose Desktop.
+2. Click `Add custom extension`.
+3. On the `Add custom extension` modal, enter:
+   - **Extension Name**: `Kernel`
+   - **Type**: `STDIO`
    - **Description**: `Access Kernel's cloud-based browsers via MCP`
-   - **URL**: `https://mcp.onkernel.com/mcp`
+   - **Command**: `npx -y mcp-remote https://mcp.onkernel.com/mcp`
    - **Timeout**: `300`
-5. Click `Add` button.
+4. Click `Save Changes` button.
 
 ### Goose CLI
 
@@ -145,11 +143,12 @@ Click [here](goose://extension?cmd=npx&arg=-y&arg=mcp-remote&arg=https%3A%2F%2Fm
    goose configure
    ```
 2. Select `Add Extension` from the menu.
-3. Choose `Remote Extension (Streaming HTTP)`.
+3. Choose `Command-line Extension`.
 4. Follow the prompts:
    - **Extension name**: `Kernel`
-   - **URL**: `https://mcp.onkernel.com/mcp`
+   - **Command**: `npx -y mcp-remote https://mcp.onkernel.com/mcp`
    - **Timeout**: `300`
+   - **Description**: `Access Kernel's cloud-based browsers via MCP`
 
 ## Visual Studio Code
 
