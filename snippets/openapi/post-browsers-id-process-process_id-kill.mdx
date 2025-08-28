@@ -1,0 +1,31 @@
+<CodeGroup>
+```typescript Typescript/Javascript
+import Kernel from '@onkernel/sdk';
+
+const client = new Kernel({
+  apiKey: 'My API Key',
+});
+
+const response = await client.browsers.process.kill('182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e', {
+  id: 'id',
+  signal: 'TERM',
+});
+
+console.log(response.ok);
+```
+
+
+```python Python
+from kernel import Kernel
+
+client = Kernel(
+    api_key="My API Key",
+)
+response = client.browsers.process.kill(
+    process_id="182bd5e5-6e1a-4fe4-a799-aa6d9a6ab26e",
+    id="id",
+    signal="TERM",
+)
+print(response.ok)
+```
+</CodeGroup>
