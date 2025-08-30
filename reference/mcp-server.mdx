@@ -3,78 +3,32 @@ title: "MCP Server"
 description: "Access Kernel's cloud-based browsers via MCP"
 ---
 
-Our Model Context Protocol (MCP) server gives any compatible AI model or agent a single, secure endpoint for launching Chromium browsers, injecting context, evaluating JavaScript, and streaming DOM snapshots from Kernel's cloud platform.
-
-## First Time? Start Here!
-
-Ready to try Kernel but don't have a browser automation yet? Perfect! Here's how to get started:
-
-### Step 1: Install Kernel MCP Server
-
-Install the Kernel MCP server to your favorite MCP client using the [setup instructions](#setup-instructions) below.
-
-### Step 2: Ask Your AI Assistant for Help
-
-Once connected, simply ask in your MCP client chat:
-
-```
-"How do I get a Kernel sample app set up locally?"
-```
-
-Your AI assistant will use the `search_docs` tool to get you the latest quickstart instructions and guide you through setting up your first Kernel app!
-
-### Step 3: Deploy & Test with MCP Tools
-
-After you have a sample app locally, ask your assistant:
-
-```
-"Deploy my sample app to Kernel"
-```
-
-Then test it:
-
-```
-"Run my app and get the title from onkernel.com"
-```
-
-## Available Tools
-The server provides these tools for AI assistants:
-
-### Browser Automation
-- `create_browser` - Launch a new browser session
-- `get_browser` - Get browser session information
-- `delete_browser` - Terminate a browser session
-- `list_browsers` - List active browser sessions
-
-### App Management
-- `deploy_app` - Deploy TypeScript or Python apps to Kernel
-- `list_apps` - List apps in your Kernel organization
-- `invoke_action` - Execute actions in Kernel apps
-- `get_deployment` - Get deployment status and logs
-- `list_deployments` - List all deployments
-- `get_invocation` - Get action invocation details
-
-### Documentation & Search
-- `search_docs` - Search Kernel platform documentation and guides
+Our Model Context Protocol (MCP) server lets any compatible AI model or agent launch Chromium browsers, inject context, evaluate JavaScript, and stream DOM snapshots from Kernel's cloud platform — via a single secure endpoint.
 
 ## Setup Instructions
 
-Add the Kernel MCP server to your favorite MCP-compatible client using `https://mcp.onkernel.com/mcp`.
+### General (Transports)
 
-## Claude
+- Streamable HTTP (recommended): `https://mcp.onkernel.com/mcp`
+- stdio via `mcp-remote` (for clients without remote MCP support): `npx -y mcp-remote https://mcp.onkernel.com/mcp`
 
-### Team & Enterprise (Claude.ai)
+Use the streamable HTTP endpoint where supported for increased reliability. If your client does not support remote MCP, use `mcp-remote` over stdio.
 
-1. Navigate to **Settings** in the sidebar (web or desktop).
-2. Scroll to **Integrations** and click **Add more**.
-3. Fill in:
-   - **Integration name:** `Kernel`
-   - **Integration URL:** `https://mcp.onkernel.com/mcp`
-4. Start a chat, enable **Tools**, and finish auth.
+Kernel's server is a centrally hosted, authenticated remote MCP using OAuth 2.1 with dynamic client registration.
 
-### Free & Pro (Claude desktop)
+## Connect in your client
 
-Open `~/Library/Application Support/Claude/claude_desktop_config.json` and add:
+### Claude
+
+#### Team & Enterprise (Claude.ai)
+
+1. Go to **Settings → Integrations → Add more**.
+2. Enter: **Integration name:** `Kernel`, **Integration URL:** `https://mcp.onkernel.com/mcp`.
+3. Start a chat, enable **Tools**, complete auth.
+
+#### Free & Pro (Claude desktop)
+
+Add to `~/Library/Application Support/Claude/claude_desktop_config.json` and restart Claude:
 
 ```json
 {
@@ -89,24 +43,27 @@ Open `~/Library/Application Support/Claude/claude_desktop_config.json` and add:
 
 Restart the Claude desktop app.
 
-### Claude Code CLI
+#### Claude Code CLI
 
 ```bash
 claude mcp add --transport http kernel https://mcp.onkernel.com/mcp
-# then, inside the REPL:
-/mcp   # to run through auth
+# Then in the REPL run once to authenticate:
+/mcp
 ```
 
-## Cursor
+### Cursor
 
-Click [here](cursor://anysphere.cursor-deeplink/mcp/install?name=kernel&config=eyJ1cmwiOiJodHRwczovL21jcC5vbmtlcm5lbC5jb20vbWNwIn0%3D) to install Kernel on Cursor in one click.
+Install with one click or configure manually.
 
-### Manual Setup
+### One-click install
 
-1. Press **⌘/Ctrl Shift J** to open settings.
-2. Click **Tools & Integrations**.
-3. Click **New MCP server**.
-4. Add the following configuration:
+Click [here](cursor://anysphere.cursor-deeplink/mcp/install?name=kernel&config=eyJ1cmwiOiJodHRwczovL21jcC5vbmtlcm5lbC5jb20vbWNwIn0%3D).
+
+### Manual setup
+
+1. Press **⌘/Ctrl Shift J**.
+2. Go to **Tools & Integrations → New MCP server**.
+3. Add this configuration:
 
 ```json
 {
@@ -118,9 +75,9 @@ Click [here](cursor://anysphere.cursor-deeplink/mcp/install?name=kernel&config=e
 }
 ```
 
-5. Save and the server will be available.
+4. Save. The server will appear in Tools.
 
-## Goose
+### Goose
 
 Click [here](goose://extension?cmd=npx&arg=-y&arg=mcp-remote&arg=https%3A%2F%2Fmcp.onkernel.com%2Fmcp&timeout=300&id=kernel&name=Kernel&description=Access%20Kernel%27s%20cloud-based%20browsers%20via%20MCP) to install Kernel on Goose in one click.
 
@@ -150,7 +107,7 @@ Click [here](goose://extension?cmd=npx&arg=-y&arg=mcp-remote&arg=https%3A%2F%2Fm
    - **Timeout**: `300`
    - **Description**: `Access Kernel's cloud-based browsers via MCP`
 
-## Visual Studio Code
+### Visual Studio Code
 
 ```json
 {
@@ -169,13 +126,13 @@ Click [here](goose://extension?cmd=npx&arg=-y&arg=mcp-remote&arg=https%3A%2F%2Fm
    ```bash
    npx -y mcp-remote https://mcp.onkernel.com/mcp
    ```
-4. Name the server **Kernel** and press Enter.
+4. Name the server **Kernel** → Enter.
 5. Activate via **MCP: List Servers → Kernel → Start Server**.
 
-## Windsurf
+### Windsurf
 
 1. Press **⌘/Ctrl ,** to open settings.
-2. Navigate **Cascade → MCP servers** → **Add custom server**.
+2. Go to **Cascade → MCP servers → Add custom server**.
 3. Paste:
 
 ```json
@@ -189,7 +146,7 @@ Click [here](goose://extension?cmd=npx&arg=-y&arg=mcp-remote&arg=https%3A%2F%2Fm
 }
 ```
 
-## Zed
+### Zed
 
 Open `settings.json` and add:
 
@@ -208,7 +165,7 @@ Open `settings.json` and add:
 }
 ```
 
-## Others
+### Others
 
 Many other MCP-capable tools accept:
 
@@ -218,17 +175,33 @@ Many other MCP-capable tools accept:
 
 Configure these values wherever the tool expects MCP server settings.
 
-## Usage Examples
+## Tools
 
-### Deploy Local Apps to the Cloud
+### Browser Automation
+- `create_browser` - Launch a new browser session
+- `get_browser` - Get browser session information
+- `delete_browser` - Terminate a browser session
+- `list_browsers` - List active browser sessions
 
-```
-Human: I have a Playwright automation script open in my editor. Can you deploy it to Kernel?
-Assistant: I'll read your local files and deploy them to Kernel for you.
-[Uses deploy_app tool to upload your code and create a cloud deployment]
-```
+### App Management
+- `list_apps` - List apps in your Kernel organization
+- `invoke_action` - Execute actions in Kernel apps
+- `get_deployment` - Get deployment status and logs
+- `list_deployments` - List all deployments
+- `get_invocation` - Get action invocation details
 
-### Invoke Apps from Anywhere
+### Documentation & Search
+- `search_docs` - Search Kernel platform documentation and guides
+
+## Troubleshooting
+
+- Clear saved auth and retry: `rm -rf ~/.mcp-auth`
+- Ensure a recent Node.js version when using `npx mcp-remote`
+- If behind strict networks, try stdio via `mcp-remote`, or explicitly set the transport your client supports
+
+## Examples
+
+### Invoke apps from anywhere
 
 ```
 Human: Run my web-scraper app to get data from reddit.com
@@ -236,7 +209,7 @@ Assistant: I'll execute your web-scraper action with reddit.com as the target.
 [Uses invoke_action tool to run your deployed app in the cloud]
 ```
 
-### Create Persistent Browser Sessions
+### Create persistent browser sessions
 
 ```
 Human: Create a stealth browser session that I can reuse for testing login flows
