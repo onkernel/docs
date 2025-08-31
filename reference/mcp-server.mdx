@@ -195,6 +195,7 @@ Configure these values wherever the tool expects MCP server settings.
 
 ## Troubleshooting
 
+- Cursor clean reset: ⌘/Ctrl Shift P → run `Cursor: Clear All MCP Tokens` (resets all MCP servers and auth; re-enable Kernel and re-authenticate).
 - Clear saved auth and retry: `rm -rf ~/.mcp-auth`
 - Ensure a recent Node.js version when using `npx mcp-remote`
 - If behind strict networks, try stdio via `mcp-remote`, or explicitly set the transport your client supports
