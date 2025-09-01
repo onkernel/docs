@@ -1,0 +1,20 @@
+---
+title: "Authentication"
+---
+
+## `kernel login`
+Login via OAuth 2.0 (PKCE) using your browser. Credentials are stored securely and refreshed automatically.
+
+| Flag | Description |
+|------|-------------|
+| `--force` | Force re-authentication even if already logged in |
+
+## `kernel logout`
+Clear stored authentication tokens and log out.
+
+## `kernel auth`
+Show current authentication status and token expiry.
+
+| Flag | Description |
+|------|-------------|
+| `--log-level debug` | Set the log level to debug for detailed info including user ID, org ID, and storage method. |
