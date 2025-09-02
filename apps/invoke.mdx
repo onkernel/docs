@@ -7,7 +7,7 @@ import AsyncInvocation from '/snippets/openapi/post-invocations-async.mdx';
 
 ## Via API
 
-You can invoke your app by making a `POST` request to Kernel's API. **For automations and agents that take longer than 100 seconds, use [async invocations](/apps/invoke#asynchronous-invocations).**
+You can invoke your app by making a `POST` request to Kernel's API or via the CLI. Both support passing a payload. **For automations and agents that take longer than 100 seconds, use [async invocations](/apps/invoke#asynchronous-invocations).**
 
 <Info>Synchronous invocations time out after 100 seconds.</Info>
 
@@ -30,6 +30,10 @@ kernel invoke <app_name> <action_name>
 ### Payload parameter
 
 `--payload` allows you to invoke the action with specified parameters. This enables your action to receive and handle dynamic inputs at runtime. For example:
+
+<Info>
+Payloads are stringified JSON and have a maximum size of 64 KB. For larger inputs, store data externally (e.g., object storage or database) and pass a reference (URL or ID) in the payload instead.
+</Info>
 
 ```bash
 kernel invoke <app_name> <action_name>
