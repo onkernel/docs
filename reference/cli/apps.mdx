@@ -1,0 +1,45 @@
+---
+title: "Apps"
+---
+
+## `kernel deploy <entrypoint_file_name>`
+Deploy an app to Kernel from the current directory.
+
+| Flag | Description |
+|------|-------------|
+| `--version <version>` | Specify a version for the app (default: latest). Optional. |
+| `--force` | Allow overwrite of an existing version with the same name. Optional. |
+| `--env <ENV_VAR=VAL>`, `-e` | Adds environment variables to the app. May be specified multiple times. Optional. |
+| `--env-file <file>` | Read environment variables from a .env file. May be specified multiple times. Optional. |
+
+## `kernel invoke <app_name> <action_name>`
+Invoke a specific app action by its name. Generates an Invocation.
+
+| Flag | Description |
+|------|-------------|
+| `--version <version>`, `-v` | Specify a version of the app to invoke (default: latest). Optional. |
+| `--payload <payload_data>`, `-p` | Stringified JSON object (max 64 KB). Optional. |
+| `--sync`, `-s` | Invoke synchronously (default false). Optional. |
+
+<Info>Synchronous invocations open a long-lived HTTP POST that times out after 60 seconds. Press `ctrl-c` to terminate a running invocation; associated browsers are destroyed.</Info>
+
+## `kernel app list`
+List deployed application versions.
+
+| Flag | Description |
+|------|-------------|
+| `--name <app_name>` | Filter by application name. Optional. |
+| `--version <version>` | Filter by version label. Optional. |
+
+## `kernel app history <app_name>`
+Show deployment history for an application.
+
+## `kernel logs <app_name>`
+Print the logs for the specified app.
+
+| Flag | Description |
+|------|-------------|
+| `--version <version>` | Specify a version of the app (default: latest). Optional. |
+| `--follow`, `-f` | Follow logs in real-time (stream continuously). Optional. |
+| `--since <time>`, `-s` | How far back to retrieve logs (e.g., 5m, 1h). Defaults to 5m if not following, 5s if following. Optional. |
+| `--with-timestamps` | Include timestamps in each log line. Optional. |
