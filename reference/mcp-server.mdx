@@ -22,9 +22,12 @@ Kernel's server is a centrally hosted, authenticated remote MCP using OAuth 2.1 
 
 #### Team & Enterprise (Claude.ai)
 
-1. Go to **Settings → Integrations → Add more**.
-2. Enter: **Integration name:** `Kernel`, **Integration URL:** `https://mcp.onkernel.com/mcp`.
-3. Start a chat, enable **Tools**, complete auth.
+1. Go to **Settings → Connectors → Add custom connector**.
+2. Enter: **Integration name:** `Kernel`, **Integration URL:** `https://mcp.onkernel.com/mcp`, then click **Add**.
+3. In **Settings → Connectors**, click **Connect** next to `Kernel` to launch OAuth and approve.
+4. In chat, click **Search and tools** and enable the Kernel tools if needed.
+
+> On Claude for Work (Team/Enterprise), only Primary Owners or Owners can enable custom connectors for the org. After it's configured, each user still needs to go to **Settings → Connectors** and click **Connect** to authorize it for their account.
 
 #### Free & Pro (Claude desktop)
 
@@ -53,13 +56,9 @@ claude mcp add --transport http kernel https://mcp.onkernel.com/mcp
 
 ### Cursor
 
-Install with one click or configure manually.
+Click [here](cursor://anysphere.cursor-deeplink/mcp/install?name=kernel&config=eyJ1cmwiOiJodHRwczovL21jcC5vbmtlcm5lbC5jb20vbWNwIn0%3D) to install Kernel on Cursor.
 
-### One-click install
-
-Click [here](cursor://anysphere.cursor-deeplink/mcp/install?name=kernel&config=eyJ1cmwiOiJodHRwczovL21jcC5vbmtlcm5lbC5jb20vbWNwIn0%3D).
-
-### Manual setup
+#### Manual setup
 
 1. Press **⌘/Ctrl Shift J**.
 2. Go to **Tools & Integrations → New MCP server**.
@@ -81,7 +80,7 @@ Click [here](cursor://anysphere.cursor-deeplink/mcp/install?name=kernel&config=e
 
 Click [here](goose://extension?cmd=npx&arg=-y&arg=mcp-remote&arg=https%3A%2F%2Fmcp.onkernel.com%2Fmcp&timeout=300&id=kernel&name=Kernel&description=Access%20Kernel%27s%20cloud-based%20browsers%20via%20MCP) to install Kernel on Goose in one click.
 
-### Goose Desktop
+#### Goose Desktop
 
 1. Click `Extensions` in the sidebar of the Goose Desktop.
 2. Click `Add custom extension`.
@@ -93,7 +92,7 @@ Click [here](goose://extension?cmd=npx&arg=-y&arg=mcp-remote&arg=https%3A%2F%2Fm
    - **Timeout**: `300`
 4. Click `Save Changes` button.
 
-### Goose CLI
+#### Goose CLI
 
 1. Run the following command:
    ```bash
