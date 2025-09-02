@@ -126,7 +126,10 @@
         "tab": "CLI",
         "icon": "terminal",
         "pages": [
-          "reference/cli"
+          "reference/cli",
+          "reference/cli/auth",
+          "reference/cli/browsers",
+          "reference/cli/apps"
         ]
       }
     ]
