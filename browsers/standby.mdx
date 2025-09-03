@@ -1,0 +1,13 @@
+---
+title: "Standby Mode"
+---
+
+Kernel browsers go into standby mode if there aren't any network requests for a given amount of time. When a browser goes into standby mode, the browser's state remains the same but incurs zero usage costs. The browser is reactivated the moment it receives an incoming network request.
+
+This means you don't pay for the browser's idle clock time. This is especially useful for use cases that run over long periods of time or require periods of inactivity, such as **human-in-the-loop workflows**.
+
+<Info>
+    See [here](/browsers/termination) to learn about destroying browsers.
+</Info>
+
+The current time-to-idle is `4 seconds`.

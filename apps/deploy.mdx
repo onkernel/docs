@@ -1,0 +1,65 @@
+---
+title: "Deploying"
+---
+
+Kernel's app deployment process is as simple as it is fast. There are no configuration files to manage or complex CI/CD pipelines.
+
+Once you deploy an app on Kernel, you can schedule its actions on a job or run them from other contexts. You can even run actions multiple times in parallel.
+
+
+## Deploy the app
+
+Use our CLI from the root directory of your project:
+```bash
+# entrypoint_file_name should be where you've defined your Kernel app
+kernel deploy <entrypoint_file_name>
+```
+
+## Environment variables
+
+You can set environment variables for your app using the `--env` flag. For example:
+
+<CodeGroup>
+```bash Typescript/Javascript
+kernel deploy my_app.ts --env MY_ENV_VAR=my_value # Can add multiple env vars delimited by space
+```
+
+```bash Python
+kernel deploy my_app.py --env MY_ENV_VAR=my_value # Can add multiple env vars delimited by space
+```
+</CodeGroup>
+
+## Deployment notes
+
+- The `entrypoint_file_name` is the file name where you [defined](/apps/develop) your app.
+- Include a `.gitignore` file to exclude dependency folders like `node_modules` and `.venv`.
+- Kernel assumes the root directory contains at least this file structure:
+
+<CodeGroup>
+```bash Typescript/Javascript
+project-root/
+  ├─ .gitignore # Exclude dependency folders like node_modules
+  ├─ my_app.ts # Entrypoint file
+  ├─ package.json
+  ├─ tsconfig.json # If using TypeScript
+  └─ bun.lock | package-lock.json | pnpm-lock.yaml # One of these lockfiles
+```
+
+```bash Python
+project-root/
+  ├─ .gitignore # Exclude dependency folders like .venv
+  ├─ my_app.py # Entrypoint file
+  └─ pyproject.toml
+```
+</CodeGroup>
+
+```bash
+# Successful deployment CLI output
+SUCCESS  Compressed files
+SUCCESS  Deployment successful
+SUCCESS  App "my_app.ts" deployed with action(s): [my-action]
+INFO  Invoke with: kernel invoke my-app my-action --payload '{...}'
+SUCCESS  Total deployment time: 2.78s
+```
+
+Once deployed, you can [invoke](/apps/invoke) your app from anywhere.

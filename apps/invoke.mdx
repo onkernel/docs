@@ -1,0 +1,47 @@
+---
+title: "Invoking"
+---
+
+import SynchronousInvocation from '/snippets/openapi/post-invocations.mdx';
+import AsyncInvocation from '/snippets/openapi/post-invocations-async.mdx';
+
+## Via API
+
+You can invoke your app by making a `POST` request to Kernel's API or via the CLI. Both support passing a payload. **For automations and agents that take longer than 100 seconds, use [async invocations](/apps/invoke#asynchronous-invocations).**
+
+<Info>Synchronous invocations time out after 100 seconds.</Info>
+
+<SynchronousInvocation />
+
+### Asynchronous invocations
+
+For long running jobs, use asynchronous invocations to trigger Kernel actions without waiting for the result. You can then poll its [status](/apps/status) for the result.
+
+<AsyncInvocation />
+
+## Via CLI
+
+Invoke an app action immediately via the CLI:
+
+```bash
+kernel invoke <app_name> <action_name>
+```
+
+### Payload parameter
+
+`--payload` allows you to invoke the action with specified parameters. This enables your action to receive and handle dynamic inputs at runtime. For example:
+
+<Info>
+Payloads are stringified JSON and have a maximum size of 64 KB. For larger inputs, store data externally (e.g., object storage or database) and pass a reference (URL or ID) in the payload instead.
+</Info>
+
+```bash
+kernel invoke <app_name> <action_name>
+    --payload '{"tshirt_size": "small", "color": "black", "shipping_address": "2 Mint Plz, San Francisco CA 94103"}'
+```
+
+See [here](/apps/develop#parameters) to learn how to access the payload in your action method.
+
+### Return values
+
+If your action specifies a [return value](/apps/develop#return-values), the invocation returns its value once it completes. (The Kernel CLI uses asynchronous invocations under the hood)

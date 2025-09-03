@@ -1,0 +1,24 @@
+<CodeGroup>
+```typescript Typescript/Javascript
+import Kernel from '@onkernel/sdk';
+
+const client = new Kernel({
+  apiKey: 'My API Key',
+});
+
+const browser = await client.browsers.create();
+
+console.log(browser.session_id);
+```
+
+
+```python Python
+from kernel import Kernel
+
+client = Kernel(
+    api_key="My API Key",
+)
+browser = client.browsers.create()
+print(browser.session_id)
+```
+</CodeGroup>

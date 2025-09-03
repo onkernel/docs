@@ -1,0 +1,207 @@
+---
+title: "MCP Server"
+description: "Access Kernel's cloud-based browsers via MCP"
+---
+
+Our Model Context Protocol (MCP) server lets any compatible AI model or agent launch Chromium browsers, inject context, evaluate JavaScript, and stream DOM snapshots from Kernel's cloud platform — via a single secure endpoint.
+
+## Setup Instructions
+
+### General (Transports)
+
+- Streamable HTTP (recommended): `https://mcp.onkernel.com/mcp`
+- stdio via `mcp-remote` (for clients without remote MCP support): `npx -y mcp-remote https://mcp.onkernel.com/mcp`
+
+Use the streamable HTTP endpoint where supported for increased reliability. If your client does not support remote MCP, use `mcp-remote` over stdio.
+
+Kernel's server is a centrally hosted, authenticated remote MCP using OAuth 2.1 with dynamic client registration.
+
+## Connect in your client
+
+### Claude
+
+<Info>Our remote MCP server is not compatible with the method Free users of Claude use to add MCP servers.</Info>
+
+#### Pro, Max, Team & Enterprise (Claude.ai and Claude Desktop)
+
+1. Go to **Settings → Connectors → Add custom connector**.
+2. Enter: **Integration name:** `Kernel`, **Integration URL:** `https://mcp.onkernel.com/mcp`, then click **Add**.
+3. In **Settings → Connectors**, click **Connect** next to `Kernel` to launch OAuth and approve.
+4. In chat, click **Search and tools** and enable the Kernel tools if needed.
+
+<Info>On Claude for Work (Team/Enterprise), only Primary Owners or Owners can enable custom connectors for the org. After it's configured, each user still needs to go to **Settings → Connectors** and click **Connect** to authorize it for their account.</Info>
+
+#### Claude Code CLI
+
+```bash
+claude mcp add --transport http kernel https://mcp.onkernel.com/mcp
+# Then in the REPL run once to authenticate:
+/mcp
+```
+
+### Cursor
+
+Click [here](cursor://anysphere.cursor-deeplink/mcp/install?name=kernel&config=eyJ1cmwiOiJodHRwczovL21jcC5vbmtlcm5lbC5jb20vbWNwIn0%3D) to install Kernel on Cursor.
+
+#### Manual setup
+
+1. Press **⌘/Ctrl Shift J**.
+2. Go to **MCP & Integrations → New MCP server**.
+3. Add this configuration:
+
+```json
+{
+  "mcpServers": {
+    "kernel": {
+      "url": "https://mcp.onkernel.com/mcp"
+    }
+  }
+}
+```
+
+4. Save. The server will appear in Tools.
+
+### Goose
+
+Click [here](goose://extension?cmd=npx&arg=-y&arg=mcp-remote&arg=https%3A%2F%2Fmcp.onkernel.com%2Fmcp&timeout=300&id=kernel&name=Kernel&description=Access%20Kernel%27s%20cloud-based%20browsers%20via%20MCP) to install Kernel on Goose in one click.
+
+#### Goose Desktop
+
+1. Click `Extensions` in the sidebar of the Goose Desktop.
+2. Click `Add custom extension`.
+3. On the `Add custom extension` modal, enter:
+   - **Extension Name**: `Kernel`
+   - **Type**: `STDIO`
+   - **Description**: `Access Kernel's cloud-based browsers via MCP`
+   - **Command**: `npx -y mcp-remote https://mcp.onkernel.com/mcp`
+   - **Timeout**: `300`
+4. Click `Save Changes` button.
+
+#### Goose CLI
+
+1. Run the following command:
+   ```bash
+   goose configure
+   ```
+2. Select `Add Extension` from the menu.
+3. Choose `Command-line Extension`.
+4. Follow the prompts:
+   - **Extension name**: `Kernel`
+   - **Command**: `npx -y mcp-remote https://mcp.onkernel.com/mcp`
+   - **Timeout**: `300`
+   - **Description**: `Access Kernel's cloud-based browsers via MCP`
+
+### Visual Studio Code
+
+```json
+{
+  "mcpServers": {
+    "kernel": {
+      "url": "https://mcp.onkernel.com/mcp",
+      "type": "http"
+    }
+  }
+}
+```
+
+1. Press **⌘/Ctrl Shift P** → search **MCP: Add Server**.
+2. Select **HTTP (HTTP or Server-Sent Events)**.
+3. Enter: `https://mcp.onkernel.com/mcp`
+4. Name the server **Kernel** → Enter.
+
+### Windsurf
+
+1. Press **⌘/Ctrl ,** to open settings.
+2. Navigate **Cascade → MCP servers → View raw config**.
+3. Paste:
+
+```json
+{
+  "mcpServers": {
+    "kernel": {
+      "command": "npx",
+      "args": ["-y", "mcp-remote", "https://mcp.onkernel.com/mcp"]
+    }
+  }
+}
+```
+
+4. On **Manage MCPs**, click **Refresh** to load Kernel MCP.
+
+### Zed
+
+1. Press **⌘/Ctrl ,** to open settings.
+2. Paste:
+
+```json
+{
+  "context_servers": {
+    "kernel": {
+      "source": "custom",
+      "command": "npx",
+      "args": ["-y", "mcp-remote", "https://mcp.onkernel.com/mcp"]
+    }
+  }
+}
+```
+
+### Others
+
+Many other MCP-capable tools accept:
+
+- **Command:** `npx`
+- **Arguments:** `-y mcp-remote https://mcp.onkernel.com/mcp`
+
+```json
+{
+  "kernel": {
+    "command": "npx",
+    "args": ["-y", "mcp-remote", "https://mcp.onkernel.com/mcp"]
+  }
+}
+```
+
+Configure these values wherever the tool expects MCP server settings.
+
+## Tools
+
+### Browser Automation
+- `create_browser` - Launch a new browser session
+- `get_browser` - Get browser session information
+- `list_browsers` - List active browser sessions
+- `delete_browser` - Terminate a browser session
+
+### App Management
+- `list_apps` - List apps in your Kernel organization
+- `invoke_action` - Execute actions in Kernel apps
+- `get_deployment` - Get deployment status and logs
+- `list_deployments` - List all deployments
+- `get_invocation` - Get action invocation details
+
+### Documentation & Search
+- `search_docs` - Search Kernel platform documentation and guides
+
+## Troubleshooting
+
+- Cursor clean reset: ⌘/Ctrl Shift P → run `Cursor: Clear All MCP Tokens` (resets all MCP servers and auth; re-enable Kernel and re-authenticate).
+- Clear saved auth and retry: `rm -rf ~/.mcp-auth`
+- Ensure a recent Node.js version when using `npx mcp-remote`
+- If behind strict networks, try stdio via `mcp-remote`, or explicitly set the transport your client supports
+
+## Examples
+
+### Invoke apps from anywhere
+
+```
+Human: Run my web-scraper app to get data from reddit.com
+Assistant: I'll execute your web-scraper action with reddit.com as the target.
+[Uses invoke_action tool to run your deployed app in the cloud]
+```
+
+### Create persistent browser sessions
+
+```
+Human: Create a stealth browser session that I can reuse for testing login flows
+Assistant: I'll create a persistent, stealth-enabled browser that maintains state between uses.
+[Uses create_browser tool with persistence and stealth options]
+```

@@ -1,0 +1,32 @@
+<CodeGroup>
+```typescript Typescript/Javascript
+import Kernel from '@onkernel/sdk';
+
+const client = new Kernel({
+  apiKey: 'My API Key',
+});
+
+const invocation = await client.invocations.create({
+  action_name: 'analyze',
+  app_name: 'my-app',
+  version: '1.0.0',
+});
+
+console.log(invocation.id);
+```
+
+
+```python Python
+from kernel import Kernel
+
+client = Kernel(
+    api_key="My API Key",
+)
+invocation = client.invocations.create(
+    action_name="analyze",
+    app_name="my-app",
+    version="1.0.0",
+)
+print(invocation.id)
+```
+</CodeGroup>

@@ -1,0 +1,26 @@
+---
+title: "Stealth Mode"
+---
+
+Kernel browsers can be configured to `stealth` mode, which adds a high performant residential proxy and auto-CAPTCHA solver to your instances.
+
+To turn on stealth mode, set its flag in your app code when instantiating Kernel:
+
+<CodeGroup>
+```typescript Typescript/Javascript
+const kernelBrowser = await kernel.browsers.create({
+    invocation_id: ctx.invocation_id,
+    stealth: true,
+});
+```
+
+```python Python
+kernel_browser = client.browsers.create(invocation_id=ctx.invocation_id, stealth=True)
+```
+</CodeGroup>
+
+<Info>
+    [Anthropic Computer Use](/quickstart#sample-apps-reference) stops when it runs into a CAPTCHA. Use Kernel's auto-captcha solver by adding this to your prompt:
+    
+    `"If you see a CAPTCHA or similar test, just wait for it to get solved automatically by the browser."`
+</Info>
