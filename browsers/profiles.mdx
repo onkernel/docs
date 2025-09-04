@@ -1,0 +1,126 @@
+---
+title: "Profiles"
+description: "Persist and reuse browser session state (cookies, local storage) across sessions"
+---
+
+Kernel Profiles let you capture browser state created during a session — cookies and local storage — and reuse it in later sessions. This is useful for persisting login state or other site preferences across runs.
+
+## 1. Create a profile
+
+The first step in using profiles is to create one, optionally giving it a meaningful `name` that is unique within your organization.
+
+<CodeGroup>
+
+```typescript Typescript/Javascript
+import { ConflictError, Kernel } from "@onkernel/sdk";
+
+const kernel = new Kernel();
+
+try {
+  await kernel.profiles.create({ name: "profiles-demo" });
+} catch (err) {
+  if (err instanceof ConflictError) {
+    // Profile already exists; continue
+  } else {
+    throw err;
+  }
+}
+```
+
+```python Python
+from kernel import AsyncKernel, ConflictError
+
+kernel = AsyncKernel()
+
+try:
+    await kernel.profiles.create(name="profiles-demo")
+except ConflictError:
+    pass
+```
+
+</CodeGroup>
+
+## 2. Start a browser session using the profile and save changes
+
+After creating the profile, you can reference it by its `name` or `id` when creating a browser.
+Set `save_changes` to true to persist any state created during this session back into the profile when the browser is closed.
+
+<CodeGroup>
+
+```typescript Typescript/Javascript
+const kernelBrowser = await kernel.browsers.create({
+  profile: {
+    name: "profiles-demo",
+    // or
+    // id: profile.id,
+    save_changes: true,
+  },
+});
+```
+
+```python Python
+kernel_browser = await kernel.browsers.create(
+    profile={
+        "name": "profiles-demo",
+        // or
+        // "id": profile.id,
+        "save_changes": True,
+    }
+)
+```
+
+</CodeGroup>
+
+## 3. Use the browser, then close it to persist the state
+
+After using a browser with `save_changes: true`, closing the browser will save cookies and local storage into the profile.
+
+<CodeGroup>
+
+```typescript Typescript/Javascript
+console.log("Live view:", kernelBrowser.browser_live_view_url);
+// Navigate and create login state ...
+await kernel.browsers.deleteByID(kernelBrowser.session_id);
+```
+
+```python Python
+print("Live view:", kernel_browser.browser_live_view_url)
+# Navigate and create login state ...
+await kernel.browsers.delete_by_id(kernel_browser.session_id)
+```
+
+</CodeGroup>
+
+## 4. Start a new session with the saved profile (read-only)
+
+Create another browser using the same profile name. Omitting `save_changes` leaves the stored profile untouched.
+
+<CodeGroup>
+
+```typescript Typescript/Javascript
+const kernelBrowser2 = await kernel.browsers.create({
+  profile: { name: "profiles-demo" },
+});
+console.log("Live view:", kernelBrowser2.browser_live_view_url);
+```
+
+```python Python
+kernel_browser2 = await kernel.browsers.create(
+    profile={"name": "profiles-demo"}
+)
+print("Live view:", kernel_browser2.browser_live_view_url)
+```
+
+</CodeGroup>
+
+### Other ways to use profiles
+
+The API and SDKs support listing, deleting, and downloading profile data as JSON. See the [API reference](/api-reference/profiles/list-profiles) for more details.
+
+### Notes
+
+- A profile's `name` must be unique within your organization.
+- Profiles store cookies and local storage. Start the session with `save_changes: true` to write changes back when the browser is closed.
+- To keep a profile immutable for a run, omit `save_changes` (default) when creating the browser.
+- You can spin up multiple browsers in parallel using the same profile.
+- Profile data is encrypted end to end using a per-organization key.
