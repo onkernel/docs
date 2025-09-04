@@ -1,0 +1,26 @@
+<CodeGroup>
+```typescript Typescript/Javascript
+import Kernel from '@onkernel/sdk';
+
+const client = new Kernel({
+  apiKey: 'My API Key',
+});
+
+const profile = await client.profiles.retrieve('id_or_name');
+
+console.log(profile.id);
+```
+
+
+```python Python
+from kernel import Kernel
+
+client = Kernel(
+    api_key="My API Key",
+)
+profile = client.profiles.retrieve(
+    "id_or_name",
+)
+print(profile.id)
+```
+</CodeGroup>
