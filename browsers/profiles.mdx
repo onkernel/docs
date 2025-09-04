@@ -113,9 +113,14 @@ print("Live view:", kernel_browser2.browser_live_view_url)
 
 </CodeGroup>
 
+### Other ways to use profiles
+
+The API and SDKs support listing, deleting, and downloading profile data as JSON. See the [API reference](/api-reference/profiles/list-profiles) for more details.
+
 ### Notes
 
 - A profile's `name` must be unique within your organization.
 - Profiles store cookies and local storage. Start the session with `save_changes: true` to write changes back when the browser is closed.
 - To keep a profile immutable for a run, omit `save_changes` (default) when creating the browser.
 - You can spin up multiple browsers in parallel using the same profile.
+- Profile data is encrypted end to end using a per-organization key.
