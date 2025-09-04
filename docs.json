@@ -62,7 +62,8 @@
               "browsers/termination",
               "browsers/file-io",
               "browsers/live-view",
-              "browsers/replays"
+              "browsers/replays",
+              "browsers/profiles"
             ]
           },
           {
