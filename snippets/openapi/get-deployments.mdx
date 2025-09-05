@@ -6,9 +6,10 @@ const client = new Kernel({
   apiKey: 'My API Key',
 });
 
-const deployments = await client.deployments.list();
-
-console.log(deployments);
+// Automatically fetches more pages as needed.
+for await (const deploymentListResponse of client.deployments.list()) {
+  console.log(deploymentListResponse.id);
+}
 ```
 
 
@@ -18,7 +19,8 @@ from kernel import Kernel
 client = Kernel(
     api_key="My API Key",
 )
-deployments = client.deployments.list()
-print(deployments)
+page = client.deployments.list()
+page = page.items[0]
+print(page.id)
 ```
 </CodeGroup>
