@@ -59,11 +59,11 @@
               "browsers/stealth",
               "browsers/standby",
               "browsers/persistence",
+              "browsers/profiles",
               "browsers/termination",
               "browsers/file-io",
               "browsers/live-view",
-              "browsers/replays",
-              "browsers/profiles"
+              "browsers/replays"
             ]
           },
           {
