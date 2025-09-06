@@ -17,6 +17,8 @@ You can invoke your app by making a `POST` request to Kernel's API or via the CL
 
 For long running jobs, use asynchronous invocations to trigger Kernel actions without waiting for the result. You can then poll its [status](/apps/status) for the result.
 
+<Info>Asynchronous invocations time out after 15 minutes.</Info>
+
 <AsyncInvocation />
 
 ## Via CLI

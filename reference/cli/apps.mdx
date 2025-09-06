@@ -21,7 +21,7 @@ Invoke a specific app action by its name. Generates an Invocation.
 | `--payload <payload_data>`, `-p` | Stringified JSON object (max 64 KB). Optional. |
 | `--sync`, `-s` | Invoke synchronously (default false). Optional. |
 
-<Info>Synchronous invocations open a long-lived HTTP POST that times out after 60 seconds. Press `ctrl-c` to terminate a running invocation; associated browsers are destroyed.</Info>
+<Info>Synchronous invocations open a long-lived HTTP POST that times out after 60 seconds. Asynchronous invocations time out after 15 minutes. Press `ctrl-c` to terminate a running invocation; associated browsers are destroyed.</Info>
 
 ## `kernel app list`
 List deployed application versions.
