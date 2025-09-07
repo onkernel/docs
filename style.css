@@ -1,5 +1,5 @@
 /* style sidebar titles */
 #navigation-items .sidebar-group-header #sidebar-title{
   font-weight: bold;
-  font-size: larger;
+  font-size: 15px;
 }

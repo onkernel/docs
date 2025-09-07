@@ -2,17 +2,11 @@
 title: "Persistence"
 ---
 
-Persistence allows you to reuse a browser's state, including cookies, session auth, cache, and any other state that lives on a browser. This can be used to minimize CAPTCHAs and login flows.
-
-Kernel's platform provides multiple ways to persist and reuse state and browser sessions.
-
-## 1. Persisting a browser
-
-With Kernel, you can specify a browser to be persisted and then reuse that exact browser instance again. Using [standby mode](/browsers/standby), we put the browser to sleep in between connections, so you don't pay for idle clock time.
+With Kernel, you can specify a browser to be persisted and then reuse that exact browser instance again over hours or days. Using [standby mode](/browsers/standby), we put the browser to sleep in between connections, so you don't pay for idle clock time.
 
 Since we return the exact same browser instance upon subsequent connections, all browser state is preserved: web page, cookies, session auth, even the exact zoom settings on the page.
 
-Persisted browsers exist indefinitely until you [delete them](/browsers/termination). See [here](/info/pricing) for plan limits on persistence.
+Persistence is especially useful for human-in-the-loop workflows, where automated steps and human actions may be separated by hours or days. The browser can be paused and reconnected without losing state, enabling multi-step processes that combine automation and manual intervention.
 
 To specify a browser for persistence, specify its `persistence` settings in the `browsers.create()` method:
 
@@ -39,8 +33,8 @@ During runtime, Kernel will search for a browser with the specified `id`:
 
 The browser's `persistence id` can be any string. You can set it to an identifier in your system to match it to a user, environment, website, or something else.
 
-## 2. Persisting browser cookies
+Persisted browsers exist indefinitely until you [delete them](/browsers/termination). See [here](/info/pricing) for plan limits on persistence.
 
 <Info>
-  This feature is coming soon
+Use [Profiles](/browsers/profiles) if your goal is to reuse authentication state (cookies, local storage) — especially across concurrent browsers. Persistence is best for human-in-the-loop workflows where the same browser instance needs to be resumed later.
 </Info>

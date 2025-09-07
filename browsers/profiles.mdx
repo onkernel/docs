@@ -3,7 +3,7 @@ title: "Profiles"
 description: "Persist and reuse browser session state (cookies, local storage) across sessions"
 ---
 
-Kernel Profiles let you capture browser state created during a session — cookies and local storage — and reuse it in later sessions. This is useful for persisting login state or other site preferences across runs.
+Profiles let you capture browser state created during a session — cookies and local storage — and reuse it in later sessions. This is useful for persisting login state or other site preferences across browser sessions.
 
 ## 1. Create a profile
 
@@ -42,7 +42,7 @@ except ConflictError:
 
 ## 2. Start a browser session using the profile and save changes
 
-After creating the profile, you can reference it by its `name` or `id` when creating a browser.
+After creating the profile, reference it by its `name` or `id` when creating a browser.
 Set `save_changes` to true to persist any state created during this session back into the profile when the browser is closed.
 
 <CodeGroup>
@@ -113,11 +113,11 @@ print("Live view:", kernel_browser2.browser_live_view_url)
 
 </CodeGroup>
 
-### Other ways to use profiles
+## Other ways to use profiles
 
 The API and SDKs support listing, deleting, and downloading profile data as JSON. See the [API reference](/api-reference/profiles/list-profiles) for more details.
 
-### Notes
+## Notes
 
 - A profile's `name` must be unique within your organization.
 - Profiles store cookies and local storage. Start the session with `save_changes: true` to write changes back when the browser is closed.
