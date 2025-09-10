@@ -32,6 +32,7 @@ kernel deploy my_app.py --env MY_ENV_VAR=my_value # Can add multiple env vars de
 ## Deployment notes
 
 - The `entrypoint_file_name` is the file name where you [defined](/apps/develop) your app.
+- **The entrypoint file and dependency manifest (`package.json` for JS/TS, `pyproject.toml` for Python) must both be in the root directory of your project.**
 - Include a `.gitignore` file to exclude dependency folders like `node_modules` and `.venv`.
 - Kernel assumes the root directory contains at least this file structure:
 

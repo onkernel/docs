@@ -12,6 +12,10 @@ Deploy an app to Kernel from the current directory.
 | `--env <ENV_VAR=VAL>`, `-e` | Adds environment variables to the app. May be specified multiple times. Optional. |
 | `--env-file <file>` | Read environment variables from a .env file. May be specified multiple times. Optional. |
 
+<Info>
+The entrypoint file and dependency manifest (`package.json` for JS/TS, `pyproject.toml` for Python) must both be in the root directory of your project.
+</Info>
+
 ## `kernel invoke <app_name> <action_name>`
 Invoke a specific app action by its name. Generates an Invocation.
 
