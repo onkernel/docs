@@ -47,8 +47,8 @@
           {
             "group": "Get Started",
             "pages": [
-              "quickstart",
-              "introduction"
+              "introduction",
+              "quickstart"
             ]
           },
           {
