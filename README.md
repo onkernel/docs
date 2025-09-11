@@ -7,7 +7,7 @@
   <a href="https://x.com/rfgarcia"><img src="https://img.shields.io/twitter/follow/rfgarcia" alt="Follow @rfgarcia"></a>
 </p>
 
-This is the documentation for the Kernel platform. It's connected to [docs.onkernel.com](https://docs.onkernel.com).
+This is the documentation for the Kernel platform. It's connected to [onkernel.com/docs](https://onkernel.com/docs).
 
 ## Code Snippets
 
