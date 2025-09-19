@@ -1,0 +1,26 @@
+---
+title: "Val Town"
+---
+
+[Val Town](https://www.val.town/) is a serverless platform to run Typescript automations. You can think of it like Zapier for software developers.
+
+Because Val Town can't launch a local browser, Kernel lets you use tools like Puppeteer or Playwright on Val Town by connecting to a remote browser session hosted on Kernel's infrastructure.
+
+## Quick start with Puppeteer
+1. Create a free [Kernel account](https://onkernel.com/) and generate an API key from Settings → API Keys
+2. Remix this [Kernel starter val](https://www.val.town/x/onkernel/kernel_starter)
+3. Add it to your Val Town val's Environment Variables (left sidebar) as `KERNEL_API_KEY`
+4. Click **Run** on `puppeteer.ts`
+5. View logs for output
+
+## Quick start with Playwright
+
+Kernel also supports Playwright sessions.
+
+The steps are nearly identical:
+
+1. Remix this [Kernel starter val](https://www.val.town/x/onkernel/kernel_starter)
+2. Add your `KERNEL_API_KEY` to Environment Variables
+3. Set `TMPDIR` to `/tmp` to avoid Playwright file-system warnings
+4. Click **Run** on `playwright.ts`
+5. Check the logs for output
