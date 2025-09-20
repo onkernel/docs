@@ -70,10 +70,10 @@
             "group": "App Platform",
             "pages": [
               "apps/develop",
-              "apps/secrets",
               "apps/deploy",
               "apps/invoke",
               "apps/stop",
+              "apps/secrets",
               "apps/status",
               "apps/logs"
             ]
