@@ -9,7 +9,38 @@ Terminating an invocation also destroys any browsers associated with it.
 </Info>
 
 ## Via API
-Stopping an invocation via the API is not available yet, but it's coming very soon.
+You can stop an invocation by setting its status to `failed`. This will cancel the invocation and mark it as terminated.
+
+<CodeGroup>
+
+```typescript Typescript/Javascript
+import Kernel from '@onkernel/sdk';
+
+const client = new Kernel({
+  apiKey: 'My API Key',
+});
+
+const invocation = await client.invocations.update('invocation_id', {
+  status: 'failed',
+  output: JSON.stringify({ error: 'Invocation cancelled by user' })
+});
+```
+
+```python Python
+from kernel import Kernel
+
+client = Kernel(
+    api_key="My API Key",
+)
+
+invocation = client.invocations.update(
+    id="invocation_id",
+    status='failed',
+    output='{"error":"Invocation cancelled by user"}'
+)
+```
+
+</CodeGroup>
 
 ## Via CLI
 Use `ctrl-c` in the terminal tab where you launched the invocation.
