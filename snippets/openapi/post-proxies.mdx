@@ -6,9 +6,9 @@ const client = new Kernel({
   apiKey: 'My API Key',
 });
 
-const invocation = await client.invocations.retrieve('rr33xuugxj9h0bkf1rdt2bet');
+const proxy = await client.proxies.create({ type: 'datacenter' });
 
-console.log(invocation.id);
+console.log(proxy.id);
 ```
 
 
@@ -18,9 +18,9 @@ from kernel import Kernel
 client = Kernel(
     api_key="My API Key",
 )
-invocation = client.invocations.retrieve(
-    "rr33xuugxj9h0bkf1rdt2bet",
+proxy = client.proxies.create(
+    type="datacenter",
 )
-print(invocation.id)
+print(proxy.id)
 ```
 </CodeGroup>

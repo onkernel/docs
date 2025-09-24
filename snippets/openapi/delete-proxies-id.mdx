@@ -6,9 +6,7 @@ const client = new Kernel({
   apiKey: 'My API Key',
 });
 
-const invocation = await client.invocations.retrieve('rr33xuugxj9h0bkf1rdt2bet');
-
-console.log(invocation.id);
+await client.proxies.delete('id');
 ```
 
 
@@ -18,9 +16,8 @@ from kernel import Kernel
 client = Kernel(
     api_key="My API Key",
 )
-invocation = client.invocations.retrieve(
-    "rr33xuugxj9h0bkf1rdt2bet",
+client.proxies.delete(
+    "id",
 )
-print(invocation.id)
 ```
 </CodeGroup>
