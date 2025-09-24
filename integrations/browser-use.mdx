@@ -1,0 +1,103 @@
+---
+title: "Browser Use"
+---
+
+[Browser Use](https://github.com/browser-use/browser-use) is the AI browser agent that empowers anyone to automate repetitive online tasks, no code required. By integrating with Kernel, you can run Browser Use Agents and automations with cloud-hosted browsers.
+
+## Adding Kernel to existing Browser Use implementations
+
+If you already have a Browser Use implementation, you can easily switch to using Kernel's cloud browsers by updating your Browser definition.
+
+### 1. Install the Kernel SDK
+
+```bash
+uv add kernel
+```
+
+### 2. Initialize Kernel and create a browser
+
+Import the libraries and create a cloud browser session:
+
+```python
+from kernel import Kernel
+from browser_use import Browser, Agent
+
+# Initialize Kernel client
+client = Kernel(api_key="your-api-key")
+
+# Create a Kernel browser session
+kernel_browser = client.browsers.create()
+```
+
+### 3. Update your Browser definition
+
+Replace your existing Browser initialization to use Kernel's CDP URL and display settings:
+
+```python
+# Update your Browser definition to use Kernel's CDP URL
+browser = Browser(
+    cdp_url=kernel_browser.cdp_ws_url,
+    headless=False,
+    window_size={'width': 1024, 'height': 786},
+    viewport={'width': 1024, 'height': 786},
+    device_scale_factor=1.0
+)
+```
+
+### 4. Create and run your agent
+
+Use your existing Agent setup with the Kernel-powered browser:
+
+```python
+# Use with your existing Agent setup
+agent = Agent(
+    task="Your automation task",
+    llm=your_llm_instance,
+    browser_session=browser
+)
+
+# Run your automation
+result = agent.run()
+
+# Clean up
+client.browsers.delete_by_id(kernel_browser.session_id)
+```
+
+<Info>
+If you're using Browser Use versions `< 0.7.9`, you may need to use a [custom resize class](https://github.com/onkernel/create-kernel-app/blob/main/templates/python/browser-use/session.py) to correct viewport sizing for the browser session. Here's how to use it:
+
+```python
+agent = Agent(
+    task="Your automation task",
+    llm=your_llm_instance,
+    browser_session=BrowserSessionCustomResize(cdp_url=kernel_browser.cdp_ws_url)
+)
+```
+</Info>
+
+## Quick setup with our Browser Use example app
+
+Alternatively, you can use our Kernel app template that includes a pre-configured Browser Use integration:
+
+```bash
+npx @onkernel/create-kernel-app my-browser-use-app
+```
+
+Choose Python as the programming language and then select `browser-use` as the template.
+
+Then follow the [Quickstart guide](/quickstart/) to deploy and run your Browser Use automation on Kernel's infrastructure.
+
+## Benefits of using Kernel with Browser Use
+
+- **No local browser management**: Run automations without installing or maintaining browsers locally
+- **Scalability**: Launch multiple browser sessions in parallel
+- **Stealth mode**: Built-in anti-detection features for web scraping
+- **Session persistence**: Maintain browser state across automation runs
+- **Live view**: Debug your automations with real-time browser viewing
+
+## Next steps
+
+- Check out [live view](/browsers/live-view) for debugging your automations
+- Learn about [stealth mode](/browsers/stealth) for avoiding detection
+- Learn how to properly [terminate browser sessions](/browsers/termination)
+- Learn how to [deploy](/apps/deploy) your Browser Use app to Kernel
