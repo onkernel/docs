@@ -10,8 +10,19 @@ If you already have a Browser Use implementation, you can easily switch to using
 
 ### 1. Install the Kernel SDK
 
+Add Kernel to your project dependencies in `pyproject.toml`:
+
+```toml
+dependencies = [
+    "kernel>=0.11.1",
+    # ... your other dependencies
+]
+```
+
+Then install it using uv:
+
 ```bash
-pip install onkernel
+uv pip install kernel
 ```
 
 ### 2. Initialize Kernel and create a browser
