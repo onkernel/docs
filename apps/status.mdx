@@ -3,11 +3,54 @@ title: "Status"
 ---
 
 import GetInvocationStatus from '/snippets/openapi/get-invocations-id.mdx';
+import GetInvocationEvents from '/snippets/openapi/get-invocations-id-events.mdx';
 
-Once you've [deployed](/apps/deploy) an app and invoked it, you can check its status.
-
-<GetInvocationStatus />
+Once you've [deployed](/apps/deploy) an app and invoked it, you can monitor its status using streaming for real-time updates or polling for periodic checks.
 
 <Info>
   An invocation ends once its code execution finishes.
 </Info>
+
+## Streaming Status Updates
+
+For real-time status monitoring, use `follow` to [stream invocation events](/api-reference/invocations/stream-invocation-events-via-sse). This provides immediate updates as your invocation progresses and is more efficient than polling.
+
+<GetInvocationEvents />
+
+### Example
+
+Here's an example showing how to handle streaming status updates:
+
+```javascript
+const result = await client.invocations.retrieve(invocation.id);
+
+const follow = await client.invocations.follow(result.id);
+for await (const evt of follow) {
+  if (evt.event === 'invocation_state') {
+    console.log(`Status: ${evt.invocation.status}`);
+
+    if (evt.invocation.status === 'succeeded') {
+      console.log('✅ Invocation completed successfully!');
+      if (evt.invocation.output) {
+        console.log('Result:', JSON.parse(evt.invocation.output));
+      }
+    } else if (evt.invocation.status === 'failed') {
+      console.log('❌ Invocation failed');
+      if (evt.invocation.status_reason) {
+        console.log('Error:', evt.invocation.status_reason);
+      }
+    }
+  } else if (evt.event === 'error') {
+    console.error('🚨 Error:', evt.error.message);
+  }
+}
+
+console.log('✅ Invocation successful!');
+console.log('Invocation result:', JSON.stringify(result, null, 2));
+```
+
+## Polling Status Updates
+
+Alternatively, you can poll the status endpoint using `retrieve` to check the invocation status periodically.
+
+<GetInvocationStatus />
