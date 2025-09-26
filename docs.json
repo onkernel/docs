@@ -82,6 +82,7 @@
             "group": "Integrations",
             "pages": [
               "integrations/browser-use",
+              "integrations/magnitude",
               "integrations/valtown",
               "integrations/vercel"
             ]
