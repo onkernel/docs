@@ -83,6 +83,7 @@
             "pages": [
               "integrations/browser-use",
               "integrations/magnitude",
+              "integrations/stagehand",
               "integrations/valtown",
               "integrations/vercel"
             ]
