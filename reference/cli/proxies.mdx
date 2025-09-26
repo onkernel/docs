@@ -1,0 +1,117 @@
+---
+title: "Proxies"
+---
+
+Manage proxy configurations for enhanced browser sessions. Proxy configurations help avoid bot detection by routing browser traffic through different IP addresses and locations.
+
+<Warning>
+This feature is currently in beta and available under the `kernel beta proxies` command.
+</Warning>
+
+## Overview
+
+### `kernel beta proxies list`
+List all proxy configurations.
+
+### `kernel beta proxies get <id>`
+Get detailed information about a specific proxy configuration.
+
+| Argument | Description |
+|----------|-------------|
+| `<id>` | Proxy configuration ID. Required. |
+
+### `kernel beta proxies create`
+Create a new proxy configuration.
+
+| Flag | Description |
+|------|-------------|
+| `--type <type>` | Proxy type: `datacenter`, `isp`, `residential`, `mobile`, or `custom`. Required. |
+| `--name <name>` | Proxy configuration name. Optional. |
+
+#### Location Flags (for datacenter, isp, residential, mobile types)
+
+| Flag | Description |
+|------|-------------|
+| `--country <code>` | ISO 3166 country code or EU. Required for `datacenter` and `isp` types. |
+| `--city <name>` | City name (no spaces, e.g., `sanfrancisco`). Optional. |
+| `--state <code>` | Two-letter state code. Optional. |
+| `--zip <code>` | US ZIP code. Optional. |
+| `--asn <number>` | Autonomous system number (e.g., `AS15169`). Optional. |
+
+#### Additional Flags
+
+| Flag | Description |
+|------|-------------|
+| `--os <system>` | Operating system for residential proxies: `windows`, `macos`, or `android`. Optional. |
+| `--carrier <name>` | Mobile carrier for mobile proxies. Optional. |
+
+#### Custom Proxy Flags
+
+| Flag | Description |
+|------|-------------|
+| `--host <address>` | Proxy host address or IP. Required for `custom` type. |
+| `--port <number>` | Proxy port. Required for `custom` type. |
+| `--username <user>` | Username for proxy authentication. Optional. |
+| `--password <pass>` | Password for proxy authentication. Optional. |
+
+### `kernel beta proxies delete <id>`
+Delete a proxy configuration.
+
+| Argument | Description |
+|----------|-------------|
+| `<id>` | Proxy configuration ID. Required. |
+
+| Flag | Description |
+|------|-------------|
+| `--yes`, `-y` | Skip confirmation prompt. Optional. |
+
+## Proxy Types
+
+Proxy types are ranked from best to worst for bot detection avoidance:
+
+1. **mobile** - Mobile carrier proxies (highest anonymity)
+2. **residential** - Residential IP proxies
+3. **isp** - ISP proxies
+4. **datacenter** - Datacenter proxies
+5. **custom** - Your own proxy server (depends on your setup)
+
+## Examples
+
+### Create a datacenter proxy
+```bash
+kernel beta proxies create --type datacenter --country US --name "US Datacenter"
+```
+
+### Create a residential proxy with location
+```bash
+kernel beta proxies create --type residential --country US --city sanfrancisco --state CA
+```
+
+### Create a mobile proxy
+```bash
+kernel beta proxies create --type mobile --country US --carrier verizon
+```
+
+### Create a custom proxy
+```bash
+kernel beta proxies create --type custom --host proxy.example.com --port 8080 --username myuser --password mypass
+```
+
+### List all proxies
+```bash
+kernel beta proxies list
+```
+
+### Get proxy details
+```bash
+kernel beta proxies get proxy_123abc
+```
+
+### Delete a proxy
+```bash
+kernel beta proxies delete proxy_123abc --yes
+```
+
+## Using Proxies with Browsers
+
+Once you've created a proxy configuration, you can use it with browser sessions through the API. See the [API Reference](/api-reference/proxies/create-proxy) for details on integrating proxies with browser creation.
