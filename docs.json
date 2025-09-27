@@ -63,7 +63,19 @@
               "browsers/termination",
               "browsers/file-io",
               "browsers/live-view",
-              "browsers/replays"
+              "browsers/replays",
+              "browsers/configure-proxy"
+            ]
+          },
+          {
+            "group": "Proxies",
+            "pages": [
+              "proxies/overview",
+              "proxies/datacenter",
+              "proxies/isp",
+              "proxies/residential",
+              "proxies/mobile",
+              "proxies/custom"
             ]
           },
           {
