@@ -1,0 +1,291 @@
+---
+title: "Configure Proxy"
+---
+
+Kernel browsers can be configured to route traffic through proxies for enhanced privacy, geographic targeting, and bot detection avoidance. You can either create reusable proxy configurations or use them directly with browsers.
+
+## Using proxies with browsers
+
+To use a proxy with a browser, specify the `proxy_id` parameter when creating the browser session:
+
+<CodeGroup>
+
+```typescript Typescript/Javascript
+import { Kernel } from '@onkernel/sdk';
+const kernel = new Kernel();
+
+// First, create a proxy configuration
+const proxy = await kernel.proxies.create({
+  type: 'residential',
+  name: 'US Residential',
+  config: {
+    country: 'US'
+  }
+});
+
+// Then use it with a browser
+const browser = await kernel.browsers.create({
+  proxy_id: proxy.id,
+  stealth: true  // Recommended when using proxies
+});
+```
+
+```Python Python
+import kernel
+client = kernel.Kernel()
+
+# First, create a proxy configuration
+proxy = client.proxies.create(
+    type='residential',
+    name='US Residential',
+    config={
+        'country': 'US'
+    }
+)
+
+# Then use it with a browser
+browser = client.browsers.create(
+    proxy_id=proxy.id,
+    stealth=True  # Recommended when using proxies
+)
+```
+
+</CodeGroup>
+
+## Reusing proxy configurations
+
+Once created, proxy configurations can be reused across multiple browser sessions:
+
+<CodeGroup>
+
+```typescript Typescript/Javascript
+// Get existing proxies
+const proxies = await kernel.proxies.list();
+const usProxy = proxies.find(p => p.name === 'US Residential');
+
+// Create multiple browsers with the same proxy
+const browsers = [];
+for (let i = 0; i < 5; i++) {
+  const browser = await kernel.browsers.create({
+    proxy_id: usProxy.id
+  });
+  browsers.push(browser);
+}
+```
+
+```Python Python
+# Get existing proxies
+proxies = client.proxies.list()
+us_proxy = next(p for p in proxies if p.name == 'US Residential')
+
+# Create multiple browsers with the same proxy
+browsers = []
+for i in range(5):
+    browser = client.browsers.create(
+        proxy_id=us_proxy.id
+    )
+    browsers.append(browser)
+```
+
+</CodeGroup>
+
+## Best practices
+
+### 1. Combine with stealth mode
+
+When using proxies, always enable stealth mode for better bot detection avoidance:
+
+<CodeGroup>
+
+```typescript Typescript/Javascript
+const browser = await kernel.browsers.create({
+  proxy_id: proxy.id,
+  stealth: true
+});
+```
+
+```Python Python
+browser = client.browsers.create(
+    proxy_id=proxy.id,
+    stealth=True
+)
+```
+
+</CodeGroup>
+
+### 2. Match proxy type to use case
+
+Choose the appropriate proxy type based on your needs:
+
+- **Mobile**: Best for avoiding detection, slowest
+- **Residential**: Great for avoiding detection, moderate speed
+- **ISP**: Good balance of speed and detection avoidance
+- **Datacenter**: Fastest but most easily detected
+- **Custom**: Use your own proxy infrastructure
+
+### 3. Geographic consistency
+
+Ensure proxy location matches your browser profile's location:
+
+<CodeGroup>
+
+```typescript Typescript/Javascript
+// Create a profile with US location
+const profile = await kernel.profiles.create({
+  name: 'US User',
+  locale: 'en-US',
+  timezone: 'America/New_York'
+});
+
+// Use a US proxy to match
+const proxy = await kernel.proxies.create({
+  type: 'residential',
+  config: {
+    country: 'US',
+    state: 'NY'
+  }
+});
+
+// Create browser with matching profile and proxy
+const browser = await kernel.browsers.create({
+  profile_id: profile.id,
+  proxy_id: proxy.id
+});
+```
+
+```Python Python
+# Create a profile with US location
+profile = client.profiles.create(
+    name='US User',
+    locale='en-US',
+    timezone='America/New_York'
+)
+
+# Use a US proxy to match
+proxy = client.proxies.create(
+    type='residential',
+    config={
+        'country': 'US',
+        'state': 'NY'
+    }
+)
+
+# Create browser with matching profile and proxy
+browser = client.browsers.create(
+    profile_id=profile.id,
+    proxy_id=proxy.id
+)
+```
+
+</CodeGroup>
+
+## Proxy rotation strategies
+
+### Sequential rotation
+
+Rotate through proxies in order:
+
+<CodeGroup>
+
+```typescript Typescript/Javascript
+const proxies = await kernel.proxies.list();
+let currentIndex = 0;
+
+function getNextProxy() {
+  const proxy = proxies[currentIndex];
+  currentIndex = (currentIndex + 1) % proxies.length;
+  return proxy;
+}
+
+// Use different proxy for each task
+for (const task of tasks) {
+  const proxy = getNextProxy();
+  const browser = await kernel.browsers.create({
+    proxy_id: proxy.id
+  });
+  await performTask(browser, task);
+  await browser.close();
+}
+```
+
+```Python Python
+proxies = client.proxies.list()
+current_index = 0
+
+def get_next_proxy():
+    global current_index
+    proxy = proxies[current_index]
+    current_index = (current_index + 1) % len(proxies)
+    return proxy
+
+# Use different proxy for each task
+for task in tasks:
+    proxy = get_next_proxy()
+    browser = client.browsers.create(
+        proxy_id=proxy.id
+    )
+    await perform_task(browser, task)
+    browser.close()
+```
+
+</CodeGroup>
+
+### Random rotation
+
+Randomly select proxies for better distribution:
+
+<CodeGroup>
+
+```typescript Typescript/Javascript
+const proxies = await kernel.proxies.list();
+
+function getRandomProxy() {
+  const index = Math.floor(Math.random() * proxies.length);
+  return proxies[index];
+}
+
+const browser = await kernel.browsers.create({
+  proxy_id: getRandomProxy().id
+});
+```
+
+```Python Python
+import random
+
+proxies = client.proxies.list()
+
+def get_random_proxy():
+    return random.choice(proxies)
+
+browser = client.browsers.create(
+    proxy_id=get_random_proxy().id
+)
+```
+
+</CodeGroup>
+
+## Troubleshooting
+
+### Proxy connection failures
+
+If a browser fails to connect through a proxy:
+
+1. Verify the proxy configuration is correct
+2. Check if the proxy type supports your target site
+3. Try a different proxy type or location
+4. Ensure custom proxies are accessible
+
+### Performance issues
+
+If experiencing slow performance:
+
+1. Consider using faster proxy types (ISP or datacenter)
+2. Choose proxy locations closer to target servers
+3. Reduce the number of concurrent browsers per proxy
+4. Monitor proxy health and rotate out slow proxies
+
+## Related resources
+
+- [Proxies Overview](/proxies/overview) - Learn about proxy types and capabilities
+- [Stealth Mode](/browsers/stealth) - Enhance bot detection avoidance
+- [Browser Profiles](/browsers/profiles) - Create consistent browser identities

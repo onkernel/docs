@@ -1,0 +1,206 @@
+---
+title: "Custom Proxies"
+---
+
+Custom proxies allow you to use your own proxy servers with Kernel browsers. This is useful when you have existing proxy infrastructure or specific proxy requirements not covered by Kernel's managed options.
+
+## When to use
+
+- You have your own proxy infrastructure
+- Need to use specific proxy providers
+- Require proxies with special configurations
+- Want to use SOCKS5 or HTTP proxies
+
+## Configuration
+
+Custom proxies require host, port, and optional authentication:
+
+<CodeGroup>
+
+```typescript Typescript/Javascript
+import { Kernel } from '@onkernel/sdk';
+const kernel = new Kernel();
+
+const proxy = await kernel.proxies.create({
+  type: 'custom',
+  name: 'My Private Proxy',
+  config: {
+    host: 'proxy.example.com',
+    port: 8080,
+    username: 'user123',
+    password: 'secure_password'
+  }
+});
+
+const browser = await kernel.browsers.create({
+  proxy_id: proxy.id
+});
+```
+
+```Python Python
+import kernel
+client = kernel.Kernel()
+
+proxy = client.proxies.create(
+    type='custom',
+    name='My Private Proxy',
+    config={
+        'host': 'proxy.example.com',
+        'port': 8080,
+        'username': 'user123',
+        'password': 'secure_password'
+    }
+)
+
+browser = client.browsers.create(
+    proxy_id=proxy.id
+)
+```
+
+</CodeGroup>
+
+## Configuration Parameters
+
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| `host` | Yes | Proxy server hostname or IP address |
+| `port` | Yes | Proxy server port |
+| `username` | No | Username for proxy authentication |
+| `password` | No* | Password for proxy authentication |
+
+*Note: When creating a proxy with authentication, provide the password. The API response will only indicate if a password exists (`has_password: true`) but won't return the actual password for security reasons.
+
+## Example: Using IP-based proxy
+
+<CodeGroup>
+
+```typescript Typescript/Javascript
+const proxy = await kernel.proxies.create({
+  type: 'custom',
+  name: 'Direct IP Proxy',
+  config: {
+    host: '192.168.1.100',
+    port: 3128
+  }
+});
+
+const browser = await kernel.browsers.create({
+  proxy_id: proxy.id
+});
+```
+
+```Python Python
+proxy = client.proxies.create(
+    type='custom',
+    name='Direct IP Proxy',
+    config={
+        'host': '192.168.1.100',
+        'port': 3128
+    }
+)
+
+browser = client.browsers.create(
+    proxy_id=proxy.id
+)
+```
+
+</CodeGroup>
+
+## Example: Rotating through multiple custom proxies
+
+<CodeGroup>
+
+```typescript Typescript/Javascript
+// List of your proxy servers
+const proxyServers = [
+  { host: 'proxy1.example.com', port: 8080 },
+  { host: 'proxy2.example.com', port: 8080 },
+  { host: 'proxy3.example.com', port: 8080 }
+];
+
+// Create proxy configurations
+const proxies = [];
+for (const server of proxyServers) {
+  const proxy = await kernel.proxies.create({
+    type: 'custom',
+    name: `Custom ${server.host}`,
+    config: {
+      host: server.host,
+      port: server.port,
+      username: 'shared_user',
+      password: 'shared_pass'
+    }
+  });
+  proxies.push(proxy);
+}
+
+// Rotate through proxies for different tasks
+for (let i = 0; i < tasks.length; i++) {
+  const proxy = proxies[i % proxies.length];
+  const browser = await kernel.browsers.create({
+    proxy_id: proxy.id
+  });
+
+  // Perform task with this proxy
+  await performTask(browser);
+  await browser.close();
+}
+```
+
+```Python Python
+# List of your proxy servers
+proxy_servers = [
+    {'host': 'proxy1.example.com', 'port': 8080},
+    {'host': 'proxy2.example.com', 'port': 8080},
+    {'host': 'proxy3.example.com', 'port': 8080}
+]
+
+# Create proxy configurations
+proxies = []
+for server in proxy_servers:
+    proxy = client.proxies.create(
+        type='custom',
+        name=f"Custom {server['host']}",
+        config={
+            'host': server['host'],
+            'port': server['port'],
+            'username': 'shared_user',
+            'password': 'shared_pass'
+        }
+    )
+    proxies.append(proxy)
+
+# Rotate through proxies for different tasks
+for i, task in enumerate(tasks):
+    proxy = proxies[i % len(proxies)]
+    browser = client.browsers.create(
+        proxy_id=proxy.id
+    )
+
+    # Perform task with this proxy
+    await perform_task(browser)
+    browser.close()
+```
+
+</CodeGroup>
+
+## Security Considerations
+
+- Proxy passwords are encrypted and never returned in API responses
+- Ensure your proxy servers use secure connections
+- Regularly rotate credentials for security
+- Monitor proxy usage for unauthorized access
+
+## Benefits
+
+- Use existing proxy infrastructure
+- Full control over proxy configuration
+- Cost-effective if you already have proxies
+- Flexibility to use any proxy provider
+
+## Limitations
+
+- You're responsible for proxy reliability
+- No automatic rotation or failover
+- Quality depends on your proxy provider
+- Must manage authentication credentials

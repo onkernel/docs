@@ -1,0 +1,236 @@
+---
+title: "Mobile Proxies"
+---
+
+Mobile proxies route traffic through mobile carrier networks, providing the highest level of trust and the best bot detection avoidance. They use IP addresses from real mobile devices on cellular networks.
+
+## When to use
+
+- Accessing sites with the strongest anti-bot protection
+- Mobile app automation and testing
+- Need to appear as genuine mobile users
+- Success rate is more important than speed
+
+## Configuration Options
+
+Mobile proxies support carrier selection and advanced targeting:
+
+<CodeGroup>
+
+```typescript Typescript/Javascript
+import { Kernel } from '@onkernel/sdk';
+const kernel = new Kernel();
+
+const proxy = await kernel.proxies.create({
+  type: 'mobile',
+  name: 'Verizon Mobile',
+  config: {
+    country: 'US',
+    carrier: 'verizon',
+    state: 'CA',
+    city: 'losangeles',
+    zip: '90001',
+    asn: '6167'
+  }
+});
+
+const browser = await kernel.browsers.create({
+  proxy_id: proxy.id
+});
+```
+
+```Python Python
+import kernel
+client = kernel.Kernel()
+
+proxy = client.proxies.create(
+    type='mobile',
+    name='Verizon Mobile',
+    config={
+        'country': 'US',
+        'carrier': 'verizon',
+        'state': 'CA',
+        'city': 'losangeles',
+        'zip': '90001',
+        'asn': '6167'
+    }
+)
+
+browser = client.browsers.create(
+    proxy_id=proxy.id
+)
+```
+
+</CodeGroup>
+
+## Configuration Parameters
+
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| `country` | No* | ISO 3166 country code (required if `city` is provided) |
+| `carrier` | No | Mobile carrier name (see supported carriers below) |
+| `state` | No | Two-letter US state code |
+| `city` | No | City name without spaces |
+| `zip` | No | US ZIP code |
+| `asn` | No | Autonomous System Number |
+
+## Supported Carriers
+
+Major carriers worldwide are supported, including:
+
+**US Carriers:**
+- `att` - AT&T
+- `verizon` - Verizon
+- `tmobile` - T-Mobile
+- `sprint` - Sprint
+- `comcast` - Xfinity Mobile
+- `cox` - Cox Mobile
+
+**International Carriers:**
+- `vodafone` - Vodafone
+- `orange` - Orange
+- `telefonica` - Telefónica
+- `dt` - Deutsche Telekom
+- `docomo` - NTT Docomo
+- `chinamobile` - China Mobile
+- `airtel` - Bharti Airtel
+- `telstra` - Telstra
+
+[View all supported carriers in the API reference]
+
+## Example: Mobile app testing
+
+Test mobile-specific features across different carriers:
+
+<CodeGroup>
+
+```typescript Typescript/Javascript
+const carriers = ['verizon', 'att', 'tmobile'];
+
+for (const carrier of carriers) {
+  const proxy = await kernel.proxies.create({
+    type: 'mobile',
+    name: `${carrier} Mobile Test`,
+    config: {
+      country: 'US',
+      carrier: carrier
+    }
+  });
+
+  const browser = await kernel.browsers.create({
+    proxy_id: proxy.id,
+    // Use mobile viewport
+    viewport: { width: 390, height: 844 }
+  });
+
+  const playwright = await chromium.connectOverCDP(browser.cdp_ws_url);
+  const context = playwright.contexts()[0];
+  const page = context.pages()[0];
+
+  // Test mobile-specific features
+  await page.goto('https://m.example.com');
+
+  // Verify carrier-specific behavior
+  const userAgent = await page.evaluate(() => navigator.userAgent);
+  console.log(`Testing with ${carrier}: ${userAgent}`);
+
+  await browser.close();
+}
+```
+
+```Python Python
+carriers = ['verizon', 'att', 'tmobile']
+
+for carrier in carriers:
+    proxy = client.proxies.create(
+        type='mobile',
+        name=f'{carrier} Mobile Test',
+        config={
+            'country': 'US',
+            'carrier': carrier
+        }
+    )
+
+    browser = client.browsers.create(
+        proxy_id=proxy.id,
+        # Use mobile viewport
+        viewport={'width': 390, 'height': 844}
+    )
+
+    playwright_browser = playwright.chromium.connect_over_cdp(browser.cdp_ws_url)
+    context = playwright_browser.contexts[0]
+    page = context.pages[0]
+
+    # Test mobile-specific features
+    await page.goto('https://m.example.com')
+
+    # Verify carrier-specific behavior
+    user_agent = await page.evaluate('() => navigator.userAgent')
+    print(f'Testing with {carrier}: {user_agent}')
+
+    browser.close()
+```
+
+</CodeGroup>
+
+## Example: Location-based mobile testing
+
+Combine carrier and location for precise mobile testing:
+
+<CodeGroup>
+
+```typescript Typescript/Javascript
+const proxy = await kernel.proxies.create({
+  type: 'mobile',
+  name: 'NYC Verizon Mobile',
+  config: {
+    country: 'US',
+    carrier: 'verizon',
+    state: 'NY',
+    city: 'newyork',
+    zip: '10001'
+  }
+});
+
+// Perfect for testing location-based mobile apps
+const browser = await kernel.browsers.create({
+  proxy_id: proxy.id,
+  stealth: true  // Enhanced stealth for mobile
+});
+```
+
+```Python Python
+proxy = client.proxies.create(
+    type='mobile',
+    name='NYC Verizon Mobile',
+    config={
+        'country': 'US',
+        'carrier': 'verizon',
+        'state': 'NY',
+        'city': 'newyork',
+        'zip': '10001'
+    }
+)
+
+# Perfect for testing location-based mobile apps
+browser = client.browsers.create(
+    proxy_id=proxy.id,
+    stealth=True  # Enhanced stealth for mobile
+)
+```
+
+</CodeGroup>
+
+## Benefits
+
+- Best bot detection avoidance
+- Genuine mobile carrier IP addresses
+- Carrier-specific testing capabilities
+- High trust score from websites
+
+## Limitations
+
+- Slowest proxy type
+- Higher latency than other options
+- Most expensive proxy type
+- IP addresses rotate frequently

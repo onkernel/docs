@@ -60,10 +60,22 @@
               "browsers/standby",
               "browsers/persistence",
               "browsers/profiles",
+              "browsers/configure-proxy",
               "browsers/termination",
               "browsers/file-io",
               "browsers/live-view",
               "browsers/replays"
+            ]
+          },
+          {
+            "group": "Proxies",
+            "pages": [
+              "proxies/overview",
+              "proxies/datacenter",
+              "proxies/isp",
+              "proxies/residential",
+              "proxies/mobile",
+              "proxies/custom"
             ]
           },
           {

@@ -1,0 +1,118 @@
+---
+title: "Datacenter Proxies"
+---
+
+Datacenter proxies route traffic through commercial data center servers. While they offer the fastest speeds and highest reliability, they are the most easily detected by anti-bot systems.
+
+## When to use
+
+- High-volume data collection
+- Speed is the primary concern
+- Target sites have minimal bot detection
+- Cost-effective proxy solution needed
+
+## Configuration
+
+Datacenter proxies require only a country specification:
+
+<CodeGroup>
+
+```typescript Typescript/Javascript
+import { Kernel } from '@onkernel/sdk';
+const kernel = new Kernel();
+
+const proxy = await kernel.proxies.create({
+  type: 'datacenter',
+  name: 'US Datacenter',
+  config: {
+    country: 'US'
+  }
+});
+
+const browser = await kernel.browsers.create({
+  proxy_id: proxy.id
+});
+```
+
+```Python Python
+import kernel
+client = kernel.Kernel()
+
+proxy = client.proxies.create(
+    type='datacenter',
+    name='US Datacenter',
+    config={
+        'country': 'US'
+    }
+)
+
+browser = client.browsers.create(
+    proxy_id=proxy.id
+)
+```
+
+</CodeGroup>
+
+## Supported Countries
+
+Use ISO 3166 country codes (e.g., `US`, `GB`, `FR`) or `EU` for European Union exit nodes.
+
+## Example: Multi-region scraping
+
+Create multiple datacenter proxies for different regions:
+
+<CodeGroup>
+
+```typescript Typescript/Javascript
+const regions = ['US', 'EU', 'JP'];
+const proxies = [];
+
+for (const region of regions) {
+  const proxy = await kernel.proxies.create({
+    type: 'datacenter',
+    name: `${region} Datacenter`,
+    config: {
+      country: region
+    }
+  });
+  proxies.push(proxy);
+}
+
+// Use different proxies for different tasks
+for (const proxy of proxies) {
+  const browser = await kernel.browsers.create({
+    proxy_id: proxy.id
+  });
+  // Perform region-specific tasks
+  await browser.close();
+}
+```
+
+```Python Python
+regions = ['US', 'EU', 'JP']
+proxies = []
+
+for region in regions:
+    proxy = client.proxies.create(
+        type='datacenter',
+        name=f'{region} Datacenter',
+        config={'country': region}
+    )
+    proxies.append(proxy)
+
+# Use different proxies for different tasks
+for proxy in proxies:
+    browser = client.browsers.create(
+        proxy_id=proxy.id
+    )
+    # Perform region-specific tasks
+    browser.close()
+```
+
+</CodeGroup>
+
+## Limitations
+
+- Most easily detected by anti-bot systems
+- May be blocked by sites with strict bot detection
+- IP addresses are from known datacenter ranges
