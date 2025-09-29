@@ -19,11 +19,9 @@ const proxy = await kernel.proxies.create({
   name: 'California Residential',
   config: {
     country: 'US',
-    state: 'CA',
-    city: 'sanfrancisco',  // No spaces in city names
+    city: 'sanfrancisco',
     zip: '94102',
-    os: 'windows',
-    asn: '7922'  // Comcast
+    os: 'windows'
   }
 });
 
@@ -41,11 +39,9 @@ proxy = client.proxies.create(
     name='California Residential',
     config={
         'country': 'US',
-        'state': 'CA',
-        'city': 'sanfrancisco',  # No spaces in city names
+        'city': 'sanfrancisco',
         'zip': '94102',
-        'os': 'windows',
-        'asn': '7922'  # Comcast
+        'os': 'windows'
     }
 )
 
@@ -60,133 +56,9 @@ browser = client.browsers.create(
 
 | Parameter | Required | Description |
 |-----------|----------|-------------|
-| `country` | No* | ISO 3166 country code (required if `city` is provided) |
-| `state` | No | Two-letter US state code |
-| `city` | No | City name without spaces (e.g., `sanfrancisco`) |
-| `zip` | No | US ZIP code |
+| `country` | No | ISO 3166 country code (e.g., `US`, `GB`) |
+| `state` | No | Two-letter state code (e.g., `NY`, `CA`). Only supported for US and Australia. **Cannot be used with `city`**. |
+| `city` | No | City name (lowercase letters only, no spaces, e.g., `sanfrancisco`, `newyork`). Required if `zip` is provided. |
+| `zip` | No | US ZIP code (5 digits only, e.g., `94102`). **Requires `city` to be provided**. |
 | `os` | No | Operating system: `windows`, `macos`, or `android` |
-| `asn` | No | Autonomous System Number (see [ASN list](https://bgp.potaroo.net/cidr/autnums.html)) |
-
-## Example: Location-specific scraping
-
-Target specific geographic locations for localized content:
-
-<CodeGroup>
-
-```typescript Typescript/Javascript
-// Create proxies for different cities
-const cities = [
-  { city: 'newyork', state: 'NY' },
-  { city: 'losangeles', state: 'CA' },
-  { city: 'chicago', state: 'IL' }
-];
-
-for (const location of cities) {
-  const proxy = await kernel.proxies.create({
-    type: 'residential',
-    name: `${location.city} Residential`,
-    config: {
-      country: 'US',
-      state: location.state,
-      city: location.city
-    }
-  });
-
-  const browser = await kernel.browsers.create({
-    proxy_id: proxy.id
-  });
-
-  // Access location-specific content
-  const playwright = await chromium.connectOverCDP(browser.cdp_ws_url);
-  const context = playwright.contexts()[0];
-  const page = context.pages()[0];
-
-  await page.goto('https://example.com/local-deals');
-  // Scrape location-specific data
-
-  await browser.close();
-}
-```
-
-```Python Python
-# Create proxies for different cities
-cities = [
-    {'city': 'newyork', 'state': 'NY'},
-    {'city': 'losangeles', 'state': 'CA'},
-    {'city': 'chicago', 'state': 'IL'}
-]
-
-for location in cities:
-    proxy = client.proxies.create(
-        type='residential',
-        name=f"{location['city']} Residential",
-        config={
-            'country': 'US',
-            'state': location['state'],
-            'city': location['city']
-        }
-    )
-
-    browser = client.browsers.create(
-        proxy_id=proxy.id
-    )
-
-    # Access location-specific content
-    playwright_browser = playwright.chromium.connect_over_cdp(browser.cdp_ws_url)
-    context = playwright_browser.contexts[0]
-    page = context.pages[0]
-
-    await page.goto('https://example.com/local-deals')
-    # Scrape location-specific data
-
-    browser.close()
-```
-
-</CodeGroup>
-
-## Example: OS-specific targeting
-
-Target specific operating systems for platform-specific content:
-
-<CodeGroup>
-
-```typescript Typescript/Javascript
-const proxy = await kernel.proxies.create({
-  type: 'residential',
-  name: 'Windows Residential',
-  config: {
-    country: 'US',
-    os: 'windows'
-  }
-});
-
-// Use for Windows-specific sites or apps
-```
-
-```Python Python
-proxy = client.proxies.create(
-    type='residential',
-    name='Windows Residential',
-    config={
-        'country': 'US',
-        'os': 'windows'
-    }
-)
-
-# Use for Windows-specific sites or apps
-```
-
-</CodeGroup>
-
-## Benefits
-
-- Excellent bot detection avoidance
-- Real residential IP addresses
-- Fine-grained geographic targeting
-- Operating system targeting
-
-## Limitations
-
-- Slower than datacenter and ISP proxies
-- IP addresses may rotate
-- Higher cost than other proxy types
+| `asn` | No | Autonomous System Number (e.g., `AS7922`, `7922`). **Mutually exclusive with geo-location targeting** (`country`, `city`, `state`, `zip`). |

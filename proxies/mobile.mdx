@@ -20,10 +20,8 @@ const proxy = await kernel.proxies.create({
   config: {
     country: 'US',
     carrier: 'verizon',
-    state: 'CA',
     city: 'losangeles',
-    zip: '90001',
-    asn: '6167'
+    zip: '90001'
   }
 });
 
@@ -42,10 +40,8 @@ proxy = client.proxies.create(
     config={
         'country': 'US',
         'carrier': 'verizon',
-        'state': 'CA',
         'city': 'losangeles',
-        'zip': '90001',
-        'asn': '6167'
+        'zip': '90001'
     }
 )
 
@@ -60,12 +56,12 @@ browser = client.browsers.create(
 
 | Parameter | Required | Description |
 |-----------|----------|-------------|
-| `country` | No* | ISO 3166 country code (required if `city` is provided) |
-| `carrier` | No | Mobile carrier name (see supported carriers below) |
-| `state` | No | Two-letter US state code |
-| `city` | No | City name without spaces |
-| `zip` | No | US ZIP code |
-| `asn` | No | Autonomous System Number |
+| `country` | No | ISO 3166 country code (e.g., `US`, `GB`) |
+| `carrier` | No | Mobile carrier name (e.g., `verizon`, `att`) |
+| `state` | No | Two-letter state code (e.g., `NY`, `CA`). Only supported for US and Australia. **Cannot be used with `city`**. |
+| `city` | No | City name (lowercase letters only, no spaces, e.g., `newyork`, `losangeles`). Required if `zip` is provided. |
+| `zip` | No | US ZIP code (5 digits only, e.g., `10001`). **Requires `city` to be provided**. |
+| `asn` | No | Autonomous System Number (e.g., `AS15169`, `15169`). **Mutually exclusive with geo-location targeting** (`country`, `city`, `state`, `zip`). |
 
 ## Supported Carriers
 

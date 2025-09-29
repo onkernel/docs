@@ -6,8 +6,6 @@ ISP (Internet Service Provider) proxies combine the speed of datacenter proxies 
 
 ## Configuration
 
-ISP proxies require a country specification:
-
 <CodeGroup>
 
 ```typescript Typescript/Javascript
@@ -46,6 +44,12 @@ browser = client.browsers.create(
 
 </CodeGroup>
 
+## Configuration Parameters
+
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| `country` | Yes | ISO 3166 country code |
+
 ## Supported Countries
 
-Use ISO 3166 country codes (e.g., `US`, `GB`, `DE`) or `EU` for European Union exit nodes.
+Use ISO 3166 country codes (e.g., `US`, `GB`, `FR`) or `EU` for European Union exit nodes.
