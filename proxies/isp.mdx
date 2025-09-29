@@ -2,11 +2,11 @@
 title: "ISP Proxies"
 ---
 
-ISP (Internet Service Provider) proxies combine the speed of datacenter proxies with better legitimacy, as they use IP addresses assigned by real ISPs. They offer a good balance between performance and detection avoidance.
+ISP proxies use residential IP addresses hosted on high-speed servers, purchased or leased from Internet Service Providers for commercial use. Target sites classify them as residential IPs, allowing you to access websites like a real user while maintaining the speed and reliability of datacenter infrastructure. They're ideal when datacenter proxies are blocked but you still need fast, cost-effective proxies.
 
 ## Configuration
 
-ISP proxies require a country to route traffic through:
+Create an ISP proxy with optional targeting:
 
 <CodeGroup>
 
@@ -16,10 +16,7 @@ const kernel = new Kernel();
 
 const proxy = await kernel.proxies.create({
   type: 'isp',
-  name: 'US ISP Proxy',
-  config: {
-    country: 'US'
-  }
+  name: 'My ISP Proxy'
 });
 
 const browser = await kernel.browsers.create({
@@ -33,10 +30,7 @@ client = kernel.Kernel()
 
 proxy = client.proxies.create(
     type='isp',
-    name='US ISP Proxy',
-    config={
-        'country': 'US'
-    }
+    name='My ISP Proxy'
 )
 
 browser = client.browsers.create(
@@ -48,4 +42,4 @@ browser = client.browsers.create(
 
 ## Configuration Parameters
 
-- **`country`** (required) - ISO 3166 country code (e.g., `US`, `GB`, `DE`) or `EU` for European Union exit nodes
+- **`country`** (required) - ISO 3166 country code. Not many countries are supported for ISP proxies, try to create a proxy in a country to check if it's available.
