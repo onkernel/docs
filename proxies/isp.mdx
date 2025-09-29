@@ -4,13 +4,6 @@ title: "ISP Proxies"
 
 ISP (Internet Service Provider) proxies combine the speed of datacenter proxies with better legitimacy, as they use IP addresses assigned by real ISPs. They offer a good balance between performance and detection avoidance.
 
-## When to use
-
-- Need better detection avoidance than datacenter proxies
-- Require consistent, static IP addresses
-- Speed is still important
-- Medium-level bot detection on target sites
-
 ## Configuration
 
 ISP proxies require a country specification:
@@ -56,78 +49,3 @@ browser = client.browsers.create(
 ## Supported Countries
 
 Use ISO 3166 country codes (e.g., `US`, `GB`, `DE`) or `EU` for European Union exit nodes.
-
-## Example: Long-running sessions
-
-ISP proxies are ideal for maintaining long-running browser sessions:
-
-<CodeGroup>
-
-```typescript Typescript/Javascript
-// Create ISP proxy for stable connection
-const proxy = await kernel.proxies.create({
-  type: 'isp',
-  name: 'Stable ISP',
-  config: {
-    country: 'US'
-  }
-});
-
-// Create persistent browser session
-const browser = await kernel.browsers.create({
-  proxy_id: proxy.id,
-  persistence: true,
-  timeout_seconds: 3600 // 1 hour
-});
-
-// Connect and perform long-running tasks
-const playwright = await chromium.connectOverCDP(browser.cdp_ws_url);
-const context = playwright.contexts()[0];
-const page = context.pages()[0];
-
-// Maintain session for extended operations
-await page.goto('https://example.com');
-// ... perform extended operations
-```
-
-```Python Python
-# Create ISP proxy for stable connection
-proxy = client.proxies.create(
-    type='isp',
-    name='Stable ISP',
-    config={
-        'country': 'US'
-    }
-)
-
-# Create persistent browser session
-browser = client.browsers.create(
-    proxy_id=proxy.id,
-    persistence=True,
-    timeout_seconds=3600  # 1 hour
-)
-
-# Connect and perform long-running tasks
-playwright_browser = playwright.chromium.connect_over_cdp(browser.cdp_ws_url)
-context = playwright_browser.contexts[0]
-page = context.pages[0]
-
-# Maintain session for extended operations
-await page.goto('https://example.com')
-# ... perform extended operations
-```
-
-</CodeGroup>
-
-## Benefits
-
-- Better than datacenter for avoiding detection
-- Static IP addresses for session consistency
-- High uptime and reliability
-- Good speed performance
-
-## Limitations
-
-- More expensive than datacenter proxies
-- Still detectable by advanced anti-bot systems
-- Limited geographic granularity
