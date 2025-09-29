@@ -60,7 +60,7 @@
               "browsers/standby",
               "browsers/persistence",
               "browsers/profiles",
-              "browsers/configure-proxy",
+              "browsers/proxies",
               "browsers/termination",
               "browsers/file-io",
               "browsers/live-view",
