@@ -4,9 +4,9 @@ title: "Mobile Proxies"
 
 Mobile proxies route traffic through mobile carrier networks, providing the highest level of trust and the best bot detection avoidance. They use IP addresses from real mobile devices on cellular networks.
 
-## Configuration Options
+## Configuration
 
-Mobile proxies support carrier selection and advanced targeting:
+Mobile proxies support carrier selection and advanced targeting options:
 
 <CodeGroup>
 
@@ -54,14 +54,12 @@ browser = client.browsers.create(
 
 ## Configuration Parameters
 
-| Parameter | Required | Description |
-|-----------|----------|-------------|
-| `country` | No | ISO 3166 country code (e.g., `US`, `GB`) |
-| `carrier` | No | Mobile carrier name (e.g., `verizon`, `att`) |
-| `state` | No | Two-letter state code (e.g., `NY`, `CA`). Only supported for US and Australia. **Cannot be used with `city`**. |
-| `city` | No | City name (lowercase letters only, no spaces, e.g., `newyork`, `losangeles`). Required if `zip` is provided. |
-| `zip` | No | US ZIP code (5 digits only, e.g., `10001`). **Requires `city` to be provided**. |
-| `asn` | No | Autonomous System Number (e.g., `AS15169`, `15169`). **Mutually exclusive with geo-location targeting** (`country`, `city`, `state`, `zip`). |
+- **`country`** - ISO 3166 country code
+- **`carrier`** - Mobile carrier name (e.g., `verizon`, `att`, `tmobile`)
+- **`state`** - Two-letter state code. Only supported for US and Australia. Cannot be used with `city`
+- **`city`** - City name (lowercase, no spaces, e.g., `newyork`, `losangeles`). Required if `zip` is provided
+- **`zip`** - US ZIP code (5 digits). Requires `city` to be provided
+- **`asn`** - Autonomous System Number. Mutually exclusive with geo-location targeting
 
 ## Supported Carriers
 

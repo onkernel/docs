@@ -4,20 +4,13 @@ title: "Custom Proxies"
 
 Custom proxies allow you to use your own proxy servers with Kernel browsers. This is useful when you have existing proxy infrastructure or specific proxy requirements not covered by Kernel's managed options.
 
-
 ## Configuration
 
 <Note>
 Currently, only HTTPS proxies are supported for custom proxy configurations.
 </Note>
 
-| Parameter | Required | Description |
-|-----------|----------|-------------|
-| `host` | Yes | Proxy server hostname or IP address (max 253 characters) |
-| `port` | Yes | Proxy server port (1-65535) |
-| `username` | No | Username for proxy authentication (max 128 characters, alphanumeric plus `_`, `-`, `@`, `.`) |
-| `password` | No | Password for proxy authentication (5-128 characters, no whitespace or escape characters) |
-
+Specify the host, port, and optional authentication credentials for your proxy server:
 
 <CodeGroup>
 
@@ -63,6 +56,12 @@ browser = client.browsers.create(
 
 </CodeGroup>
 
+## Configuration Parameters
+
+- **`host`** (required) - Proxy server hostname or IP address
+- **`port`** (required) - Proxy server port (1-65535)
+- **`username`** - Username for proxy authentication
+- **`password`** - Password for proxy authentication (minimum 5 characters)
 
 <Note>
 When creating a proxy with authentication, provide the password. The API response will only indicate if a password exists (`has_password: true`) but won't return the actual password for security reasons.

@@ -6,6 +6,8 @@ Datacenter proxies route traffic through commercial data center servers. While t
 
 ## Configuration
 
+Datacenter proxies require a country to route traffic through:
+
 <CodeGroup>
 
 ```typescript Typescript/Javascript
@@ -46,10 +48,4 @@ browser = client.browsers.create(
 
 ## Configuration Parameters
 
-| Parameter | Required | Description |
-|-----------|----------|-------------|
-| `country` | Yes | ISO 3166 country code |
-
-## Supported Countries
-
-Use ISO 3166 country codes (e.g., `US`, `GB`, `FR`) or `EU` for European Union exit nodes.
+- **`country`** (required) - ISO 3166 country code (e.g., `US`, `GB`, `FR`) or `EU` for European Union exit nodes

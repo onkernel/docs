@@ -4,7 +4,7 @@ title: "Residential Proxies"
 
 Residential proxies route traffic through real residential IP addresses, making them highly effective at avoiding bot detection. They support advanced targeting options including city, state, and operating system.
 
-## Configuration Options
+## Configuration
 
 Residential proxies support multiple targeting parameters:
 
@@ -54,11 +54,9 @@ browser = client.browsers.create(
 
 ## Configuration Parameters
 
-| Parameter | Required | Description |
-|-----------|----------|-------------|
-| `country` | No | ISO 3166 country code (e.g., `US`, `GB`) |
-| `state` | No | Two-letter state code (e.g., `NY`, `CA`). Only supported for US and Australia. **Cannot be used with `city`**. |
-| `city` | No | City name (lowercase letters only, no spaces, e.g., `sanfrancisco`, `newyork`). Required if `zip` is provided. |
-| `zip` | No | US ZIP code (5 digits only, e.g., `94102`). **Requires `city` to be provided**. |
-| `os` | No | Operating system: `windows`, `macos`, or `android` |
-| `asn` | No | Autonomous System Number (e.g., `AS7922`, `7922`). **Mutually exclusive with geo-location targeting** (`country`, `city`, `state`, `zip`). |
+- **`country`** - ISO 3166 country code
+- **`state`** - Two-letter state code. Only supported for US and Australia. Cannot be used with `city`
+- **`city`** - City name (lowercase, no spaces, e.g., `sanfrancisco`, `newyork`). Required if `zip` is provided
+- **`zip`** - US ZIP code (5 digits). Requires `city` to be provided
+- **`os`** - Operating system: `windows`, `macos`, or `android`
+- **`asn`** - Autonomous System Number. Mutually exclusive with geo-location targeting
