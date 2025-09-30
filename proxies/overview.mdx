@@ -1,0 +1,94 @@
+---
+title: "Overview"
+---
+
+import CreateProxySnippet from '/snippets/openapi/post-proxies.mdx';
+import ListProxiesSnippet from '/snippets/openapi/get-proxies.mdx';
+import DeleteProxySnippet from '/snippets/openapi/delete-proxies-id.mdx';
+
+Kernel proxies enable you to route browser traffic through different types of proxy servers, providing enhanced privacy, flexibility, and bot detection avoidance. Proxies can be created once and reused across multiple browser sessions.
+
+## Proxy Types
+
+Kernel supports five types of proxies, ranked by quality (from best to worst):
+
+0. [**Custom**](/proxies/custom) - Your own proxy servers
+1. [**Mobile**](/proxies/mobile) - Traffic routed through mobile carrier networks
+2. [**Residential**](/proxies/residential) - Traffic routed through residential ISP connections
+3. [**ISP**](/proxies/isp) - Traffic routed through ISP data centers
+4. [**Datacenter**](/proxies/datacenter) - Traffic routed through commercial data centers
+
+## 1. Create a proxy
+
+Create a proxy configuration from the types above that can be reused across browser sessions:
+
+<CreateProxySnippet />
+
+## 2. List your proxies
+
+View all proxy configurations in your organization:
+
+<ListProxiesSnippet />
+
+## 3. Use with browsers
+
+Once created, you can attach a proxy to any browser session using the `proxy_id` parameter:
+
+<CodeGroup>
+
+```typescript Typescript/Javascript
+import { Kernel } from '@onkernel/sdk';
+const kernel = new Kernel();
+
+// Create or use existing proxy
+const proxy = await kernel.proxies.create({
+  type: 'residential',
+  name: 'US Residential',
+  config: {
+    country: 'US'
+  }
+});
+
+// Create browser with proxy
+const browser = await kernel.browsers.create({
+  proxy_id: proxy.id
+});
+```
+
+```Python Python
+import kernel
+client = kernel.Kernel()
+
+# Create or use existing proxy
+proxy = client.proxies.create(
+    type='residential',
+    name='US Residential',
+    config={
+        'country': 'US'
+    }
+)
+
+# Create browser with proxy
+browser = client.browsers.create(
+    proxy_id=proxy.id
+)
+```
+
+</CodeGroup>
+
+## 4. Delete a proxy
+
+When no longer needed, delete the proxy configuration:
+
+<DeleteProxySnippet />
+
+<Info>
+Deleting a proxy does not affect existing browser sessions that are currently using it. The configuration is only removed from your organization so it can't be used in future browser sessions.
+</Info>
+
+## Limitations
+
+Some sites are blocked by the proxy network:
+- Government websites
+- Google
+- LinkedIn

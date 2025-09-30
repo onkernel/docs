@@ -56,14 +56,30 @@
             "pages": [
               "browsers/create-a-browser",
               "browsers/headless",
-              "browsers/stealth",
               "browsers/standby",
               "browsers/persistence",
               "browsers/profiles",
               "browsers/termination",
               "browsers/file-io",
               "browsers/live-view",
-              "browsers/replays"
+              "browsers/replays",
+              {
+                "group": "Bot Anti-Detection",
+                "pages": [
+                  "browsers/stealth",
+                  {
+                    "group": "Proxies",
+                    "pages": [
+                      "proxies/overview",
+                      "proxies/custom",
+                      "proxies/mobile",
+                      "proxies/residential",
+                      "proxies/isp",
+                      "proxies/datacenter"
+                    ]
+                  }
+                ]
+              }
             ]
           },
           {

@@ -1,0 +1,51 @@
+---
+title: "Datacenter Proxies"
+---
+
+Datacenter proxies use IP addresses assigned from datacenter servers to route your traffic and access locations around the world. With a shorter journey and simplified architecture, datacenter proxies are both the fastest and most cost-effective proxy option.
+
+## Configuration
+
+Datacenter proxies require a country to route traffic through:
+
+<CodeGroup>
+
+```typescript Typescript/Javascript
+import { Kernel } from '@onkernel/sdk';
+const kernel = new Kernel();
+
+const proxy = await kernel.proxies.create({
+  type: 'datacenter',
+  name: 'US Datacenter',
+  config: {
+    country: 'US'
+  }
+});
+
+const browser = await kernel.browsers.create({
+  proxy_id: proxy.id
+});
+```
+
+```Python Python
+import kernel
+client = kernel.Kernel()
+
+proxy = client.proxies.create(
+    type='datacenter',
+    name='US Datacenter',
+    config={
+        'country': 'US'
+    }
+)
+
+browser = client.browsers.create(
+    proxy_id=proxy.id
+)
+```
+
+</CodeGroup>
+
+## Configuration Parameters
+
+- **`country`** (required) - ISO 3166 country code (e.g., `US`, `GB`, `FR`) or `EU` for European Union exit nodes

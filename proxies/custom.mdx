@@ -1,0 +1,68 @@
+---
+title: "Custom Proxies"
+---
+
+Custom proxies allow you to use your own proxy servers with Kernel browsers. This is useful when you have existing proxy infrastructure or specific proxy requirements not covered by Kernel's managed options.
+
+## Configuration
+
+<Tip>
+Currently, only HTTPS proxies are supported for custom proxy configurations.
+</Tip>
+
+Specify the host, port, and optional authentication credentials for your proxy server:
+
+<CodeGroup>
+
+```typescript Typescript/Javascript
+import { Kernel } from '@onkernel/sdk';
+const kernel = new Kernel();
+
+const proxy = await kernel.proxies.create({
+  type: 'custom',
+  name: 'My Private Proxy',
+  config: {
+    host: 'proxy.example.com',
+    port: 443,
+    username: 'user123',
+    password: 'secure_password'
+  }
+});
+
+const browser = await kernel.browsers.create({
+  proxy_id: proxy.id
+});
+```
+
+```Python Python
+import kernel
+client = kernel.Kernel()
+
+proxy = client.proxies.create(
+    type='custom',
+    name='My Private Proxy',
+    config={
+        'host': 'proxy.example.com',
+        'port': 443,
+        'username': 'user123',
+        'password': 'secure_password'
+    }
+)
+
+browser = client.browsers.create(
+    proxy_id=proxy.id
+)
+```
+
+</CodeGroup>
+
+## Configuration Parameters
+
+- **`host`** (required) - Proxy server hostname or IP address
+- **`port`** (required) - Proxy server port (1-65535)
+- **`username`** - Username for proxy authentication
+- **`password`** - Password for proxy authentication (minimum 5 characters)
+
+<Info>
+When creating a proxy with authentication, provide the password. The API response will only indicate if a password exists (`has_password: true`) but won't return the actual password for security reasons.
+</Info>
