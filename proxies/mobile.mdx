@@ -2,7 +2,7 @@
 title: "Mobile Proxies"
 ---
 
-Mobile proxies use real mobile IPs from devices on cellular networks worldwide. These IPs are distributed by ISPs to mobile devices, where real users opt-in to share their connection. Mobile proxies let you connect through 3G/4G mobile connections in every country and city, accessing the internet as a real mobile user would, with complete ASN, carrier, and mobile network targeting capabilities.
+Mobile proxies use real mobile IPs from devices on cellular networks worldwide. These IPs are distributed by ISPs to mobile devices, where real users opt-in to share their connection.
 
 ## Configuration
 
@@ -16,12 +16,10 @@ const kernel = new Kernel();
 
 const proxy = await kernel.proxies.create({
   type: 'mobile',
-  name: 'Verizon Mobile',
+  name: 'LA Mobile',
   config: {
     country: 'US',
-    carrier: 'verizon',
-    city: 'losangeles',
-    zip: '90001'
+    city: 'losangeles'
   }
 });
 
@@ -36,12 +34,10 @@ client = kernel.Kernel()
 
 proxy = client.proxies.create(
     type='mobile',
-    name='Verizon Mobile',
+    name='LA Mobile',
     config={
         'country': 'US',
-        'carrier': 'verizon',
-        'city': 'losangeles',
-        'zip': '90001'
+        'city': 'losangeles'
     }
 )
 
@@ -82,3 +78,9 @@ Major carriers worldwide are supported:
 - `chinamobile` - China Mobile
 - `airtel` - Bharti Airtel
 - `telstra` - Telstra
+
+See API reference for complete list of carriers.
+
+## Limitations
+
+Highly specific geotargeting may not have available IP addresses. Try creating a mobile proxy configuration to see if a specific geotargeting combination is available. Use less specific geotargeting where not available, or use residential proxies which are the most flexible option.
