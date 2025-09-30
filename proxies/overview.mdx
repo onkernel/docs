@@ -1,32 +1,26 @@
 ---
-title: "Proxies Overview"
+title: "Overview"
 ---
 
 import CreateProxySnippet from '/snippets/openapi/post-proxies.mdx';
 import ListProxiesSnippet from '/snippets/openapi/get-proxies.mdx';
 import DeleteProxySnippet from '/snippets/openapi/delete-proxies-id.mdx';
 
-Kernel proxies enable you to route browser traffic through different types of proxy servers, providing enhanced privacy, geographic flexibility, and bot detection avoidance. Proxies can be created once and reused across multiple browser sessions.
+Kernel proxies enable you to route browser traffic through different types of proxy servers, providing enhanced privacy, flexibility, and bot detection avoidance. Proxies can be created once and reused across multiple browser sessions.
 
 ## Proxy Types
 
-Kernel supports five types of proxies, ranked by quality for avoiding bot detection (from best to worst):
+Kernel supports five types of proxies, ranked by quality (from best to worst):
 
-1. **Mobile** - Traffic routed through mobile carrier networks
-2. **Residential** - Traffic routed through residential ISP connections
-3. **ISP** - Traffic routed through ISP data centers
-4. **Datacenter** - Traffic routed through commercial data centers
-5. **Custom** - Your own proxy servers
+0. [**Custom**](/proxies/custom) - Your own proxy servers
+1. [**Mobile**](/proxies/mobile) - Traffic routed through mobile carrier networks
+2. [**Residential**](/proxies/residential) - Traffic routed through residential ISP connections
+3. [**ISP**](/proxies/isp) - Traffic routed through ISP data centers
+4. [**Datacenter**](/proxies/datacenter) - Traffic routed through commercial data centers
 
 ## 1. Create a proxy
 
-<Info>
-First, install the Kernel SDK:
-- Typescript/Javascript: `npm install @onkernel/sdk`
-- Python: `pip install kernel`
-</Info>
-
-Create a proxy configuration that can be reused across browser sessions:
+Create a proxy configuration from the types above that can be reused across browser sessions:
 
 <CreateProxySnippet />
 
@@ -88,6 +82,6 @@ When no longer needed, delete the proxy configuration:
 
 <DeleteProxySnippet />
 
-<Note>
-Deleting a proxy does not affect existing browser sessions that are using it. The proxy configuration is only removed from your organization.
-</Note>
+<Info>
+Deleting a proxy does not affect existing browser sessions that are currently using it. The configuration is only removed from your organization so it can't be used in future browser sessions.
+</Info>

@@ -6,9 +6,9 @@ Custom proxies allow you to use your own proxy servers with Kernel browsers. Thi
 
 ## Configuration
 
-<Note>
+<Tip>
 Currently, only HTTPS proxies are supported for custom proxy configurations.
-</Note>
+</Tip>
 
 Specify the host, port, and optional authentication credentials for your proxy server:
 
@@ -63,6 +63,6 @@ browser = client.browsers.create(
 - **`username`** - Username for proxy authentication
 - **`password`** - Password for proxy authentication (minimum 5 characters)
 
-<Note>
+<Info>
 When creating a proxy with authentication, provide the password. The API response will only indicate if a password exists (`has_password: true`) but won't return the actual password for security reasons.
-</Note>
+</Info>

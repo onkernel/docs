@@ -55,7 +55,7 @@ browser = client.browsers.create(
 ## Configuration Parameters
 
 - **`country`** - ISO 3166 country code
-- **`carrier`** - Mobile carrier name (e.g., `verizon`, `att`, `tmobile`)
+- **`carrier`** - Mobile carrier name (see available carriers below)
 - **`state`** - Two-letter state code. Only supported for US and Australia. Cannot be used with `city`
 - **`city`** - City name (lowercase, no spaces, e.g., `newyork`, `losangeles`). Required if `zip` is provided
 - **`zip`** - US ZIP code (5 digits). Requires `city` to be provided
@@ -63,7 +63,7 @@ browser = client.browsers.create(
 
 ## Supported Carriers
 
-Major carriers worldwide are supported, including:
+Major carriers worldwide are supported:
 
 **US Carriers:**
 - `att` - AT&T
@@ -82,5 +82,3 @@ Major carriers worldwide are supported, including:
 - `chinamobile` - China Mobile
 - `airtel` - Bharti Airtel
 - `telstra` - Telstra
-
-[View all supported carriers in the API reference]
