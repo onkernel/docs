@@ -56,6 +56,13 @@
             "pages": [
               "browsers/create-a-browser",
               "browsers/headless",
+              "browsers/standby",
+              "browsers/persistence",
+              "browsers/profiles",
+              "browsers/termination",
+              "browsers/file-io",
+              "browsers/live-view",
+              "browsers/replays",
               {
                 "group": "Bot Anti-Detection",
                 "pages": [
@@ -72,14 +79,7 @@
                     ]
                   }
                 ]
-              },
-              "browsers/standby",
-              "browsers/persistence",
-              "browsers/profiles",
-              "browsers/termination",
-              "browsers/file-io",
-              "browsers/live-view",
-              "browsers/replays"
+              }
             ]
           },
           {
