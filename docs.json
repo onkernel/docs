@@ -98,6 +98,13 @@
             "group": "Integrations",
             "pages": [
               "integrations/browser-use",
+              {
+                "group": "Computer Use",
+                "pages": [
+                  "integrations/computer-use/anthropic",
+                  "integrations/computer-use/openai"
+                ]
+              },
               "integrations/magnitude",
               "integrations/stagehand",
               "integrations/valtown",
