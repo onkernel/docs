@@ -98,6 +98,7 @@
             "group": "Integrations",
             "pages": [
               "integrations/browser-use",
+              "integrations/computer-use-openai",
               "integrations/magnitude",
               "integrations/stagehand",
               "integrations/valtown",
