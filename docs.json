@@ -98,7 +98,7 @@
             "group": "Integrations",
             "pages": [
               "integrations/browser-use",
-              "integrations/computer-use",
+              "integrations/computer-use-anthropic",
               "integrations/magnitude",
               "integrations/stagehand",
               "integrations/valtown",
