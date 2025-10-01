@@ -2,7 +2,7 @@
 title: "Mobile Proxies"
 ---
 
-Mobile proxies use real mobile IPs from devices on cellular networks worldwide. These IPs are distributed by ISPs to mobile devices, where real users opt-in to share their connection.
+Mobile proxies use real mobile IPs from devices on cellular networks worldwide. These IPs are distributed by ISPs to mobile devices, where real users opt-in to share their connection. Mobile proxies have limited availability.
 
 ## Configuration
 
@@ -16,10 +16,9 @@ const kernel = new Kernel();
 
 const proxy = await kernel.proxies.create({
   type: 'mobile',
-  name: 'LA Mobile',
+  name: 'T-Mobile Proxy',
   config: {
-    country: 'US',
-    city: 'losangeles'
+    carrier: 'tmobile'
   }
 });
 
@@ -34,10 +33,9 @@ client = kernel.Kernel()
 
 proxy = client.proxies.create(
     type='mobile',
-    name='LA Mobile',
+    name='T-Mobile Proxy',
     config={
-        'country': 'US',
-        'city': 'losangeles'
+        'carrier': 'tmobile'
     }
 )
 
@@ -83,4 +81,6 @@ See API reference for complete list of carriers.
 
 ## Limitations
 
-Highly specific geotargeting may not have available IP addresses. Try creating a mobile proxy configuration to see if a specific geotargeting combination is available. Use less specific geotargeting where not available, or use residential proxies which are the most flexible option.
+Mobile proxies have limited availabilty, especially when more specific configuration options are provided. Sometimes, no mobile proxies are available in any region. Proxy availablity is tested when creating a proxy, and when associating a browser to a proxy. Use residential proxies for better availability, and prefer to use mobile only where it's required and limited availability can be tolerated.
+
+A 502 error is returned when no proxies are available.
