@@ -98,7 +98,12 @@
             "group": "Integrations",
             "pages": [
               "integrations/browser-use",
-              "integrations/computer-use-anthropic",
+              {
+                "group": "Computer Use",
+                "pages": [
+                  "integrations/computer-use/anthropic"
+                ]
+              },
               "integrations/magnitude",
               "integrations/stagehand",
               "integrations/valtown",
