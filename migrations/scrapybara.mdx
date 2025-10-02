@@ -13,8 +13,8 @@ title: "Scrapybara"
 | **CDP URL** | `instance.get_cdp_url().cdp_url` | Returns `cdp_ws_url` in create response |
 | **Live View** | `instance.get_stream_url().stream_url` | Returns `browser_live_view_url` in create response |
 | **Stealth Mode** | ❌ Not available | Create browser with `stealth: true` |
-| **Replays** | ❌ Not available | `client.browsers.replays.*` |
-| **Save Auth** | `instance.browser.save_auth(name)` | Create profile with `save_changes: true` |
+| **Replays** | ❌ Not available | `client.browsers.replays.start()` and `client.browsers.replays.stop()` |
+| **Save Auth** | `instance.browser.save_auth(name="default")` | Create [Profile](/browsers/profiles). Then create browser with `kernel.browsers.create(profile={"name": "profile1", "save_changes": True})` |
 
 ## How to migrate
 
@@ -35,7 +35,7 @@ async with async_playwright() as p:
     await page.goto("https://example.com")
     await browser.close()
 
-instance.browser.stop()
+instance.stop()
 ```
 
 **Kernel**
@@ -150,21 +150,21 @@ browser2 = await client.browsers.create(
 | **Create Browser** | `client.start_browser()` | `client.browsers.create()` |
 | **Get CDP URL** | `instance.get_cdp_url().cdp_url` | Returns `cdp_ws_url` in create response |
 | **Get Live View** | `instance.get_stream_url().stream_url` | Returns `browser_live_view_url` in create response |
-| **Delete Browser** | `instance.browser.stop()` | `client.browsers.deleteByID(session_id)` |
+| **Delete Browser** | `instance.stop()` | `client.browsers.delete_by_id(session_id)` |
 | **List Browsers** | `client.get_instances()` | `client.browsers.list()` |
-| **Save Auth State** | `instance.browser.save_auth(name)` | Create profile with `save_changes: true` |
-| **Load Auth State** | `instance.browser.authenticate(auth_state_id)` | `client.browsers.create({ profile: { name } })` |
+| **Save Auth State** | `instance.browser.save_auth(name="default")` | Create [Profile](/browsers/profiles). Then create browser with `kernel.browsers.create(profile={"name": "profile1", "save_changes": True})` |
+| **Load Auth State** | `instance.browser.authenticate(auth_state_id="xyz")` | `kernel.browsers.create(profile={"name": "profile1"})` |
 | **Pause/Resume** | `instance.pause()` / `instance.resume()` | Automatic standby mode |
 | **Screenshot** | `instance.screenshot()` | Use Playwright or Puppeteer |
 | **Timeout Config** | `timeout_hours` parameter | `timeout_seconds` parameter |
 | **Stealth Mode** | ❌ Not available | Create browser with `stealth: true` |
 | **Headless Mode** | ❌ Not available | Create browser with `headless: true` |
-| **Session Persistence** | Auth state only | Full state via `persistence: { id }` |
-| **Video Replays** | ❌ Not available | `client.browsers.replays.*` |
+| **Session Persistence** | Auth state only | Full browser state via creating browser with `persistence={"id": "persist-id"}` |
+| **Video Replays** | ❌ Not available | `client.browsers.replays.start()` and `client.browsers.replays.stop()` |
 | **File Upload** | `instance.upload()` | `client.browsers.fs.upload()` or Playwright |
-| **File Download** | Via browser, then `instance.file()` | `client.browsers.fs.readFile()` |
+| **File Download** | Via browser, then `instance.file()` | `client.browsers.fs.read_file()` |
 | **Process Control** | `instance.bash()` | `client.browsers.process.*` |
-| **Proxy Support** | ❌ Not available | `proxy_id` parameter + `client.proxies.*` |
+| **Proxy Support** | ❌ Not available | Create [Proxy](/proxies/overview#1-create-a-proxy). Then create browser with `client.browsers.create(proxy_id=proxy.id)` |
 
 ---
 
