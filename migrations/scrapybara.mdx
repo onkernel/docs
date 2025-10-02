@@ -11,8 +11,8 @@ title: "Scrapybara"
 | **Start Browser** | `client.start_browser()` | `client.browsers.create()` |
 | **Standby Mode** | `instance.pause()` / `instance.resume()` | Automatic standby mode |
 | **CDP URL** | `instance.get_cdp_url().cdp_url` | Returns `cdp_ws_url` in create response |
-| **Live View** | `instance.get_stream_url()` | Returns `browser_live_view_url` in create response |
-| **Stealth Mode** | ❌ Not available | `stealth: true` parameter |
+| **Live View** | `instance.get_stream_url().stream_url` | Returns `browser_live_view_url` in create response |
+| **Stealth Mode** | ❌ Not available | Create browser with `stealth: true` |
 | **Replays** | ❌ Not available | `client.browsers.replays.*` |
 | **Save Auth** | `instance.browser.save_auth(name)` | Create profile with `save_changes: true` |
 
@@ -149,7 +149,7 @@ browser2 = await client.browsers.create(
 |---------|-----------|--------|
 | **Create Browser** | `client.start_browser()` | `client.browsers.create()` |
 | **Get CDP URL** | `instance.get_cdp_url().cdp_url` | Returns `cdp_ws_url` in create response |
-| **Get Live View** | `instance.get_stream_url()` | Returns `browser_live_view_url` in create response |
+| **Get Live View** | `instance.get_stream_url().stream_url` | Returns `browser_live_view_url` in create response |
 | **Delete Browser** | `instance.browser.stop()` | `client.browsers.deleteByID(session_id)` |
 | **List Browsers** | `client.get_instances()` | `client.browsers.list()` |
 | **Save Auth State** | `instance.browser.save_auth(name)` | Create profile with `save_changes: true` |
@@ -157,8 +157,8 @@ browser2 = await client.browsers.create(
 | **Pause/Resume** | `instance.pause()` / `instance.resume()` | Automatic standby mode |
 | **Screenshot** | `instance.screenshot()` | Use Playwright or Puppeteer |
 | **Timeout Config** | `timeout_hours` parameter | `timeout_seconds` parameter |
-| **Stealth Mode** | ❌ Not available | `stealth: true` parameter |
-| **Headless Mode** | ❌ Not available | `headless: true` parameter |
+| **Stealth Mode** | ❌ Not available | Create browser with `stealth: true` |
+| **Headless Mode** | ❌ Not available | Create browser with `headless: true` |
 | **Session Persistence** | Auth state only | Full state via `persistence: { id }` |
 | **Video Replays** | ❌ Not available | `client.browsers.replays.*` |
 | **File Upload** | `instance.upload()` | `client.browsers.fs.upload()` or Playwright |
