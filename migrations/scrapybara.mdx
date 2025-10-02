@@ -2,7 +2,7 @@
 title: "Scrapybara"
 ---
 
-Scrapybara is shutting down their virtual desktop and browser service on **October 15, 2025**. If you're currently using Scrapybara for browser automation, Kernel is here to help you migrate seamlessly.
+[Scrapybara](https://scrapybara.com/) is shutting down their virtual desktop and browser service on **October 15, 2025**. If you're currently using Scrapybara for browser automation, Kernel is here to help you migrate seamlessly.
 
 This guide shows you how to migrate your Scrapybara browser automation code to Kernel with minimal changes to your existing workflow.
 
@@ -13,7 +13,7 @@ This guide shows you how to migrate your Scrapybara browser automation code to K
 | Feature | Scrapybara | Kernel |
 |---------|-----------|--------|
 | **Start Browser** | `client.start_browser()` → `instance.browser.start()` | `client.browsers.create()` |
-| **Standby Mode** | `instance.pause()` / `instance.resume()` | Automatic standby mode (no manual control) |
+| **Standby Mode** | `instance.pause()` / `instance.resume()` | Automatic standby mode |
 | **CDP URL** | `instance.browser.get_cdp_url()` | Returns `cdp_ws_url` in create response |
 | **Live View** | `instance.get_stream_url()` | Returns `browser_live_view_url` in create response |
 | **Stealth Mode** | ❌ Not available | `stealth: true` parameter |
@@ -189,7 +189,7 @@ browser2 = await client.browsers.create(
 | **List Browsers** | `client.get_instances()` | `client.browsers.list()` |
 | **Save Auth State** | `instance.browser.save_auth(name)` | Create profile with `save_changes: true` |
 | **Load Auth State** | `instance.browser.authenticate(auth_state_id)` | `client.browsers.create({ profile: { name } })` |
-| **Pause/Resume** | `instance.pause()` / `instance.resume()` | Automatic standby mode (no manual control) |
+| **Pause/Resume** | `instance.pause()` / `instance.resume()` | Automatic standby mode |
 | **Screenshot** | `instance.screenshot()` | Use Playwright after CDP connection |
 | **Timeout Config** | `timeout_hours` parameter | `timeout_seconds` parameter |
 | **Stealth Mode** | ❌ Not available | `stealth: true` parameter |
