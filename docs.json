@@ -106,6 +106,12 @@
                 ]
               },
               "integrations/magnitude",
+              {
+                "group": "Migrations",
+                "pages": [
+                  "integrations/migrations/scrapybara/scrapybara"
+                ]
+              },
               "integrations/stagehand",
               "integrations/valtown",
               "integrations/vercel"
