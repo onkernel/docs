@@ -62,15 +62,13 @@ await client.browsers.delete_by_id(kernel_browser.session_id)
 ```python
 # First session - save auth
 instance = client.start_browser()
-instance.browser.start()
 # ... login to website via Playwright ...
 auth_state = instance.browser.save_auth(name="my-login")
 instance.stop()
 
 # Second session - load auth
 instance2 = client.start_browser()
-instance2.browser.start()
-instance2.browser.authenticate(auth_state.auth_state_id)
+instance2.browser.authenticate(auth_state_id=auth_state.auth_state_id)
 # ... browser now has saved cookies ...
 ```
 
@@ -98,7 +96,7 @@ browser2 = await client.browsers.create(
 instance = client.start_browser()
 # ... trigger download in browser ...
 # Then use file operations
-downloaded_file = instance.file(action="read", path="/download/path")
+downloaded_file = instance.file(command="read", path="/download/path")
 ```
 
 **Kernel**
@@ -129,17 +127,15 @@ instance.resume()  # Resume work
 ```python
 # Automatic standby mode + persistence
 browser = await client.browsers.create(
-    persistence={"id": "my-long-session"},
-    timeout_seconds=86400  # 24 hours
+    persistence={"id": "my-long-session"}
 )
 # ... do some work ...
-await client.browsers.delete_by_id(browser.session_id)
+# Browser enters standby mode between connections
 
-# Later - automatically restored with full state
+# Later - reuse the exact browser instance with full state
 browser2 = await client.browsers.create(
     persistence={"id": "my-long-session"}
 )
-# Browser state fully restored (DOM, cookies, zoom, etc.)
 ```
 
 
