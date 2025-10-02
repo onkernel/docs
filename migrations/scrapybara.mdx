@@ -4,10 +4,6 @@ title: "Scrapybara"
 
 [Scrapybara](https://scrapybara.com/) is shutting down their virtual desktop and browser service on **October 15, 2025**. If you're currently using Scrapybara for browser automation, Kernel is here to help you migrate seamlessly.
 
-This guide shows you how to migrate your Scrapybara browser automation code to Kernel with minimal changes to your existing workflow.
-
----
-
 ## Key Concepts
 
 | Feature | Scrapybara | Kernel |
@@ -20,13 +16,11 @@ This guide shows you how to migrate your Scrapybara browser automation code to K
 | **Replays** | ❌ Not available | `client.browsers.replays.*` |
 | **Save Auth** | `instance.browser.save_auth(name)` | Create profile with `save_changes: true` |
 
----
+## How to migrate
 
-## Migration Examples
+### Basic Browser Creation
 
-### 1. Basic Browser Creation & CDP Connection
-
-#### Scrapybara
+**Scrapybara**
 ```python
 from scrapybara import Scrapybara
 from playwright.async_api import async_playwright
@@ -45,7 +39,7 @@ async with async_playwright() as p:
 instance.browser.stop()
 ```
 
-#### Kernel
+**Kernel**
 ```python
 from kernel import Kernel
 from playwright.async_api import async_playwright
@@ -63,11 +57,9 @@ async with async_playwright() as p:
 await client.browsers.delete_by_id(kernel_browser.session_id)
 ```
 
----
+### Save & Reuse Authentication
 
-### 2. Save & Reuse Authentication
-
-#### Scrapybara
+**Scrapybara**
 ```python
 # First session - save auth
 instance = client.start_browser()
@@ -83,7 +75,7 @@ instance2.browser.authenticate(auth_state.auth_state_id)
 # ... browser now has saved cookies ...
 ```
 
-#### Kernel
+**Kernel**
 ```python
 # First session - save auth
 profile = await client.profiles.create(name="my-login")
@@ -100,30 +92,9 @@ browser2 = await client.browsers.create(
 # ... browser now has saved cookies ...
 ```
 
----
+### File Download
 
-### 3. Stealth Mode & Anti-Detection
-
-#### Scrapybara
-```python
-# No built-in stealth mode
-instance = client.start_browser()
-# Must handle anti-detection manually or use external tools
-```
-
-#### Kernel
-```python
-# Built-in stealth mode with CAPTCHA solving
-browser = await client.browsers.create(
-    stealth=True  # Enables proxy + auto CAPTCHA solver
-)
-```
-
----
-
-### 4. File Download
-
-#### Scrapybara
+**Scrapybara**
 ```python
 instance = client.start_browser()
 # ... trigger download in browser ...
@@ -131,7 +102,7 @@ instance = client.start_browser()
 downloaded_file = instance.file(action="read", path="/download/path")
 ```
 
-#### Kernel
+**Kernel**
 ```python
 browser = await client.browsers.create()
 # ... trigger download in browser via Playwright ...
@@ -143,11 +114,9 @@ file_response = await client.browsers.fs.read_file(
 await file_response.write_to_file("local-file.pdf")
 ```
 
----
+### Long-Running Sessions
 
-### 5. Long-Running Sessions
-
-#### Scrapybara
+**Scrapybara**
 ```python
 # Pause/resume for long-running sessions
 instance = client.start_browser(timeout_hours=24)
@@ -157,7 +126,7 @@ instance.pause()  # Pause to save costs
 instance.resume()  # Resume work
 ```
 
-#### Kernel
+**Kernel**
 ```python
 # Automatic standby mode + persistence
 browser = await client.browsers.create(
@@ -174,9 +143,6 @@ browser2 = await client.browsers.create(
 # Browser state fully restored (DOM, cookies, zoom, etc.)
 ```
 
----
-
----
 
 ## Full API Comparison
 
@@ -190,25 +156,22 @@ browser2 = await client.browsers.create(
 | **Save Auth State** | `instance.browser.save_auth(name)` | Create profile with `save_changes: true` |
 | **Load Auth State** | `instance.browser.authenticate(auth_state_id)` | `client.browsers.create({ profile: { name } })` |
 | **Pause/Resume** | `instance.pause()` / `instance.resume()` | Automatic standby mode |
-| **Screenshot** | `instance.screenshot()` | Use Playwright after CDP connection |
+| **Screenshot** | `instance.screenshot()` | Use Playwright or Puppeteer |
 | **Timeout Config** | `timeout_hours` parameter | `timeout_seconds` parameter |
 | **Stealth Mode** | ❌ Not available | `stealth: true` parameter |
-| **Headless Mode** | Not explicitly documented | `headless: true` parameter |
+| **Headless Mode** | ❌ Not available | `headless: true` parameter |
 | **Session Persistence** | Auth state only | Full state via `persistence: { id }` |
 | **Video Replays** | ❌ Not available | `client.browsers.replays.*` |
 | **File Upload** | `instance.upload()` | `client.browsers.fs.upload()` or Playwright |
 | **File Download** | Via browser, then `instance.file()` | `client.browsers.fs.readFile()` |
 | **Process Control** | `instance.bash()` | `client.browsers.process.*` |
-| **Proxy Support** | Not documented | `proxy_id` parameter + `client.proxies.*` |
+| **Proxy Support** | ❌ Not available | `proxy_id` parameter + `client.proxies.*` |
 
 ---
 
 ## Need Help?
 
-* **Documentation**: [docs.onkernel.com](https://www.onkernel.com/docs/introduction)
-* **Dashboard**: [dashboard.onkernel.com](https://dashboard.onkernel.com)
-* **Quick Templates**: `npx @onkernel/create-kernel-app`
+* **Contact Us** on [Discord](https://discord.gg/FBrveQRcud)
+* **Sign-Up** [here](https://dashboard.onkernel.com/sign-up)
+* **Check out** our open source repos [here](https://github.com/onkernel/kernel-images)
 
----
-
-*Welcome to Kernel! We're excited to help you build crazy fast, reliable browser automations.*
