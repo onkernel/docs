@@ -10,7 +10,7 @@ title: "Scrapybara"
 |---------|-----------|--------|
 | **Start Browser** | `client.start_browser()` | `client.browsers.create()` |
 | **Standby Mode** | `instance.pause()` / `instance.resume()` | Automatic standby mode |
-| **CDP URL** | `instance.browser.get_cdp_url()` | Returns `cdp_ws_url` in create response |
+| **CDP URL** | `instance.get_cdp_url().cdp_url` | Returns `cdp_ws_url` in create response |
 | **Live View** | `instance.get_stream_url()` | Returns `browser_live_view_url` in create response |
 | **Stealth Mode** | ❌ Not available | `stealth: true` parameter |
 | **Replays** | ❌ Not available | `client.browsers.replays.*` |
@@ -27,8 +27,7 @@ from playwright.async_api import async_playwright
 
 client = Scrapybara(api_key="your_api_key")
 instance = client.start_browser(timeout_hours=1)
-browser_session = instance.browser.start()
-cdp_url = browser_session.cdp_url
+cdp_url = instance.get_cdp_url().cdp_url
 
 async with async_playwright() as p:
     browser = await p.chromium.connect_over_cdp(cdp_url)
@@ -148,8 +147,8 @@ browser2 = await client.browsers.create(
 
 | Feature | Scrapybara | Kernel |
 |---------|-----------|--------|
-| **Create Browser** | `client.start_browser()` → `instance.browser.start()` | `client.browsers.create()` |
-| **Get CDP URL** | `instance.browser.get_cdp_url()` | Returns `cdp_ws_url` in create response |
+| **Create Browser** | `client.start_browser()` | `client.browsers.create()` |
+| **Get CDP URL** | `instance.get_cdp_url().cdp_url` | Returns `cdp_ws_url` in create response |
 | **Get Live View** | `instance.get_stream_url()` | Returns `browser_live_view_url` in create response |
 | **Delete Browser** | `instance.browser.stop()` | `client.browsers.deleteByID(session_id)` |
 | **List Browsers** | `client.get_instances()` | `client.browsers.list()` |
