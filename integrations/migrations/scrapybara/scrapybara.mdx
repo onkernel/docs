@@ -8,28 +8,17 @@ This guide shows you how to migrate your Scrapybara browser automation code to K
 
 ---
 
-## Browser API Comparison
+## Key Concepts
 
 | Feature | Scrapybara | Kernel |
 |---------|-----------|--------|
-| **Create Browser** | `client.start_browser()` → `instance.browser.start()` | `client.browsers.create()` |
-| **Get CDP URL** | `instance.browser.get_cdp_url()` | Returns `cdp_ws_url` in create response |
-| **Get Live View** | `instance.get_stream_url()` | Returns `browser_live_view_url` in create response |
-| **Delete Browser** | `instance.browser.stop()` | `client.browsers.deleteByID(session_id)` |
-| **List Browsers** | `client.get_instances()` | `client.browsers.list()` |
-| **Save Auth State** | `instance.browser.save_auth(name)` | Create profile with `save_changes: true` |
-| **Load Auth State** | `instance.browser.authenticate(auth_state_id)` | `client.browsers.create({ profile: { name } })` |
-| **Pause/Resume** | `instance.pause()` / `instance.resume()` | Automatic standby mode (no manual control) |
-| **Screenshot** | `instance.screenshot()` | Use Playwright after CDP connection |
-| **Timeout Config** | `timeout_hours` parameter | `timeout_seconds` parameter |
+| **Start Browser** | `client.start_browser()` → `instance.browser.start()` | `client.browsers.create()` |
+| **Standby Mode** | `instance.pause()` / `instance.resume()` | Automatic standby mode (no manual control) |
+| **CDP URL** | `instance.browser.get_cdp_url()` | Returns `cdp_ws_url` in create response |
+| **Live View** | `instance.get_stream_url()` | Returns `browser_live_view_url` in create response |
 | **Stealth Mode** | ❌ Not available | `stealth: true` parameter |
-| **Headless Mode** | Not explicitly documented | `headless: true` parameter |
-| **Session Persistence** | Auth state only | Full state via `persistence: { id }` |
-| **Video Replays** | ❌ Not available | `client.browsers.replays.*` |
-| **File Upload** | `instance.upload()` | `client.browsers.fs.upload()` or Playwright |
-| **File Download** | Via browser, then `instance.file()` | `client.browsers.fs.readFile()` |
-| **Process Control** | `instance.bash()` | `client.browsers.process.*` |
-| **Proxy Support** | Not documented | `proxy_id` parameter + `client.proxies.*` |
+| **Replays** | ❌ Not available | `client.browsers.replays.*` |
+| **Save Auth** | `instance.browser.save_auth(name)` | Create profile with `save_changes: true` |
 
 ---
 
@@ -184,6 +173,33 @@ browser2 = await client.browsers.create(
 )
 # Browser state fully restored (DOM, cookies, zoom, etc.)
 ```
+
+---
+
+---
+
+## Full API Comparison
+
+| Feature | Scrapybara | Kernel |
+|---------|-----------|--------|
+| **Create Browser** | `client.start_browser()` → `instance.browser.start()` | `client.browsers.create()` |
+| **Get CDP URL** | `instance.browser.get_cdp_url()` | Returns `cdp_ws_url` in create response |
+| **Get Live View** | `instance.get_stream_url()` | Returns `browser_live_view_url` in create response |
+| **Delete Browser** | `instance.browser.stop()` | `client.browsers.deleteByID(session_id)` |
+| **List Browsers** | `client.get_instances()` | `client.browsers.list()` |
+| **Save Auth State** | `instance.browser.save_auth(name)` | Create profile with `save_changes: true` |
+| **Load Auth State** | `instance.browser.authenticate(auth_state_id)` | `client.browsers.create({ profile: { name } })` |
+| **Pause/Resume** | `instance.pause()` / `instance.resume()` | Automatic standby mode (no manual control) |
+| **Screenshot** | `instance.screenshot()` | Use Playwright after CDP connection |
+| **Timeout Config** | `timeout_hours` parameter | `timeout_seconds` parameter |
+| **Stealth Mode** | ❌ Not available | `stealth: true` parameter |
+| **Headless Mode** | Not explicitly documented | `headless: true` parameter |
+| **Session Persistence** | Auth state only | Full state via `persistence: { id }` |
+| **Video Replays** | ❌ Not available | `client.browsers.replays.*` |
+| **File Upload** | `instance.upload()` | `client.browsers.fs.upload()` or Playwright |
+| **File Download** | Via browser, then `instance.file()` | `client.browsers.fs.readFile()` |
+| **Process Control** | `instance.bash()` | `client.browsers.process.*` |
+| **Proxy Support** | Not documented | `proxy_id` parameter + `client.proxies.*` |
 
 ---
 
