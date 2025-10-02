@@ -17,6 +17,7 @@
   },
   "contextual": {
     "options": [
+      "copy",
       "chatgpt",
       "claude"
     ]
