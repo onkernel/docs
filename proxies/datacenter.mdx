@@ -16,7 +16,7 @@ const kernel = new Kernel();
 
 const proxy = await kernel.proxies.create({
   type: 'datacenter',
-  name: 'US Datacenter',
+  name: 'my-us-datacenter',
   config: {
     country: 'US'
   }
@@ -33,7 +33,7 @@ client = kernel.Kernel()
 
 proxy = client.proxies.create(
     type='datacenter',
-    name='US Datacenter',
+    name='my-us-datacenter',
     config={
         'country': 'US'
     }
