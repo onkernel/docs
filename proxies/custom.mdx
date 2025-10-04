@@ -7,7 +7,7 @@ Custom proxies allow you to use your own proxy servers with Kernel browsers. Thi
 ## Configuration
 
 <Tip>
-Currently, only HTTPS proxies are supported for custom proxy configurations.
+HTTP and HTTPS proxies are supported for custom proxy configurations. If no protocol is specified, HTTPS is used by default.
 </Tip>
 
 Specify the host, port, and optional authentication credentials for your proxy server:
@@ -20,7 +20,7 @@ const kernel = new Kernel();
 
 const proxy = await kernel.proxies.create({
   type: 'custom',
-  name: 'My Private Proxy',
+  name: 'my-private-proxy',
   config: {
     host: 'proxy.example.com',
     port: 443,
@@ -40,7 +40,7 @@ client = kernel.Kernel()
 
 proxy = client.proxies.create(
     type='custom',
-    name='My Private Proxy',
+    name='my-private-proxy',
     config={
         'host': 'proxy.example.com',
         'port': 443,

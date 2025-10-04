@@ -113,6 +113,12 @@
             ]
           },
           {
+            "group": "Migrations",
+            "pages": [
+              "migrations/scrapybara"
+            ]
+          },
+          {
             "group": "Community",
             "pages": [
               "community/github",

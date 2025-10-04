@@ -43,7 +43,7 @@ const kernel = new Kernel();
 // Create or use existing proxy
 const proxy = await kernel.proxies.create({
   type: 'residential',
-  name: 'US Residential',
+  name: 'my-us-residential',
   config: {
     country: 'US'
   }
@@ -62,7 +62,7 @@ client = kernel.Kernel()
 # Create or use existing proxy
 proxy = client.proxies.create(
     type='residential',
-    name='US Residential',
+    name='my-us-residential',
     config={
         'country': 'US'
     }
