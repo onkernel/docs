@@ -1,0 +1,419 @@
+---
+title: "Playwright on AWS Lambda: Constraints and Solutions"
+sidebarTitle: "AWS Lambda"
+description: "Run Playwright on AWS Lambda despite binary size limits, memory constraints, and cold start issues. Learn packaging strategies and when to use remote browsers."
+---
+
+**AWS Lambda's 512MB deployment size limit prevents bundling Chromium binaries directly.** Solutions include Lambda Layers (up to 250MB), Docker images (10GB), or connecting to remote browsers via CDP.
+
+## The Challenge
+
+Playwright's Chromium binaries are ~300MB uncompressed, ~150MB compressed. AWS Lambda constraints:
+
+| Constraint | Limit | Impact on Playwright |
+|------------|-------|---------------------|
+| **Deployment package** | 50MB (zipped), 250MB (unzipped) | Chromium doesn't fit |
+| **Lambda Layer** | 50MB (zipped), 250MB (unzipped) | Chromium barely fits (if optimized) |
+| **Docker image** | 10GB total | Chromium fits, but cold start slow |
+| **Memory** | 128MB - 10GB | Chromium needs 1-2GB minimum |
+| **Timeout** | 15 minutes max | Usually sufficient |
+| **Filesystem** | /tmp only, 512MB | Chrome writes temp files here |
+
+## Solution 1: Lambda Layers (Limited)
+
+Package Chromium as a Lambda Layer. This works but is fragile:
+
+### Step 1: Build Layer
+
+```bash
+# In a Docker container matching Lambda runtime (Amazon Linux 2)
+docker run -v "$PWD":/build -it public.ecr.aws/lambda/nodejs:20 bash
+
+# Inside container
+cd /build
+npm init -y
+npm install playwright-core
+npx playwright install chromium --with-deps
+
+# Package layer
+mkdir -p layer/nodejs/node_modules
+cp -r node_modules/playwright-core layer/nodejs/node_modules/
+mkdir -p layer/chromium
+cp -r /root/.cache/ms-playwright layer/chromium/
+
+cd layer
+zip -r ../layer.zip .
+```
+
+### Step 2: Deploy Layer
+
+```bash
+aws lambda publish-layer-version \
+  --layer-name chromium-layer \
+  --zip-file fileb://layer.zip \
+  --compatible-runtimes nodejs20.x
+```
+
+### Step 3: Use in Lambda
+
+```typescript
+import { chromium } from 'playwright-core';
+
+export const handler = async (event) => {
+  const browser = await chromium.launch({
+    executablePath: '/opt/chromium/ms-playwright/chromium-*/chrome-linux/chrome',
+    headless: true,
+    args: [
+      '--no-sandbox',
+      '--disable-setuid-sandbox',
+      '--single-process' // Required for Lambda
+    ]
+  });
+  
+  const page = await browser.newPage();
+  await page.goto(event.url);
+  const title = await page.title();
+  
+  await browser.close();
+  
+  return { title };
+};
+```
+
+**Limitations:**
+
+- Fragile: Chrome updates break frequently
+- Single-process mode: Less stable, can crash
+- Cold start: 5-10s to extract and launch
+- Maintenance: Must rebuild layer for each Playwright update
+
+## Solution 2: Docker Images (Better)
+
+Lambda supports Docker images up to 10GB. This is more reliable:
+
+### Dockerfile
+
+```dockerfile
+FROM public.ecr.aws/lambda/nodejs:20
+
+# Install Chromium dependencies
+RUN yum install -y \
+    atk cups-libs gtk3 libXcomposite alsa-lib \
+    libXcursor libXdamage libXext libXi libXrandr libXScrnSaver \
+    libXtst pango at-spi2-atk libXt xorg-x11-server-Xvfb \
+    xorg-x11-xauth dbus-glib dbus-glib-devel nss mesa-libgbm
+
+# Copy package files
+COPY package*.json ./
+RUN npm ci --omit=dev
+
+# Install Playwright and Chromium
+RUN npx playwright install chromium --with-deps
+
+# Copy Lambda function
+COPY index.js ./
+
+CMD ["index.handler"]
+```
+
+### Deploy
+
+```bash
+# Build and push to ECR
+docker build -t playwright-lambda .
+aws ecr create-repository --repository-name playwright-lambda
+docker tag playwright-lambda:latest <account-id>.dkr.ecr.<region>.amazonaws.com/playwright-lambda:latest
+docker push <account-id>.dkr.ecr.<region>.amazonaws.com/playwright-lambda:latest
+
+# Create Lambda function
+aws lambda create-function \
+  --function-name playwright-scraper \
+  --package-type Image \
+  --code ImageUri=<account-id>.dkr.ecr.<region>.amazonaws.com/playwright-lambda:latest \
+  --role arn:aws:iam::<account-id>:role/lambda-execution-role \
+  --memory-size 2048 \
+  --timeout 300
+```
+
+**Pros:**
+
+- Reliable: Full Chromium with all features
+- Version control: Pin specific Chromium version
+- Familiar: Standard Docker workflow
+
+**Cons:**
+
+- Cold start: 10-30s to pull and extract image
+- Maintenance: Must rebuild image for updates
+- Cost: ECR storage + Lambda memory (2GB+ needed)
+
+## Solution 3: Remote Browsers via CDP (Recommended)
+
+Connect to a hosted browser over WebSocket. No binaries to package:
+
+### Lambda Function
+
+```typescript
+import { chromium } from 'playwright-core';
+import { Kernel } from '@onkernel/sdk';
+
+export const handler = async (event) => {
+  const kernel = new Kernel({ apiKey: process.env.KERNEL_API_KEY });
+  const kb = await kernel.browsers.create({ headless: true });
+  
+  const browser = await chromium.connectOverCDP({
+    wsEndpoint: kb.cdp_ws_url
+  });
+  
+  const page = browser.contexts()[0].pages()[0];
+  await page.goto(event.url);
+  const title = await page.title();
+  const html = await page.content();
+  
+  await browser.close();
+  await kernel.browsers.deleteByID(kb.session_id);
+  
+  return { title, html };
+};
+```
+
+### Package
+
+```bash
+npm install playwright-core @onkernel/sdk
+zip -r function.zip index.js node_modules
+```
+
+**Package size:** &lt;10MB (no Chromium binaries)
+
+**Pros:**
+
+- Fast cold start: &lt;1s (no binary extraction)
+- Always up-to-date: Browser managed by Kernel
+- No maintenance: No Docker images to rebuild
+- Extra features: Live view, replays, stealth mode, persistent sessions
+- Unlimited concurrency: Scale browsers independently from Lambda
+
+**Cons:**
+
+- Network latency: ~20-50ms per request
+- External dependency: Requires Kernel API
+
+**Cost comparison (1,000 executions):**
+
+| Method | Lambda Cost | Chromium Cost | Total |
+|--------|-------------|---------------|-------|
+| **Docker image** | $3.50 (2GB × 10s) | Included | $3.50 |
+| **Remote (Kernel)** | $0.35 (128MB × 2s) | $0.50 (5min @ $0.10/min) | $0.85 |
+
+**Remote browsers cost 75% less** for typical workloads.
+
+## Performance Optimization
+
+### For Lambda Layers/Docker
+
+```typescript
+const browser = await chromium.launch({
+  headless: true,
+  args: [
+    '--no-sandbox',
+    '--disable-setuid-sandbox',
+    '--disable-dev-shm-usage', // Use /tmp instead of /dev/shm
+    '--disable-gpu',
+    '--single-process', // Required for low memory
+    '--no-zygote', // Also required for single-process
+    '--disable-extensions',
+    '--disable-background-networking',
+    '--disable-default-apps'
+  ]
+});
+```
+
+### For Remote Browsers
+
+```typescript
+// Use headless for speed
+const kb = await kernel.browsers.create({ headless: true });
+
+// Block unnecessary resources
+await page.route('**/*', route => {
+  if (['image', 'font', 'stylesheet'].includes(route.request().resourceType())) {
+    return route.abort();
+  }
+  return route.continue();
+});
+
+// Don't wait for full load
+await page.goto(url, { waitUntil: 'domcontentloaded' });
+```
+
+## Persistent Sessions
+
+For Lambda functions that run frequently, reuse browser sessions:
+
+```typescript
+const BROWSER_SESSION_ID = 'lambda-persistent-browser';
+
+export const handler = async (event) => {
+  const kernel = new Kernel({ apiKey: process.env.KERNEL_API_KEY });
+  
+  // Try to reuse existing browser
+  let kb;
+  try {
+    const browsers = await kernel.browsers.list();
+    kb = browsers.find(b => b.persistent_id === BROWSER_SESSION_ID);
+  } catch {}
+  
+  // Create if doesn't exist
+  if (!kb) {
+    kb = await kernel.browsers.create({
+      persistent: true,
+      persistent_id: BROWSER_SESSION_ID,
+      headless: true
+    });
+  }
+  
+  const browser = await chromium.connectOverCDP({
+    wsEndpoint: kb.cdp_ws_url
+  });
+  
+  // ... use browser ...
+  
+  await browser.close();
+  // Don't delete - keeps session for next invocation
+  
+  return result;
+};
+```
+
+First invocation: Creates browser (~2s)
+Subsequent invocations: Reuses browser (~0.1s)
+
+Browser goes to [standby mode](/browsers/standby) after 1 minute of inactivity (zero cost).
+
+## Step Functions for Long Tasks
+
+For multi-step workflows that exceed 15 minutes:
+
+```json
+{
+  "Comment": "Scrape multiple pages",
+  "StartAt": "ScrapePage1",
+  "States": {
+    "ScrapePage1": {
+      "Type": "Task",
+      "Resource": "arn:aws:lambda:region:account:function:playwright-scraper",
+      "Parameters": {
+        "url": "https://example.com/page1"
+      },
+      "Next": "ScrapePage2"
+    },
+    "ScrapePage2": {
+      "Type": "Task",
+      "Resource": "arn:aws:lambda:region:account:function:playwright-scraper",
+      "Parameters": {
+        "url": "https://example.com/page2"
+      },
+      "Next": "Combine"
+    },
+    "Combine": {
+      "Type": "Task",
+      "Resource": "arn:aws:lambda:region:account:function:combine-results",
+      "End": true
+    }
+  }
+}
+```
+
+Each step has its own 15-minute timeout.
+
+## ECS/Fargate for Heavy Workloads
+
+If you need to run many concurrent browser sessions or very long tasks, use ECS Fargate instead of Lambda:
+
+**Pros:**
+
+- No timeout limits
+- Control over resources (CPU, memory)
+- Easier to manage Chrome lifecycle
+
+**Cons:**
+
+- More operational overhead
+- Always-on cost (even if idle)
+- Cold start slower than Lambda + remote browsers
+
+**Recommendation:** Use Lambda + Kernel for most workloads. Reserve ECS/Fargate for:
+
+- Batch processing 1000s of pages
+- Tasks that always take >10 minutes
+- Regulatory requirements (data can't leave your VPC)
+
+## Common Errors
+
+### Error: "spawn ENOMEM"
+
+Lambda ran out of memory. Increase memory size:
+
+```bash
+aws lambda update-function-configuration \
+  --function-name playwright-scraper \
+  --memory-size 2048 # or higher
+```
+
+### Error: "/tmp" is full
+
+Chrome writes temp files to /tmp (512MB limit). Solutions:
+
+1. Use `--disable-dev-shm-usage` flag
+2. Clean up temp files: `fs.rmSync('/tmp/*', { recursive: true })`
+3. Use remote browsers (no /tmp usage)
+
+### Error: "Failed to launch browser"
+
+Check:
+
+1. `--no-sandbox --disable-setuid-sandbox` args present
+2. Lambda has enough memory (2GB+)
+3. Lambda timeout is sufficient (60s+)
+4. Chromium binary path is correct
+
+## FAQ
+
+### Should I use Lambda Layers or Docker images?
+
+Docker images are more reliable. Lambda Layers work but break easily with Playwright updates.
+
+If you're starting new, use remote browsers instead—no packaging needed.
+
+### Can I run headful mode on Lambda?
+
+No. Lambda has no display server (no X11). You must use headless mode or remote headful browsers.
+
+Kernel provides headful browsers with [Live View](/browsers/live-view) if you need to watch the browser.
+
+### What about Fargate?
+
+Fargate is easier than ECS but more expensive than Lambda. Use if:
+
+- You need >15min timeout
+- You're running continuous workloads
+- You need control over Chrome lifecycle
+
+For sporadic workloads, Lambda + Kernel is cheaper.
+
+### Can I use Playwright's built-in Docker image?
+
+Playwright's official Docker image (`mcr.microsoft.com/playwright`) works on Fargate/ECS but not Lambda (wrong base image). For Lambda, build custom image as shown above.
+
+## Related Resources
+
+- [Playwright Vercel Error](/troubleshooting/playwright-vercel-error)
+- [Headless Chrome on Serverless](/troubleshooting/headless-chrome-serverless)
+- [Playwright Timeouts](/troubleshooting/playwright-timeouts-serverless)
+- [Create a Browser](/browsers/create-a-browser)
+
+## Need Help?
+
+Join our [Discord](https://discord.gg/FBrveQRcud) for support with Lambda deployments.
+

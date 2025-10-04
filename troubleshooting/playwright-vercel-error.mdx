@@ -1,0 +1,228 @@
+---
+title: "Fix: Playwright 'Executable doesn't exist' on Vercel"
+sidebarTitle: "Vercel Error Fix"
+description: "Solve Playwright headless_shell errors on Vercel by connecting to Kernel's cloud browsers via CDP. Works in 2 minutes with copy-paste code."
+---
+
+**You can't launch a local Chromium binary inside Vercel's serverless functions.** Use Playwright's `connectOverCDP` to connect to a hosted browser (Kernel) and keep your code and API routes on Vercel.
+
+## The Error
+
+If you're seeing this error on Vercel:
+
+```
+Error: Executable doesn't exist at /var/task/.next/server/chunks/playwright/chromium-1091/chrome-linux/headless_shell
+```
+
+Or similar variations like:
+
+```
+browserType.launch: Executable doesn't exist
+Failed to launch browser
+```
+
+This happens because Vercel's serverless environment doesn't include the Chromium binary that Playwright needs.
+
+## The Solution
+
+Instead of launching a local browser, connect to a remote browser via CDP (Chrome DevTools Protocol):
+
+<CodeGroup>
+```typescript Next.js API Route
+// pages/api/scrape.ts
+import { chromium } from 'playwright-core';
+import { Kernel } from '@onkernel/sdk';
+
+export default async function handler(req, res) {
+  const kernel = new Kernel({ apiKey: process.env.KERNEL_API_KEY });
+  const kernelBrowser = await kernel.browsers.create();
+  
+  const browser = await chromium.connectOverCDP({
+    wsEndpoint: kernelBrowser.cdp_ws_url
+  });
+  
+  const context = browser.contexts()[0];
+  const page = context.pages()[0];
+  
+  await page.goto(req.query.url || 'https://example.com');
+  const title = await page.title();
+  const html = await page.content();
+  
+  await browser.close();
+  await kernel.browsers.deleteByID(kernelBrowser.session_id);
+  
+  return res.json({ title, html });
+}
+```
+
+```python Python (Flask/FastAPI)
+from playwright.async_api import async_playwright
+from kernel import Kernel
+
+async def scrape_page(url: str):
+    kernel = Kernel()
+    kernel_browser = kernel.browsers.create()
+    
+    async with async_playwright() as p:
+        browser = await p.chromium.connect_over_cdp(kernel_browser.cdp_ws_url)
+        context = browser.contexts[0]
+        page = context.pages[0]
+        
+        await page.goto(url)
+        title = await page.title()
+        html = await page.content()
+        
+        await browser.close()
+        kernel.browsers.delete_by_id(kernel_browser.session_id)
+        
+        return {"title": title, "html": html}
+```
+</CodeGroup>
+
+## Environment Variables
+
+Add your Kernel API key to Vercel:
+
+```bash
+# Get your API key from https://dashboard.onkernel.com/settings/api-keys
+vercel env add KERNEL_API_KEY
+```
+
+Set the value to your Kernel API key and select all environments (Production, Preview, Development).
+
+## Toggle Between Local and Remote
+
+For local development, you can use local Playwright. For production on Vercel, use Kernel:
+
+<CodeGroup>
+```typescript Environment-based Toggle
+import { chromium } from 'playwright-core';
+import { Kernel } from '@onkernel/sdk';
+
+const isProduction = process.env.VERCEL_ENV === 'production';
+
+async function getBrowser() {
+  if (isProduction || process.env.USE_KERNEL) {
+    // Use Kernel on Vercel
+    const kernel = new Kernel({ apiKey: process.env.KERNEL_API_KEY });
+    const kb = await kernel.browsers.create();
+    return {
+      browser: await chromium.connectOverCDP({ wsEndpoint: kb.cdp_ws_url }),
+      sessionId: kb.session_id,
+      kernel
+    };
+  } else {
+    // Use local Playwright in development
+    return {
+      browser: await chromium.launch(),
+      sessionId: null,
+      kernel: null
+    };
+  }
+}
+
+// Usage
+const { browser, sessionId, kernel } = await getBrowser();
+// ... use browser ...
+await browser.close();
+if (kernel && sessionId) {
+  await kernel.browsers.deleteByID(sessionId);
+}
+```
+
+```python Environment-based Toggle
+import os
+from playwright.async_api import async_playwright
+from kernel import Kernel
+
+is_production = os.getenv('VERCEL_ENV') == 'production'
+
+async def get_browser():
+    async with async_playwright() as p:
+        if is_production or os.getenv('USE_KERNEL'):
+            # Use Kernel on Vercel
+            kernel = Kernel()
+            kb = kernel.browsers.create()
+            browser = await p.chromium.connect_over_cdp(kb.cdp_ws_url)
+            return browser, kb.session_id, kernel
+        else:
+            # Use local Playwright in development
+            browser = await p.chromium.launch()
+            return browser, None, None
+
+# Usage
+browser, session_id, kernel = await get_browser()
+# ... use browser ...
+await browser.close()
+if kernel and session_id:
+    kernel.browsers.delete_by_id(session_id)
+```
+</CodeGroup>
+
+## Why This Works
+
+Vercel's serverless functions have limitations:
+
+- **No filesystem for binaries:** Chromium requires ~300MB of binaries that can't be bundled
+- **Cold start constraints:** Functions need to start in &lt;10s
+- **Read-only filesystem:** Can't install or cache browser binaries at runtime
+
+Kernel provides browsers in the cloud that you connect to via WebSocket, bypassing all these constraints.
+
+## Native Vercel Integration
+
+For a seamless setup, install [Kernel from the Vercel Marketplace](https://vercel.com/integrations/kernel). This provides:
+
+- One-click API key provisioning
+- Automatic QA checks on every deployment
+- Configuration management via Vercel dashboard
+
+See the [Vercel integration guide](/integrations/vercel) for details.
+
+## FAQ
+
+### Can I run Playwright on Vercel?
+
+You cannot launch a local Chromium binary inside Vercel's serverless functions. However, you can use Playwright's `connectOverCDP` method to connect to a remote browser hosted by Kernel. Your Playwright code runs on Vercel; the browser runs on Kernel.
+
+### Do I need to change my existing Playwright code?
+
+Minimal changes. Replace `browser.launch()` with `chromium.connectOverCDP()` and connect to Kernel's CDP endpoint. The rest of your Playwright code (page navigation, selectors, actions) remains identical.
+
+### What about `playwright install`?
+
+You don't need to run `playwright install` on Vercel. Use `playwright-core` (which doesn't include browser binaries) and connect to Kernel's hosted browsers instead.
+
+### Does this work with Puppeteer too?
+
+Yes! Puppeteer also supports CDP connections:
+
+```typescript
+import puppeteer from 'puppeteer-core';
+const browser = await puppeteer.connect({
+  browserWSEndpoint: kernelBrowser.cdp_ws_url
+});
+```
+
+### How much does it cost?
+
+Kernel charges per-minute of active browser time. See [pricing](/info/pricing) for details. Most API routes run in seconds, costing fractions of a cent per request.
+
+## Related Resources
+
+- [Vercel Integration Guide](/integrations/vercel)
+- [Network Interception on Serverless](/troubleshooting/network-interception)
+- [Playwright Timeouts on Serverless](/troubleshooting/playwright-timeouts-serverless)
+- [Create a Browser](/browsers/create-a-browser)
+
+## Troubleshooting
+
+**Still seeing errors?** Check:
+
+1. `KERNEL_API_KEY` is set in Vercel environment variables
+2. Using `playwright-core` (not `playwright`) in package.json
+3. Using `chromium.connectOverCDP()` (not `chromium.launch()`)
+4. Awaiting the connection before using the browser
+
+Need help? Join our [Discord](https://discord.gg/FBrveQRcud) or check the [troubleshooting hub](/troubleshooting/headless-chrome-serverless).
+

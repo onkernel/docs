@@ -1,0 +1,514 @@
+---
+title: "Download Files and Upload to S3"
+sidebarTitle: "Download to S3"
+description: "Download PDFs, invoices, reports, or any files from the browser and upload to S3, R2, or cloud storage. Complete recipe with Kernel's File I/O API."
+---
+
+Download files triggered in the browser (PDFs, CSVs, images) and automatically upload them to cloud storage. Uses Kernel's File I/O API to access downloaded files.
+
+## What This Recipe Does
+
+1. Navigate to a page with download links
+2. Trigger file download in browser
+3. Wait for download to complete
+4. Read file via Kernel's File I/O API
+5. Upload to S3/R2/GCS
+6. Return public URL or confirmation
+
+## Use Cases
+
+- Automated invoice downloads
+- Export reports from SaaS tools
+- Backup form submissions
+- Archive receipts or statements
+- Download generated PDFs
+- Scrape file attachments
+
+## Complete Code
+
+<CodeGroup>
+```typescript TypeScript/Next.js
+import { chromium } from 'playwright-core';
+import { Kernel } from '@onkernel/sdk';
+import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+
+const s3 = new S3Client({ region: 'us-east-1' });
+
+export async function downloadAndUpload(config: {
+  pageUrl: string;
+  downloadSelector: string;
+  s3Bucket: string;
+  s3Key?: string;
+}) {
+  const { pageUrl, downloadSelector, s3Bucket, s3Key } = config;
+  
+  // Create Kernel browser
+  const kernel = new Kernel({ apiKey: process.env.KERNEL_API_KEY! });
+  const kb = await kernel.browsers.create();
+  
+  const browser = await chromium.connectOverCDP({
+    wsEndpoint: kb.cdp_ws_url
+  });
+  
+  const page = browser.contexts()[0].pages()[0];
+  
+  // Navigate to page
+  await page.goto(pageUrl);
+  
+  // Trigger download
+  console.log('Triggering download...');
+  await page.click(downloadSelector);
+  
+  // Wait for download to appear in filesystem
+  await page.waitForTimeout(3000);
+  
+  // List downloads via Kernel File I/O API
+  const files = await kernel.browsers.files.list(
+    kb.session_id,
+    '/downloads'
+  );
+  
+  if (files.length === 0) {
+    throw new Error('No files downloaded');
+  }
+  
+  // Get most recent file
+  const latestFile = files.sort((a, b) => 
+    new Date(b.modified_time).getTime() - new Date(a.modified_time).getTime()
+  )[0];
+  
+  console.log(`Downloaded: ${latestFile.name} (${latestFile.size} bytes)`);
+  
+  // Read file content
+  const fileBuffer = await kernel.browsers.files.read(
+    kb.session_id,
+    latestFile.path
+  );
+  
+  // Upload to S3
+  const uploadKey = s3Key || `downloads/${Date.now()}-${latestFile.name}`;
+  await s3.send(new PutObjectCommand({
+    Bucket: s3Bucket,
+    Key: uploadKey,
+    Body: fileBuffer,
+    ContentType: getContentType(latestFile.name)
+  }));
+  
+  const s3Url = `https://${s3Bucket}.s3.amazonaws.com/${uploadKey}`;
+  console.log(`Uploaded to: ${s3Url}`);
+  
+  await browser.close();
+  await kernel.browsers.deleteByID(kb.session_id);
+  
+  return {
+    fileName: latestFile.name,
+    fileSize: latestFile.size,
+    s3Url,
+    s3Key: uploadKey
+  };
+}
+
+function getContentType(filename: string): string {
+  const ext = filename.split('.').pop()?.toLowerCase();
+  const types: Record<string, string> = {
+    'pdf': 'application/pdf',
+    'csv': 'text/csv',
+    'xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'png': 'image/png',
+    'jpg': 'image/jpeg',
+    'jpeg': 'image/jpeg',
+    'zip': 'application/zip'
+  };
+  return types[ext || ''] || 'application/octet-stream';
+}
+
+// Usage in API route
+export default async function handler(req, res) {
+  const result = await downloadAndUpload({
+    pageUrl: 'https://example.com/invoices',
+    downloadSelector: 'a[href*="download"]',
+    s3Bucket: process.env.S3_BUCKET!,
+    s3Key: `invoices/${req.body.invoiceId}.pdf`
+  });
+  
+  res.json(result);
+}
+```
+
+```python Python
+import os
+from playwright.async_api import async_playwright
+from kernel import Kernel
+import boto3
+from datetime import datetime
+
+s3 = boto3.client('s3')
+
+async def download_and_upload(config: dict):
+    page_url = config['page_url']
+    download_selector = config['download_selector']
+    s3_bucket = config['s3_bucket']
+    s3_key = config.get('s3_key')
+    
+    # Create Kernel browser
+    kernel = Kernel()
+    kb = kernel.browsers.create()
+    
+    async with async_playwright() as p:
+        browser = await p.chromium.connect_over_cdp(kb.cdp_ws_url)
+        page = browser.contexts[0].pages[0]
+        
+        # Navigate
+        await page.goto(page_url)
+        
+        # Trigger download
+        print('Triggering download...')
+        await page.click(download_selector)
+        
+        # Wait for download
+        await page.wait_for_timeout(3000)
+        
+        await browser.close()
+    
+    # List downloads via Kernel File I/O API
+    files = kernel.browsers.files.list(kb.session_id, '/downloads')
+    
+    if not files:
+        raise Exception('No files downloaded')
+    
+    # Get most recent file
+    latest_file = max(files, key=lambda f: f['modified_time'])
+    
+    print(f"Downloaded: {latest_file['name']} ({latest_file['size']} bytes)")
+    
+    # Read file content
+    file_buffer = kernel.browsers.files.read(
+        kb.session_id,
+        latest_file['path']
+    )
+    
+    # Upload to S3
+    upload_key = s3_key or f"downloads/{int(datetime.now().timestamp())}-{latest_file['name']}"
+    s3.put_object(
+        Bucket=s3_bucket,
+        Key=upload_key,
+        Body=file_buffer,
+        ContentType=get_content_type(latest_file['name'])
+    )
+    
+    s3_url = f"https://{s3_bucket}.s3.amazonaws.com/{upload_key}"
+    print(f'Uploaded to: {s3_url}')
+    
+    kernel.browsers.delete_by_id(kb.session_id)
+    
+    return {
+        'file_name': latest_file['name'],
+        'file_size': latest_file['size'],
+        's3_url': s3_url,
+        's3_key': upload_key
+    }
+
+def get_content_type(filename: str) -> str:
+    ext = filename.split('.')[-1].lower()
+    types = {
+        'pdf': 'application/pdf',
+        'csv': 'text/csv',
+        'xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'png': 'image/png',
+        'jpg': 'image/jpeg',
+        'jpeg': 'image/jpeg',
+        'zip': 'application/zip'
+    }
+    return types.get(ext, 'application/octet-stream')
+
+# Usage
+result = await download_and_upload({
+    'page_url': 'https://example.com/invoices',
+    'download_selector': 'a[href*="download"]',
+    's3_bucket': os.getenv('S3_BUCKET'),
+    's3_key': 'invoices/latest.pdf'
+})
+print(result)
+```
+</CodeGroup>
+
+## Environment Variables
+
+```bash
+KERNEL_API_KEY=your_kernel_api_key
+AWS_ACCESS_KEY_ID=your_aws_key
+AWS_SECRET_ACCESS_KEY=your_aws_secret
+S3_BUCKET=your-bucket-name
+```
+
+## Expected Output
+
+```json
+{
+  "fileName": "invoice-2024-03.pdf",
+  "fileSize": 245678,
+  "s3Url": "https://my-bucket.s3.amazonaws.com/downloads/1234567890-invoice-2024-03.pdf",
+  "s3Key": "downloads/1234567890-invoice-2024-03.pdf"
+}
+```
+
+## Variations
+
+### Upload to Cloudflare R2
+
+```typescript
+import { S3Client } from '@aws-sdk/client-s3';
+
+const r2 = new S3Client({
+  region: 'auto',
+  endpoint: `https://${process.env.CLOUDFLARE_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+  credentials: {
+    accessKeyId: process.env.R2_ACCESS_KEY_ID!,
+    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY!
+  }
+});
+
+// Upload same way as S3
+await r2.send(new PutObjectCommand({
+  Bucket: process.env.R2_BUCKET!,
+  Key: uploadKey,
+  Body: fileBuffer
+}));
+```
+
+### Upload to Google Cloud Storage
+
+```typescript
+import { Storage } from '@google-cloud/storage';
+
+const gcs = new Storage({
+  projectId: process.env.GCP_PROJECT_ID,
+  keyFilename: process.env.GCP_KEY_FILE
+});
+
+const bucket = gcs.bucket(process.env.GCS_BUCKET!);
+const file = bucket.file(uploadKey);
+
+await file.save(fileBuffer, {
+  metadata: {
+    contentType: getContentType(latestFile.name)
+  }
+});
+
+const publicUrl = `https://storage.googleapis.com/${process.env.GCS_BUCKET}/${uploadKey}`;
+```
+
+### Download Multiple Files
+
+```typescript
+// Trigger multiple downloads
+await page.click('button.download-all');
+await page.waitForTimeout(5000);
+
+// Get all downloaded files
+const files = await kernel.browsers.files.list(kb.session_id, '/downloads');
+
+// Upload all
+const uploads = await Promise.all(
+  files.map(async (file) => {
+    const buffer = await kernel.browsers.files.read(kb.session_id, file.path);
+    const key = `downloads/${Date.now()}-${file.name}`;
+    
+    await s3.send(new PutObjectCommand({
+      Bucket: s3Bucket,
+      Key: key,
+      Body: buffer
+    }));
+    
+    return { name: file.name, key };
+  })
+);
+
+return { uploadedFiles: uploads };
+```
+
+### Wait for Specific File
+
+```typescript
+async function waitForFile(
+  kernel: Kernel,
+  sessionId: string,
+  filename: string,
+  timeoutMs = 30000
+): Promise<any> {
+  const startTime = Date.now();
+  
+  while (Date.now() - startTime < timeoutMs) {
+    const files = await kernel.browsers.files.list(sessionId, '/downloads');
+    const matchingFile = files.find(f => f.name.includes(filename));
+    
+    if (matchingFile) {
+      return matchingFile;
+    }
+    
+    await new Promise(resolve => setTimeout(resolve, 1000));
+  }
+  
+  throw new Error(`File ${filename} not found after ${timeoutMs}ms`);
+}
+
+// Usage
+await page.click('a.download-report');
+const file = await waitForFile(kernel, kb.session_id, 'report', 30000);
+```
+
+### Generate Pre-Signed URL
+
+Instead of public S3 URL, generate time-limited signed URL:
+
+```typescript
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { GetObjectCommand } from '@aws-sdk/client-s3';
+
+// Upload file
+await s3.send(new PutObjectCommand({
+  Bucket: s3Bucket,
+  Key: uploadKey,
+  Body: fileBuffer
+}));
+
+// Generate signed URL (valid for 1 hour)
+const signedUrl = await getSignedUrl(
+  s3,
+  new GetObjectCommand({
+    Bucket: s3Bucket,
+    Key: uploadKey
+  }),
+  { expiresIn: 3600 }
+);
+
+return { signedUrl };
+```
+
+## Advanced: Monitor Download Progress
+
+```typescript
+// Check file size increase to monitor download
+async function waitForDownloadComplete(
+  kernel: Kernel,
+  sessionId: string,
+  filename: string
+): Promise<void> {
+  let lastSize = 0;
+  let stableCount = 0;
+  
+  while (true) {
+    const files = await kernel.browsers.files.list(sessionId, '/downloads');
+    const file = files.find(f => f.name === filename);
+    
+    if (!file) {
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      continue;
+    }
+    
+    if (file.size === lastSize) {
+      stableCount++;
+      if (stableCount >= 3) {
+        // Size stable for 3 checks = download complete
+        return;
+      }
+    } else {
+      stableCount = 0;
+      lastSize = file.size;
+    }
+    
+    console.log(`Download progress: ${file.size} bytes`);
+    await new Promise(resolve => setTimeout(resolve, 1000));
+  }
+}
+```
+
+## Common Issues
+
+### File Not Appearing
+
+If file doesn't appear in `/downloads`:
+
+1. Check if download actually triggered:
+```typescript
+// Add download listener
+page.on('download', download => {
+  console.log('Download started:', download.suggestedFilename());
+});
+```
+
+2. Wait longer:
+```typescript
+await page.waitForTimeout(5000); // Increase wait time
+```
+
+3. Check different directory:
+```typescript
+// Some browsers use different paths
+const files = await kernel.browsers.files.list(kb.session_id, '/');
+console.log('All files:', files);
+```
+
+### S3 Upload Fails
+
+Check credentials and permissions:
+
+```typescript
+try {
+  await s3.send(new PutObjectCommand({ ... }));
+} catch (error) {
+  console.error('S3 error:', error);
+  // Check: bucket name, region, credentials, IAM permissions
+}
+```
+
+### Out of Memory
+
+For large files (>100MB):
+
+```typescript
+// Stream instead of buffering
+import { Readable } from 'stream';
+import { Upload } from '@aws-sdk/lib-storage';
+
+const fileBuffer = await kernel.browsers.files.read(kb.session_id, file.path);
+const stream = Readable.from(fileBuffer);
+
+const upload = new Upload({
+  client: s3,
+  params: {
+    Bucket: s3Bucket,
+    Key: uploadKey,
+    Body: stream
+  }
+});
+
+await upload.done();
+```
+
+## Cost Estimation
+
+**Per download:**
+- Kernel browser: ~$0.01 (2-3s @ $0.05/min)
+- S3 PUT request: $0.000005
+- S3 storage: $0.023/GB/month
+- **Total: ~$0.01 per download**
+
+**1,000 downloads/month:** ~$10
+
+## Related Recipes
+
+- [Auth & Cookies](/recipes/auth-cookies-sessions) - Download from logged-in pages
+- [Parallel Browsers](/recipes/parallel-browsers) - Download multiple files faster
+- [Screenshot + LLM](/recipes/screenshot-dom-llm) - Extract text from PDFs with OCR
+
+## Related Features
+
+- [File I/O API](/browsers/file-io) - Full documentation
+- [Create a Browser](/browsers/create-a-browser)
+- [Persistence](/browsers/persistence) - Reuse auth for multiple downloads
+
+## Support
+
+Questions about file downloads? Join our [Discord](https://discord.gg/FBrveQRcud).
+

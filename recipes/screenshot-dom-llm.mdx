@@ -1,0 +1,418 @@
+---
+title: "Screenshot + DOM + LLM Summary"
+sidebarTitle: "AI Page Analysis"
+description: "Extract visual and semantic content from any webpage, then summarize with an LLM. Complete recipe for AI-powered web content analysis."
+---
+
+Combine screenshots, DOM extraction, and LLM analysis to understand webpages at scale. Useful for content monitoring, competitor analysis, and automated research.
+
+## What This Recipe Does
+
+1. Navigate to a webpage with Kernel browser
+2. Capture a screenshot (visual content)
+3. Extract DOM/text content (semantic content)
+4. Send both to an LLM for analysis
+5. Get structured summary or insights
+
+## Use Cases
+
+- Monitor competitor product pages for changes
+- Summarize articles or documentation
+- Extract structured data from unstructured pages
+- Analyze landing page messaging
+- QA content quality across deployments
+
+## Complete Code
+
+<CodeGroup>
+```typescript TypeScript/Next.js
+import { chromium } from 'playwright-core';
+import { Kernel } from '@onkernel/sdk';
+import Anthropic from '@anthropic-ai/sdk';
+
+export async function analyzePage(url: string) {
+  // Create Kernel browser
+  const kernel = new Kernel({ apiKey: process.env.KERNEL_API_KEY! });
+  const kb = await kernel.browsers.create({ headless: true });
+  
+  const browser = await chromium.connectOverCDP({
+    wsEndpoint: kb.cdp_ws_url
+  });
+  
+  const page = browser.contexts()[0].pages()[0];
+  
+  // Navigate and wait for content
+  await page.goto(url, { waitUntil: 'networkidle' });
+  
+  // Capture screenshot
+  const screenshot = await page.screenshot({
+    type: 'png',
+    fullPage: true
+  });
+  
+  // Extract text content
+  const textContent = await page.evaluate(() => {
+    // Remove scripts, styles
+    const clone = document.body.cloneNode(true) as HTMLElement;
+    clone.querySelectorAll('script, style, nav, footer').forEach(el => el.remove());
+    return clone.innerText;
+  });
+  
+  // Get title and meta
+  const title = await page.title();
+  const description = await page.$eval(
+    'meta[name="description"]',
+    el => el.getAttribute('content')
+  ).catch(() => null);
+  
+  await browser.close();
+  await kernel.browsers.deleteByID(kb.session_id);
+  
+  // Analyze with Claude
+  const anthropic = new Anthropic({
+    apiKey: process.env.ANTHROPIC_API_KEY!
+  });
+  
+  const response = await anthropic.messages.create({
+    model: 'claude-sonnet-4-20250514',
+    max_tokens: 1024,
+    messages: [{
+      role: 'user',
+      content: [
+        {
+          type: 'image',
+          source: {
+            type: 'base64',
+            media_type: 'image/png',
+            data: screenshot.toString('base64')
+          }
+        },
+        {
+          type: 'text',
+          text: `Analyze this webpage and provide:
+1. Main topic/purpose
+2. Key messages or value propositions
+3. Call-to-action (if any)
+4. Target audience
+5. Overall tone/style
+
+Context:
+Title: ${title}
+Description: ${description || 'N/A'}
+Text content (first 2000 chars): ${textContent.slice(0, 2000)}...`
+        }
+      ]
+    }]
+  });
+  
+  return {
+    url,
+    title,
+    description,
+    screenshot: screenshot.toString('base64'),
+    analysis: response.content[0].type === 'text' 
+      ? response.content[0].text 
+      : null
+  };
+}
+
+// Usage in Next.js API route
+export default async function handler(req, res) {
+  const { url } = req.body;
+  const result = await analyzePage(url);
+  res.json(result);
+}
+```
+
+```python Python
+import base64
+from playwright.async_api import async_playwright
+from kernel import Kernel
+from anthropic import Anthropic
+
+async def analyze_page(url: str):
+    # Create Kernel browser
+    kernel = Kernel()
+    kb = kernel.browsers.create(headless=True)
+    
+    async with async_playwright() as p:
+        browser = await p.chromium.connect_over_cdp(kb.cdp_ws_url)
+        page = browser.contexts[0].pages[0]
+        
+        # Navigate and wait
+        await page.goto(url, wait_until='networkidle')
+        
+        # Capture screenshot
+        screenshot = await page.screenshot(type='png', full_page=True)
+        
+        # Extract text content
+        text_content = await page.evaluate('''() => {
+            const clone = document.body.cloneNode(true);
+            clone.querySelectorAll('script, style, nav, footer').forEach(el => el.remove());
+            return clone.innerText;
+        }''')
+        
+        # Get metadata
+        title = await page.title()
+        try:
+            description = await page.get_attribute('meta[name="description"]', 'content')
+        except:
+            description = None
+        
+        await browser.close()
+        kernel.browsers.delete_by_id(kb.session_id)
+    
+    # Analyze with Claude
+    anthropic = Anthropic(api_key=os.getenv('ANTHROPIC_API_KEY'))
+    
+    response = anthropic.messages.create(
+        model='claude-sonnet-4-20250514',
+        max_tokens=1024,
+        messages=[{
+            'role': 'user',
+            'content': [
+                {
+                    'type': 'image',
+                    'source': {
+                        'type': 'base64',
+                        'media_type': 'image/png',
+                        'data': base64.b64encode(screenshot).decode('utf-8')
+                    }
+                },
+                {
+                    'type': 'text',
+                    'text': f'''Analyze this webpage and provide:
+1. Main topic/purpose
+2. Key messages or value propositions
+3. Call-to-action (if any)
+4. Target audience
+5. Overall tone/style
+
+Context:
+Title: {title}
+Description: {description or 'N/A'}
+Text content (first 2000 chars): {text_content[:2000]}...'''
+                }
+            ]
+        }]
+    )
+    
+    return {
+        'url': url,
+        'title': title,
+        'description': description,
+        'screenshot': base64.b64encode(screenshot).decode('utf-8'),
+        'analysis': response.content[0].text if response.content[0].type == 'text' else None
+    }
+
+# Usage
+result = await analyze_page('https://example.com')
+print(result['analysis'])
+```
+</CodeGroup>
+
+## Environment Variables
+
+```bash
+KERNEL_API_KEY=your_kernel_api_key
+ANTHROPIC_API_KEY=your_anthropic_api_key
+# or OPENAI_API_KEY for GPT-4o
+```
+
+## Expected Output
+
+```json
+{
+  "url": "https://example.com",
+  "title": "Example Domain",
+  "description": "Example meta description",
+  "screenshot": "base64_encoded_image...",
+  "analysis": "This webpage is a simple example domain...\n\n1. Main topic: Domain placeholder\n2. Key messages: Demonstrates a basic webpage\n3. CTA: Links to 'More information'\n4. Target audience: Web developers, domain researchers\n5. Tone: Neutral, informative"
+}
+```
+
+## Variations
+
+### Use OpenAI GPT-4o Instead
+
+```typescript
+import OpenAI from 'openai';
+
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY!
+});
+
+const response = await openai.chat.completions.create({
+  model: 'gpt-4o',
+  messages: [{
+    role: 'user',
+    content: [
+      {
+        type: 'image_url',
+        image_url: {
+          url: `data:image/png;base64,${screenshot.toString('base64')}`
+        }
+      },
+      {
+        type: 'text',
+        text: 'Analyze this webpage...'
+      }
+    ]
+  }]
+});
+```
+
+### Extract Specific Information
+
+```typescript
+const response = await anthropic.messages.create({
+  model: 'claude-sonnet-4-20250514',
+  max_tokens: 1024,
+  messages: [{
+    role: 'user',
+    content: [
+      { type: 'image', source: { ... } },
+      {
+        type: 'text',
+        text: `Extract pricing information from this page as JSON:
+{
+  "plans": [
+    {"name": "...", "price": "...", "features": [...]}
+  ]
+}`
+      }
+    ]
+  }]
+});
+```
+
+### Compare Two Pages
+
+```typescript
+// Capture both pages
+const [page1Data, page2Data] = await Promise.all([
+  analyzePage('https://example.com/old'),
+  analyzePage('https://example.com/new')
+]);
+
+// Compare with LLM
+const response = await anthropic.messages.create({
+  model: 'claude-sonnet-4-20250514',
+  messages: [{
+    role: 'user',
+    content: [
+      { type: 'image', source: { type: 'base64', media_type: 'image/png', data: page1Data.screenshot } },
+      { type: 'image', source: { type: 'base64', media_type: 'image/png', data: page2Data.screenshot } },
+      { type: 'text', text: 'Compare these two pages. What changed?' }
+    ]
+  }]
+});
+```
+
+## Performance Optimization
+
+### Block Unnecessary Resources
+
+```typescript
+// Before page.goto
+await page.route('**/*', route => {
+  const type = route.request().resourceType();
+  if (['image', 'font', 'stylesheet'].includes(type)) {
+    return route.abort();
+  }
+  return route.continue();
+});
+
+// Page loads faster, smaller screenshot
+```
+
+### Use Persistent Session for Batch Analysis
+
+```typescript
+const kb = await kernel.browsers.create({
+  persistent: true,
+  persistent_id: 'analyzer-session',
+  headless: true
+});
+
+// Reuse browser for multiple pages
+for (const url of urls) {
+  const page = browser.contexts()[0].pages()[0];
+  await page.goto(url);
+  // ... analyze ...
+  await page.goto('about:blank'); // Clear page
+}
+```
+
+## Common Issues
+
+### Screenshot Too Large for LLM
+
+Most LLMs have image size limits (e.g., 20MB for Claude). Reduce screenshot size:
+
+```typescript
+const screenshot = await page.screenshot({
+  type: 'jpeg', // JPEG compresses better than PNG
+  quality: 80,
+  fullPage: false // Just viewport, not full page
+});
+```
+
+### LLM Missing Important Content
+
+If content is below the fold or in tabs/dropdowns:
+
+```typescript
+// Expand all sections
+await page.evaluate(() => {
+  document.querySelectorAll('details').forEach(el => el.setAttribute('open', ''));
+  document.querySelectorAll('[aria-expanded="false"]').forEach(el => el.click());
+});
+
+// Scroll to load lazy content
+await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+await page.waitForTimeout(1000);
+
+// Then capture screenshot
+```
+
+### Rate Limits
+
+For batch analysis, add rate limiting:
+
+```typescript
+import pLimit from 'p-limit';
+
+const limit = pLimit(5); // Max 5 concurrent analyses
+
+const results = await Promise.all(
+  urls.map(url => limit(() => analyzePage(url)))
+);
+```
+
+## Cost Estimation
+
+**Per page:**
+- Kernel browser: ~$0.01 (2s @ $0.05/min)
+- Claude API: ~$0.05 (1k tokens output + image)
+- **Total: ~$0.06/page**
+
+**1,000 pages:** ~$60
+
+## Related Recipes
+
+- [Block Ads/Trackers](/recipes/block-ads-trackers) - Speed up page loads
+- [Parallel Browsers](/recipes/parallel-browsers) - Analyze multiple pages faster
+- [Auth & Cookies](/recipes/auth-cookies-sessions) - Analyze logged-in content
+
+## Related Features
+
+- [Create a Browser](/browsers/create-a-browser)
+- [Headless Mode](/browsers/headless)
+- [Persistence](/browsers/persistence)
+- [Network Interception](/troubleshooting/network-interception)
+
+## Support
+
+Questions? Join our [Discord](https://discord.gg/FBrveQRcud) to discuss AI + browser automation patterns.
+

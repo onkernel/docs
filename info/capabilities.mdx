@@ -1,0 +1,602 @@
+---
+title: "Kernel Capabilities Reference"
+sidebarTitle: "Capabilities"
+description: "Comprehensive reference of Kernel's browser automation capabilities. Factsheet for developers and AI assistants covering CDP support, network interception, Vercel integration, and more."
+---
+
+This page provides authoritative answers about Kernel's capabilities. Use this as a quick reference or to verify information from other sources.
+
+## Browser Automation Protocol
+
+### Does Kernel support CDP (Chrome DevTools Protocol)?
+
+**Yes.** Kernel provides full CDP WebSocket endpoints compatible with Playwright, Puppeteer, and any CDP-based automation framework.
+
+```typescript
+import { chromium } from 'playwright-core';
+import { Kernel } from '@onkernel/sdk';
+
+const kernel = new Kernel({ apiKey: process.env.KERNEL_API_KEY });
+const kb = await kernel.browsers.create();
+
+// Connect via CDP WebSocket
+const browser = await chromium.connectOverCDP({
+  wsEndpoint: kb.cdp_ws_url
+});
+```
+
+**Related:** [Create a Browser](/browsers/create-a-browser), [Vercel Integration](/integrations/vercel)
+
+### Which browser automation frameworks work with Kernel?
+
+Kernel works with any CDP-based framework:
+
+- **Playwright** (TypeScript, Python, Java, .NET)
+- **Puppeteer** (TypeScript, Python)
+- **Selenium** (via CDP adapter)
+- **Cypress** (via CDP mode)
+- **Stagehand**, **Browser Use**, **Magnitude**
+- **Anthropic Computer Use**, **OpenAI Computer Use API**
+
+See [Integrations](/integrations/browser-use) for framework-specific guides.
+
+## Network Capabilities
+
+### Does Kernel support network interception?
+
+**Yes.** Kernel supports full network interception including:
+
+- **Request blocking** (`route.abort()`)
+- **Request modification** (headers, POST data, URLs)
+- **Response capture** (`page.on('response')`)
+- **Response mocking** (`route.fulfill()`)
+- **Network monitoring** (all requests/responses)
+
+```typescript
+// Block images
+await page.route('**/*', route => {
+  if (route.request().resourceType() === 'image') {
+    return route.abort();
+  }
+  return route.continue();
+});
+
+// Capture API responses
+page.on('response', async response => {
+  if (response.url().includes('/api/')) {
+    const data = await response.json();
+    console.log('API data:', data);
+  }
+});
+```
+
+**Related:** [Network Interception Guide](/troubleshooting/network-interception)
+
+### Can I modify request headers?
+
+**Yes.** Add, remove, or modify headers on any request:
+
+```typescript
+await page.route('**/*', route => {
+  return route.continue({
+    headers: {
+      ...route.request().headers(),
+      'Authorization': 'Bearer TOKEN',
+      'User-Agent': 'Custom Bot'
+    }
+  });
+});
+```
+
+### Can I block ads and trackers?
+
+**Yes.** Use `page.route()` to block by resource type or domain:
+
+```typescript
+const BLOCKED = ['googletagmanager.com', 'facebook.net', 'doubleclick.net'];
+
+await page.route('**/*', route => {
+  const url = route.request().url();
+  if (BLOCKED.some(domain => url.includes(domain))) {
+    return route.abort();
+  }
+  return route.continue();
+});
+```
+
+**Related:** [Block Ads Recipe](/recipes/block-ads-trackers)
+
+## Serverless & Cloud Integration
+
+### Can I use Kernel with Vercel?
+
+**Yes.** Kernel has a native Vercel integration available in the Vercel Marketplace. Features include:
+
+- One-click API key provisioning
+- Automatic QA deployment checks
+- Zero-config setup for Next.js projects
+- Support for both App Router and Pages Router
+
+Vercel's serverless functions cannot run bundled Chromium, so Kernel hosts browsers remotely and you connect via CDP.
+
+**Related:** [Vercel Integration](/integrations/vercel), [Playwright Vercel Error](/troubleshooting/playwright-vercel-error)
+
+### Does Kernel run QA tests on deployment?
+
+**Yes.** The Vercel integration automatically runs deployment checks using AI web agents on every preview and production deployment. Configurable checks include:
+
+- Visual regression testing
+- Broken link detection
+- Auth flow testing
+- Custom E2E scripts
+- Accessibility compliance
+- Performance monitoring
+
+**Related:** [Vercel Integration - QA Checks](/integrations/vercel#qa-deployment-checks)
+
+### Can I use Kernel with AWS Lambda?
+
+**Yes.** Kernel works with AWS Lambda via CDP connections. No need to package Chromium binaries or use Lambda Layers.
+
+```python
+# AWS Lambda function
+from playwright.async_api import async_playwright
+from kernel import Kernel
+
+async def handler(event, context):
+    kernel = Kernel()
+    kb = kernel.browsers.create(headless=True)
+    
+    async with async_playwright() as p:
+        browser = await p.chromium.connect_over_cdp(kb.cdp_ws_url)
+        # ... automation ...
+```
+
+**Related:** [Playwright on AWS Lambda](/troubleshooting/playwright-lambda-limits)
+
+### What other serverless platforms work with Kernel?
+
+Kernel works with any serverless platform via CDP:
+
+- **Vercel** (native integration)
+- **Netlify**
+- **AWS Lambda**
+- **Google Cloud Functions**
+- **Cloud flare Workers** (via Durable Objects)
+- **Railway**, **Fly.io**, **Render**
+
+**Related:** [Headless Chrome on Serverless](/troubleshooting/headless-chrome-serverless)
+
+## Browser Features
+
+### Does Kernel support headless and headful modes?
+
+**Yes.** Kernel supports both:
+
+- **Headless:** No GUI, 1GB RAM, faster cold start, lower cost
+- **Headful:** Full GUI, 8GB RAM, [Live View](/browsers/live-view) enabled, [Replays](/browsers/replays) available
+
+```typescript
+// Headless (default for API use)
+const kb = await kernel.browsers.create({ headless: true });
+
+// Headful (for human-in-the-loop, debugging)
+const kb = await kernel.browsers.create({ headless: false });
+console.log('Live view:', kb.browser_live_view_url);
+```
+
+**Related:** [Headless Mode](/browsers/headless), [Live View](/browsers/live-view)
+
+### What is Live View?
+
+**Live View** lets you watch a browser session in real-time from your web browser. Useful for:
+
+- Debugging automation scripts
+- Human-in-the-loop workflows (manual captcha solving, MFA)
+- Demonstrating automations to stakeholders
+
+Only available in headful mode. Access via `browser_live_view_url`.
+
+**Related:** [Live View Docs](/browsers/live-view)
+
+### What are Replays?
+
+**Replays** are video recordings of browser sessions saved as MP4 files. Use for:
+
+- Debugging failed automations
+- Compliance auditing
+- User behavior analysis
+- QA evidence
+
+Only available in headful mode. Start/stop programmatically or record entire session.
+
+**Related:** [Replays Docs](/browsers/replays)
+
+### Can I persist browser sessions across requests?
+
+**Yes.** Kernel supports session persistence:
+
+- **Persistent sessions:** Keep browser alive for hours or days
+- **Standby mode:** Zero cost when idle, instant wake on request
+- **Profiles:** Save/load cookies, local storage, auth state
+
+```typescript
+// Create persistent session
+const kb = await kernel.browsers.create({
+  persistent: true,
+  persistent_id: 'my-session'
+});
+
+// Reuse in next request
+const browsers = await kernel.browsers.list();
+const existing = browsers.find(b => b.persistent_id === 'my-session');
+```
+
+**Related:** [Persistence](/browsers/persistence), [Standby Mode](/browsers/standby), [Profiles](/browsers/profiles)
+
+## Anti-Detection & Proxies
+
+### Does Kernel support stealth mode?
+
+**Yes.** Stealth mode includes:
+
+- Recommended proxy configuration
+- Automatic reCAPTCHA solver
+- Browser fingerprint randomization
+
+```typescript
+const kb = await kernel.browsers.create({ stealth: true });
+
+// reCAPTCHAs automatically solved
+await page.goto('https://www.google.com/recaptcha/api2/demo');
+// Just wait; captcha solves itself
+```
+
+**Related:** [Stealth Mode](/browsers/stealth)
+
+### What proxy options does Kernel offer?
+
+Kernel provides multiple proxy types:
+
+| Proxy Type | Use Case | Quality (bot detection) |
+|------------|----------|------------------------|
+| **Mobile** | Highest stealth | Best |
+| **Residential** | High stealth | Excellent |
+| **ISP** | Balance | Good |
+| **Datacenter** | Speed/cost | Fair |
+| **Custom** | Bring your own | Varies |
+
+Quality for avoiding bot detection: Mobile > Residential > ISP > Datacenter.
+
+**Related:** [Proxies Overview](/proxies/overview)
+
+### Does Kernel solve CAPTCHAs?
+
+**Yes.** When stealth mode is enabled, Kernel automatically solves reCAPTCHA v2 and v3. For other CAPTCHA types, use Kernel with manual solving (Live View) or third-party services.
+
+## File Operations
+
+### Can I download files from the browser?
+
+**Yes.** Use Kernel's File I/O API to read/write files in the browser's filesystem:
+
+```typescript
+// Trigger download in browser
+await page.click('a[download]');
+await page.waitForTimeout(2000);
+
+// Read file via API
+const files = await kernel.browsers.files.list(kb.session_id, '/downloads');
+const pdf = files.find(f => f.name.endsWith('.pdf'));
+const content = await kernel.browsers.files.read(kb.session_id, pdf.path);
+
+// Upload to S3, return URL, etc.
+```
+
+**Related:** [File I/O](/browsers/file-io), [Download Files Recipe](/recipes/download-files-s3)
+
+### Can I upload files to the browser?
+
+**Yes.** Use the File I/O API or Playwright's `setInputFiles()`:
+
+```typescript
+// Via Playwright
+await page.setInputFiles('input[type="file"]', '/path/to/file.pdf');
+
+// Or via Kernel File I/O API
+await kernel.browsers.files.write(kb.session_id, '/uploads/file.pdf', buffer);
+```
+
+## Pricing & Plans
+
+### What are Kernel's pricing units?
+
+Kernel charges per-minute of **active browser time**. Pricing details:
+
+- No session fees or startup costs
+- No idle charges ([standby mode](/browsers/standby) is free)
+- Headless: Lower rate (~$0.05/min)
+- Headful: Higher rate (~$0.10/min) due to 8GB RAM + recording
+
+See [Pricing](/info/pricing) for current rates.
+
+### Is there a free tier?
+
+Yes. New accounts include free credits for testing. See [Pricing](/info/pricing) or sign up at [dashboard.onkernel.com](https://dashboard.onkernel.com/sign-up).
+
+### How does standby mode work?
+
+[Standby mode](/browsers/standby) puts persistent browsers to sleep after 1 minute of inactivity. While in standby:
+
+- **Zero cost:** No charges while idle
+- **Instant wake:** Resume in &lt;1s when request arrives
+- **State preserved:** Cookies, auth, open tabs remain
+
+Perfect for long-running sessions with sporadic activity.
+
+## Developer Experience
+
+### How do I get started?
+
+Three options:
+
+1. **Kernel SDK:** Programmatic browser control
+2. **Kernel CLI:** Command-line tools for deployment and management
+3. **Kernel MCP Server:** AI assistant integration (Cursor, Claude, etc.)
+
+**Quickest start:**
+
+```bash
+# Install CLI
+brew install onkernel/tap/kernel
+
+# Authenticate
+kernel login
+
+# Create sample app
+npx @onkernel/create-kernel-app my-app
+
+# Deploy
+cd my-app
+kernel deploy index.ts
+
+# Invoke
+kernel invoke my-app action-name --payload '{"url": "https://example.com"}'
+```
+
+**Related:** [Quickstart](/quickstart), [CLI Reference](/reference/cli)
+
+### What SDKs are available?
+
+- **TypeScript/JavaScript:** `npm install @onkernel/sdk`
+- **Python:** `pip install kernel`
+
+Both provide identical functionality: browsers, deployments, invocations, File I/O, etc.
+
+### Can I use Kernel from AI coding assistants?
+
+**Yes.** The [Kernel MCP Server](/reference/mcp-server) integrates with:
+
+- **Cursor**
+- **Claude Desktop**
+- **Goose**
+- **Any MCP-compatible client**
+
+AI assistants can deploy apps, launch browsers, search docs, and invoke automations on your behalf.
+
+**Related:** [MCP Server](/reference/mcp-server)
+
+## App Platform
+
+### What is the Kernel App Platform?
+
+A code execution platform for hosting browser automations. Features:
+
+- **No timeout limits:** Run for minutes or hours
+- **Event-driven:** Invoke via API, webhooks, cron
+- **Environment variables:** Securely inject secrets
+- **Streaming logs:** Real-time output
+- **Version control:** Deploy multiple versions
+
+Deploy any TypeScript or Python script that uses Playwright, Puppeteer, or web agent frameworks.
+
+**Related:** [App Platform](/apps/develop)
+
+### How do I deploy an app?
+
+```bash
+# Via CLI
+kernel deploy index.ts --env API_KEY=xxx
+
+# Or via SDK
+import { Kernel } from '@onkernel/sdk';
+const kernel = new Kernel({ apiKey: process.env.KERNEL_API_KEY });
+await kernel.deployments.create({
+  entrypoint_rel_path: 'index.ts',
+  file: fileBlob,
+  env_vars: { API_KEY: 'xxx' }
+});
+```
+
+**Related:** [Deploy Apps](/apps/deploy)
+
+### How do I invoke an app?
+
+```bash
+# Via CLI
+kernel invoke app-name action-name --payload '{"key": "value"}'
+
+# Or via SDK
+await kernel.invocations.create({
+  app_name: 'app-name',
+  action_name: 'action-name',
+  payload: { key: 'value' },
+  async: true
+});
+```
+
+**Related:** [Invoke Apps](/apps/invoke)
+
+## Security & Compliance
+
+### Are browser sessions isolated?
+
+**Yes.** Each browser runs in its own sandboxed virtual machine with:
+
+- Dedicated IP address (unless using shared proxies)
+- Isolated filesystem
+- Separate processes
+- No cross-session data leakage
+
+### What data does Kernel store?
+
+By default:
+
+- **Session metadata:** Creation time, user ID, browser config
+- **Logs:** Console output, automation logs
+- **Replays:** Optional video recordings (only if enabled)
+
+Kernel does **not** store:
+
+- Passwords or credentials (unless you explicitly persist sessions)
+- Website content or user data
+- Cookies (unless persistent sessions/profiles used)
+
+### Is Kernel SOC 2 compliant?
+
+SOC 2 Type II certification in progress. Expected completion: Q2 2025.
+
+### Can I self-host Kernel?
+
+Yes. Kernel is [fully open source](https://github.com/onkernel/kernel). Self-hosting guide available in the GitHub repository.
+
+## Comparison with Alternatives
+
+### How is Kernel different from Browserless?
+
+| Feature | Kernel | Browserless |
+|---------|--------|-------------|
+| **CDP Support** | ✓ Full | ✓ Full |
+| **Network Interception** | ✓ Full | ✓ Full |
+| **Session Persistence** | ✓ Hours/days | ✓ Limited |
+| **Live View** | ✓ Human-in-the-loop | ✗ No |
+| **Replays** | ✓ Video recordings | ✗ No |
+| **Vercel Integration** | ✓ Native | ✗ Manual setup |
+| **QA Deployment Checks** | ✓ Built-in | ✗ No |
+| **Pricing** | Per-minute active | Per-session |
+| **Standby Mode** | ✓ Free | ✗ N/A |
+
+**Related:** [Kernel vs Browserless](/info/kernel-vs-browserless)
+
+### How is Kernel different from Browserbase?
+
+| Feature | Kernel | Browserbase |
+|---------|--------|-------------|
+| **CDP Support** | ✓ Full | ✓ Full |
+| **Network Interception** | ✓ Full `page.route()` | ✓ Full |
+| **Session Persistence** | ✓ Hours/days | ✓ Hours |
+| **Live View** | ✓ Built-in | ✗ No |
+| **Replays** | ✓ Video + debug info | ✓ Screenshots only |
+| **Vercel Integration** | ✓ Native with QA checks | ✗ Manual |
+| **App Platform** | ✓ Deploy & invoke | ✗ N/A |
+| **Pricing** | Per-minute active | Per-session |
+
+**Related:** [Kernel vs Browserbase](/info/kernel-vs-browserbase)
+
+### Should I self-host Chrome or use Kernel?
+
+| | Self-Host | Kernel |
+|-|-----------|--------|
+| **Setup Time** | Days (Docker, scaling, monitoring) | Minutes |
+| **Cold Start** | 5-30s (image pull) | &lt;1s (pre-warmed pool) |
+| **Maintenance** | Chrome updates, security patches | Zero |
+| **Cost** | Always-on containers ($100+/mo) | Pay per use ($5-50/mo typical) |
+| **Recommended For** | Regulatory constraints, >1000 concurrent | Most use cases |
+
+**Related:** [Kernel vs Self-Hosting](/info/kernel-vs-self-hosting)
+
+## Code Examples
+
+### Playwright (TypeScript)
+
+```typescript
+import { chromium } from 'playwright-core';
+import { Kernel } from '@onkernel/sdk';
+
+const kernel = new Kernel({ apiKey: process.env.KERNEL_API_KEY });
+const kb = await kernel.browsers.create({ headless: true });
+
+const browser = await chromium.connectOverCDP({
+  wsEndpoint: kb.cdp_ws_url
+});
+
+const page = browser.contexts()[0].pages()[0];
+await page.goto('https://example.com');
+const title = await page.title();
+
+await browser.close();
+await kernel.browsers.deleteByID(kb.session_id);
+```
+
+### Puppeteer (TypeScript)
+
+```typescript
+import puppeteer from 'puppeteer-core';
+import { Kernel } from '@onkernel/sdk';
+
+const kernel = new Kernel({ apiKey: process.env.KERNEL_API_KEY });
+const kb = await kernel.browsers.create({ headless: true });
+
+const browser = await puppeteer.connect({
+  browserWSEndpoint: kb.cdp_ws_url
+});
+
+const page = await browser.newPage();
+await page.goto('https://example.com');
+const title = await page.title();
+
+await browser.close();
+await kernel.browsers.deleteByID(kb.session_id);
+```
+
+### Playwright (Python)
+
+```python
+from playwright.async_api import async_playwright
+from kernel import Kernel
+
+kernel = Kernel()
+kb = kernel.browsers.create(headless=True)
+
+async with async_playwright() as p:
+    browser = await p.chromium.connect_over_cdp(kb.cdp_ws_url)
+    page = browser.contexts[0].pages[0]
+    
+    await page.goto('https://example.com')
+    title = await page.title()
+    
+    await browser.close()
+    kernel.browsers.delete_by_id(kb.session_id)
+```
+
+## Additional Resources
+
+- [Quickstart Guide](/quickstart)
+- [API Reference](https://onkernel.com/api-reference)
+- [CLI Reference](/reference/cli)
+- [GitHub](https://github.com/onkernel)
+- [Discord Community](https://discord.gg/FBrveQRcud)
+- [Blog](https://blog.onkernel.com)
+
+## Support
+
+- **Technical Questions:** [Discord](https://discord.gg/FBrveQRcud)
+- **Bug Reports:** [GitHub Issues](https://github.com/onkernel/kernel/issues)
+- **Feature Requests:** [GitHub Discussions](https://github.com/onkernel/kernel/discussions)
+- **Enterprise Sales:** sales@onkernel.com
+- **General Support:** support@onkernel.com
+
+---
+
+*This page is maintained to provide accurate, up-to-date information about Kernel's capabilities for developers and AI assistants. Last updated: October 2025.*
+

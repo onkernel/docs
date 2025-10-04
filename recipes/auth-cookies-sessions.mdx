@@ -1,0 +1,503 @@
+---
+title: "Auth Flows & Cookies with Sessions"
+sidebarTitle: "Auth & Sessions"
+description: "Handle authentication flows, preserve cookies, and reuse login state across automations with Kernel's persistent sessions and profiles."
+---
+
+Automate login flows, preserve authentication state, and reuse cookies across multiple browser sessions. Avoid logging in repeatedly with Kernel's persistence features.
+
+## What This Recipe Does
+
+1. Log in to a website once
+2. Save cookies and session state
+3. Reuse authentication in future automations
+4. Avoid rate limits and CAPTCHAs from repeated logins
+
+## Use Cases
+
+- Scrape data behind login walls
+- Automate SaaS workflows
+- Test authenticated user flows
+- Export data from logged-in accounts
+- Monitor dashboards or reports
+- Social media automation
+
+## Complete Code
+
+<CodeGroup>
+```typescript TypeScript
+import { chromium } from 'playwright-core';
+import { Kernel } from '@onkernel/sdk';
+
+async function loginAndSave(credentials: {
+  email: string;
+  password: string;
+  profileName: string;
+}) {
+  const kernel = new Kernel({ apiKey: process.env.KERNEL_API_KEY! });
+  
+  // Create browser with profile saving enabled
+  const kb = await kernel.browsers.create({
+    profile_name: credentials.profileName,
+    profile_save_changes: true, // Save cookies/storage on close
+    headless: false // Use headful for first login (see live view)
+  });
+  
+  console.log('Live view:', kb.browser_live_view_url);
+  console.log('Log in manually via live view, or script below will auto-login');
+  
+  const browser = await chromium.connectOverCDP({
+    wsEndpoint: kb.cdp_ws_url
+  });
+  
+  const page = browser.contexts()[0].pages()[0];
+  
+  // Navigate to login page
+  await page.goto('https://example.com/login');
+  
+  // Fill login form
+  await page.fill('input[name="email"]', credentials.email);
+  await page.fill('input[name="password"]', credentials.password);
+  await page.click('button[type="submit"]');
+  
+  // Wait for redirect after login
+  await page.waitForURL('**/dashboard', { timeout: 30000 });
+  
+  console.log('Login successful! Cookies saved to profile.');
+  
+  await browser.close();
+  // Profile automatically saved when browser closes
+  
+  return { profileName: credentials.profileName };
+}
+
+async function scrapeWithAuth(profileName: string) {
+  const kernel = new Kernel({ apiKey: process.env.KERNEL_API_KEY! });
+  
+  // Reuse existing profile (logged-in state)
+  const kb = await kernel.browsers.create({
+    profile_name: profileName,
+    headless: true // Can use headless now
+  });
+  
+  const browser = await chromium.connectOverCDP({
+    wsEndpoint: kb.cdp_ws_url
+  });
+  
+  const page = browser.contexts()[0].pages()[0];
+  
+  // Go directly to protected page (already logged in!)
+  await page.goto('https://example.com/dashboard/data');
+  
+  // Extract data
+  const data = await page.$$eval('.data-row', rows =>
+    rows.map(row => row.textContent?.trim())
+  );
+  
+  await browser.close();
+  await kernel.browsers.deleteByID(kb.session_id);
+  
+  return { data };
+}
+
+// Usage
+// First time: log in and save
+const { profileName } = await loginAndSave({
+  email: 'user@example.com',
+  password: 'password123',
+  profileName: 'example-user'
+});
+
+// Subsequent times: reuse auth
+const result1 = await scrapeWithAuth(profileName);
+const result2 = await scrapeWithAuth(profileName); // Still logged in!
+```
+
+```python Python
+from playwright.async_api import async_playwright
+from kernel import Kernel
+
+async def login_and_save(credentials: dict):
+    kernel = Kernel()
+    
+    # Create browser with profile saving
+    kb = kernel.browsers.create(
+        profile_name=credentials['profile_name'],
+        profile_save_changes=True,
+        headless=False  # Use headful for first login
+    )
+    
+    print(f'Live view: {kb.browser_live_view_url}')
+    
+    async with async_playwright() as p:
+        browser = await p.chromium.connect_over_cdp(kb.cdp_ws_url)
+        page = browser.contexts[0].pages[0]
+        
+        # Navigate and login
+        await page.goto('https://example.com/login')
+        await page.fill('input[name="email"]', credentials['email'])
+        await page.fill('input[name="password"]', credentials['password'])
+        await page.click('button[type="submit"]')
+        
+        # Wait for dashboard
+        await page.wait_for_url('**/dashboard', timeout=30000)
+        
+        print('Login successful! Cookies saved.')
+        
+        await browser.close()
+    
+    return {'profile_name': credentials['profile_name']}
+
+async def scrape_with_auth(profile_name: str):
+    kernel = Kernel()
+    
+    # Reuse profile
+    kb = kernel.browsers.create(
+        profile_name=profile_name,
+        headless=True
+    )
+    
+    async with async_playwright() as p:
+        browser = await p.chromium.connect_over_cdp(kb.cdp_ws_url)
+        page = browser.contexts[0].pages[0]
+        
+        # Already logged in!
+        await page.goto('https://example.com/dashboard/data')
+        
+        # Extract data
+        data = await page.eval_on_selector_all('.data-row', 
+            'rows => rows.map(row => row.textContent.trim())'
+        )
+        
+        await browser.close()
+        kernel.browsers.delete_by_id(kb.session_id)
+    
+    return {'data': data}
+
+# Usage
+profile = await login_and_save({
+    'email': 'user@example.com',
+    'password': 'password123',
+    'profile_name': 'example-user'
+})
+
+result1 = await scrape_with_auth(profile['profile_name'])
+result2 = await scrape_with_auth(profile['profile_name'])
+```
+</CodeGroup>
+
+## Environment Variables
+
+```bash
+KERNEL_API_KEY=your_kernel_api_key
+```
+
+## How Profiles Work
+
+When you create a browser with `profile_save_changes: true`:
+
+1. **Browser opens** with fresh state (no cookies)
+2. **You log in** (manually or via script)
+3. **Browser closes** and Kernel saves:
+   - All cookies
+   - localStorage
+   - sessionStorage
+   - IndexedDB
+   - Service workers
+
+Next time you create a browser with the same `profile_name`:
+
+1. **Browser opens** with saved state (already logged in!)
+2. **You can immediately** access protected pages
+3. **No re-login** needed
+
+## Persistent Sessions (Alternative)
+
+For even more control, use persistent sessions:
+
+```typescript
+// Create persistent session
+const kb = await kernel.browsers.create({
+  persistent: true,
+  persistent_id: 'user-session-123',
+  headless: false
+});
+
+// Log in via live view or script
+// ...
+
+// Close browser but keep session alive
+await browser.close();
+// Session goes to standby (free) after 1 minute
+
+// Later: reconnect to same session
+const browsers = await kernel.browsers.list();
+const existing = browsers.find(b => b.persistent_id === 'user-session-123');
+
+if (existing) {
+  const browser = await chromium.connectOverCDP({
+    wsEndpoint: existing.cdp_ws_url
+  });
+  // Still logged in, same tabs open!
+}
+```
+
+**Difference:**
+- **Profiles:** Save/load cookies between NEW browsers
+- **Persistent sessions:** Keep THE SAME browser alive
+
+## Advanced: Handle MFA/2FA
+
+For sites with two-factor authentication:
+
+### Option 1: Manual MFA via Live View
+
+```typescript
+const kb = await kernel.browsers.create({
+  profile_name: 'user-with-mfa',
+  profile_save_changes: true,
+  headless: false // Must use headful for live view
+});
+
+console.log('Live view URL:', kb.browser_live_view_url);
+console.log('Complete MFA manually in the browser');
+
+// Wait for user to complete MFA
+await new Promise(resolve => {
+  console.log('Press Enter after completing MFA...');
+  process.stdin.once('data', resolve);
+});
+
+// MFA complete, cookies saved when browser closes
+await browser.close();
+```
+
+### Option 2: Automated TOTP
+
+If the site uses TOTP (Google Authenticator):
+
+```typescript
+import { authenticator } from 'otplib';
+
+const secret = 'YOUR_TOTP_SECRET'; // From QR code setup
+
+// Fill MFA code
+await page.fill('input[name="mfa_code"]', authenticator.generate(secret));
+await page.click('button[type="submit"]');
+```
+
+### Option 3: SMS via API
+
+Some services provide APIs to receive SMS codes:
+
+```typescript
+import { Twilio } from 'twilio';
+
+// Trigger SMS
+await page.click('button.send-sms');
+
+// Wait for SMS via Twilio
+const client = new Twilio(accountSid, authToken);
+const messages = await client.messages.list({ to: phoneNumber, limit: 1 });
+const code = messages[0].body.match(/\d{6}/)?.[0];
+
+// Enter code
+await page.fill('input[name="sms_code"]', code!);
+```
+
+## Variations
+
+### Per-User Profiles
+
+```typescript
+async function getAuthenticatedBrowser(userId: string) {
+  const kernel = new Kernel({ apiKey: process.env.KERNEL_API_KEY! });
+  
+  const profileName = `user-${userId}`;
+  
+  // Check if profile exists
+  const profiles = await kernel.profiles.list();
+  const exists = profiles.some(p => p.name === profileName);
+  
+  if (!exists) {
+    // First time: need to log in
+    console.log(`Profile ${profileName} doesn't exist. Please log in.`);
+    await loginAndSave({
+      email: `user${userId}@example.com`,
+      password: await getPasswordForUser(userId),
+      profileName
+    });
+  }
+  
+  // Create browser with profile
+  return await kernel.browsers.create({
+    profile_name: profileName,
+    headless: true
+  });
+}
+```
+
+### Conditional Re-auth
+
+Check if still logged in, re-auth if needed:
+
+```typescript
+async function scrapeWithAutoReauth(profileName: string) {
+  const kernel = new Kernel({ apiKey: process.env.KERNEL_API_KEY! });
+  const kb = await kernel.browsers.create({ profile_name: profileName });
+  
+  const browser = await chromium.connectOverCDP({ wsEndpoint: kb.cdp_ws_url });
+  const page = browser.contexts()[0].pages()[0];
+  
+  // Try to access protected page
+  await page.goto('https://example.com/dashboard');
+  
+  // Check if redirected to login
+  if (page.url().includes('/login')) {
+    console.log('Session expired, re-authenticating...');
+    
+    await page.fill('input[name="email"]', process.env.EMAIL!);
+    await page.fill('input[name="password"]', process.env.PASSWORD!);
+    await page.click('button[type="submit"]');
+    await page.waitForURL('**/dashboard');
+    
+    // Save updated cookies
+    await browser.close();
+    await kernel.browsers.deleteByID(kb.session_id);
+    
+    // Recreate with saved profile
+    return scrapeWithAutoReauth(profileName);
+  }
+  
+  // Still logged in, proceed
+  const data = await page.textContent('.data');
+  
+  await browser.close();
+  await kernel.browsers.deleteByID(kb.session_id);
+  
+  return { data };
+}
+```
+
+### Share Profiles Across Team
+
+Export/import profiles between team members:
+
+```typescript
+// Export profile
+const kernel = new Kernel({ apiKey: process.env.KERNEL_API_KEY! });
+// Note: Profile export API coming soon
+// For now: share profile_name and team members can use same profile
+
+// Team member A creates profile
+await loginAndSave({
+  email: 'shared@company.com',
+  password: 'password',
+  profileName: 'company-shared-account'
+});
+
+// Team member B uses same profile
+const kb = await kernel.browsers.create({
+  profile_name: 'company-shared-account' // Same org, same profile
+});
+```
+
+## Security Best Practices
+
+### 1. Never Commit Credentials
+
+```typescript
+// ✗ BAD
+const email = 'user@example.com';
+const password = 'password123';
+
+// ✓ GOOD
+const email = process.env.EMAIL!;
+const password = process.env.PASSWORD!;
+```
+
+### 2. Use Different Profiles Per Environment
+
+```typescript
+const profileName = process.env.NODE_ENV === 'production'
+  ? 'production-account'
+  : 'staging-account';
+```
+
+### 3. Rotate Profiles Regularly
+
+```typescript
+// Delete old profile
+await kernel.profiles.delete('old-profile');
+
+// Create new one
+await loginAndSave({
+  ...credentials,
+  profileName: 'new-profile'
+});
+```
+
+### 4. Use Read-Only Accounts
+
+When possible, log in with accounts that have read-only permissions for scraping/monitoring.
+
+## Common Issues
+
+### Profile Not Saving
+
+If cookies aren't persisting:
+
+1. Ensure `profile_save_changes: true`
+2. Close browser properly (await `browser.close()`)
+3. Check profile was created:
+```typescript
+const profiles = await kernel.profiles.list();
+console.log('Profiles:', profiles);
+```
+
+### Still Redirecting to Login
+
+If you're redirected despite using a profile:
+
+1. Session might have expired (time-based)
+2. Site might use IP-based auth (use same proxy)
+3. Site might clear cookies on suspicious activity
+
+Solution: Use `scrapeWithAutoReauth` pattern above.
+
+### MFA Required Every Time
+
+Some sites require MFA on every login from new IP:
+
+1. Use persistent sessions (keeps IP consistent)
+2. Use same proxy every time
+3. Use profiles + stealth mode to appear consistent
+
+## Cost Optimization
+
+**Without Profiles:**
+- Log in on every request: 10s/request
+- 1,000 requests = 167 minutes @ $0.05/min = $8.35
+
+**With Profiles:**
+- Log in once: 10s
+- Scrape 1,000 times: 2s each = 33 minutes @ $0.05/min = $1.65
+- **Savings: 80%**
+
+## Related Recipes
+
+- [Download Files](/recipes/download-files-s3) - Download from logged-in accounts
+- [Parallel Browsers](/recipes/parallel-browsers) - Use profiles in parallel
+- [Screenshot + LLM](/recipes/screenshot-dom-llm) - Analyze logged-in content
+
+## Related Features
+
+- [Profiles](/browsers/profiles) - Full documentation
+- [Persistence](/browsers/persistence) - Keep browsers alive
+- [Standby Mode](/browsers/standby) - Zero-cost idle
+- [Live View](/browsers/live-view) - Manual MFA completion
+
+## Support
+
+Questions about auth flows? Join our [Discord](https://discord.gg/FBrveQRcud).
+

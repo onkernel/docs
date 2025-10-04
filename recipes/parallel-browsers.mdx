@@ -1,0 +1,511 @@
+---
+title: "Run Parallel Browser Sessions"
+sidebarTitle: "Parallel Browsers"
+description: "Process thousands of URLs concurrently with parallel browser sessions. Complete guide to batch scraping, concurrent automation, and performance optimization."
+---
+
+Run multiple browser sessions in parallel to process large workloads faster. Scale from 1 to 100+ concurrent browsers without infrastructure management.
+
+## What This Recipe Does
+
+1. Split workload into batches
+2. Launch multiple browsers concurrently
+3. Process items in parallel
+4. Aggregate results
+5. Handle errors gracefully
+
+## Use Cases
+
+- Batch scraping (1000+ URLs)
+- Parallel E2E testing
+- Competitive price monitoring
+- Content validation across pages
+- Screenshot generation at scale
+- Multi-account automation
+
+## Complete Code
+
+<CodeGroup>
+```typescript TypeScript
+import { chromium } from 'playwright-core';
+import { Kernel } from '@onkernel/sdk';
+import pLimit from 'p-limit';
+
+interface ScrapResult {
+  url: string;
+  title: string;
+  status: 'success' | 'error';
+  error?: string;
+}
+
+async function scrapeUrl(kernel: Kernel, url: string): Promise<ScrapResult> {
+  try {
+    const kb = await kernel.browsers.create({ headless: true });
+    
+    const browser = await chromium.connectOverCDP({
+      wsEndpoint: kb.cdp_ws_url
+    });
+    
+    const page = browser.contexts()[0].pages()[0];
+    await page.goto(url, { timeout: 30000 });
+    const title = await page.title();
+    
+    await browser.close();
+    await kernel.browsers.deleteByID(kb.session_id);
+    
+    return { url, title, status: 'success' };
+  } catch (error) {
+    return {
+      url,
+      title: '',
+      status: 'error',
+      error: error instanceof Error ? error.message : 'Unknown error'
+    };
+  }
+}
+
+export async function scrapeParallel(
+  urls: string[],
+  concurrency = 10
+): Promise<ScrapResult[]> {
+  const kernel = new Kernel({ apiKey: process.env.KERNEL_API_KEY! });
+  
+  // Limit concurrent browsers
+  const limit = pLimit(concurrency);
+  
+  console.log(`Scraping ${urls.length} URLs with concurrency ${concurrency}`);
+  
+  // Process in parallel
+  const results = await Promise.all(
+    urls.map(url => limit(() => scrapeUrl(kernel, url)))
+  );
+  
+  // Summary
+  const successful = results.filter(r => r.status === 'success').length;
+  const failed = results.filter(r => r.status === 'error').length;
+  
+  console.log(`Complete: ${successful} success, ${failed} failed`);
+  
+  return results;
+}
+
+// Usage
+const urls = [
+  'https://example.com/page1',
+  'https://example.com/page2',
+  // ... 1000 more URLs
+];
+
+const results = await scrapeParallel(urls, 20); // 20 concurrent browsers
+```
+
+```python Python
+import asyncio
+from playwright.async_api import async_playwright
+from kernel import Kernel
+from typing import List, Dict
+
+async def scrape_url(kernel: Kernel, url: str) -> Dict:
+    try:
+        kb = kernel.browsers.create(headless=True)
+        
+        async with async_playwright() as p:
+            browser = await p.chromium.connect_over_cdp(kb.cdp_ws_url)
+            page = browser.contexts[0].pages[0]
+            
+            await page.goto(url, timeout=30000)
+            title = await page.title()
+            
+            await browser.close()
+        
+        kernel.browsers.delete_by_id(kb.session_id)
+        
+        return {'url': url, 'title': title, 'status': 'success'}
+    except Exception as e:
+        return {'url': url, 'title': '', 'status': 'error', 'error': str(e)}
+
+async def scrape_parallel(urls: List[str], concurrency: int = 10) -> List[Dict]:
+    kernel = Kernel()
+    
+    print(f'Scraping {len(urls)} URLs with concurrency {concurrency}')
+    
+    # Create semaphore for concurrency control
+    semaphore = asyncio.Semaphore(concurrency)
+    
+    async def limited_scrape(url: str):
+        async with semaphore:
+            return await scrape_url(kernel, url)
+    
+    # Process in parallel
+    results = await asyncio.gather(
+        *[limited_scrape(url) for url in urls]
+    )
+    
+    # Summary
+    successful = sum(1 for r in results if r['status'] == 'success')
+    failed = sum(1 for r in results if r['status'] == 'error')
+    
+    print(f'Complete: {successful} success, {failed} failed')
+    
+    return results
+
+# Usage
+urls = [
+    'https://example.com/page1',
+    'https://example.com/page2',
+    # ... more URLs
+]
+
+results = await scrape_parallel(urls, concurrency=20)
+```
+</CodeGroup>
+
+## Environment Variables
+
+```bash
+KERNEL_API_KEY=your_kernel_api_key
+```
+
+## Performance Numbers
+
+| URLs | Concurrency | Time (serial) | Time (parallel) | Speedup |
+|------|-------------|---------------|-----------------|---------|
+| 100  | 10          | 500s          | 50s             | 10×     |
+| 1000 | 20          | 5000s         | 250s            | 20×     |
+| 1000 | 50          | 5000s         | 100s            | 50×     |
+
+**Cost (1000 URLs @ 5s each):**
+- Serial: 83 minutes @ $0.05/min = $4.15
+- Parallel (20×): 83 minutes total (distributed) = $4.15
+- **Same cost, 20× faster!**
+
+## Advanced Patterns
+
+### Batched Processing with Progress
+
+```typescript
+async function scrapeInBatches(
+  urls: string[],
+  batchSize = 50,
+  concurrency = 10
+): Promise<ScrapResult[]> {
+  const kernel = new Kernel({ apiKey: process.env.KERNEL_API_KEY! });
+  const allResults: ScrapResult[] = [];
+  
+  // Split into batches
+  const batches: string[][] = [];
+  for (let i = 0; i < urls.length; i += batchSize) {
+    batches.push(urls.slice(i, i + batchSize));
+  }
+  
+  console.log(`Processing ${urls.length} URLs in ${batches.length} batches`);
+  
+  // Process each batch
+  for (let i = 0; i < batches.length; i++) {
+    const batch = batches[i];
+    console.log(`Batch ${i + 1}/${batches.length}: ${batch.length} URLs`);
+    
+    const limit = pLimit(concurrency);
+    const results = await Promise.all(
+      batch.map(url => limit(() => scrapeUrl(kernel, url)))
+    );
+    
+    allResults.push(...results);
+    
+    // Progress
+    const progress = ((i + 1) / batches.length * 100).toFixed(1);
+    console.log(`Progress: ${progress}% (${allResults.length}/${urls.length})`);
+    
+    // Optional: delay between batches
+    if (i < batches.length - 1) {
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    }
+  }
+  
+  return allResults;
+}
+```
+
+### Retry Failed URLs
+
+```typescript
+async function scrapeWithRetry(
+  urls: string[],
+  maxRetries = 3,
+  concurrency = 10
+): Promise<ScrapResult[]> {
+  const kernel = new Kernel({ apiKey: process.env.KERNEL_API_KEY! });
+  let results = await scrapeParallel(urls, concurrency);
+  
+  // Retry failed URLs
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    const failed = results.filter(r => r.status === 'error');
+    
+    if (failed.length === 0) break;
+    
+    console.log(`Retry ${attempt}/${maxRetries}: ${failed.length} failed URLs`);
+    
+    const retryResults = await scrapeParallel(
+      failed.map(r => r.url),
+      concurrency
+    );
+    
+    // Update results
+    retryResults.forEach(retry => {
+      const index = results.findIndex(r => r.url === retry.url);
+      if (index !== -1) {
+        results[index] = retry;
+      }
+    });
+  }
+  
+  return results;
+}
+```
+
+### Adaptive Concurrency
+
+Automatically adjust concurrency based on error rate:
+
+```typescript
+async function scrapeAdaptive(urls: string[]): Promise<ScrapResult[]> {
+  let concurrency = 20;
+  const minConcurrency = 5;
+  const maxConcurrency = 50;
+  
+  const results: ScrapResult[] = [];
+  
+  for (let i = 0; i < urls.length; i += 100) {
+    const batch = urls.slice(i, i + 100);
+    const batchResults = await scrapeParallel(batch, concurrency);
+    
+    results.push(...batchResults);
+    
+    // Calculate error rate
+    const errorRate = batchResults.filter(r => r.status === 'error').length / batchResults.length;
+    
+    // Adjust concurrency
+    if (errorRate > 0.2) {
+      concurrency = Math.max(minConcurrency, concurrency - 5);
+      console.log(`High error rate (${(errorRate * 100).toFixed(1)}%), reducing concurrency to ${concurrency}`);
+    } else if (errorRate < 0.05) {
+      concurrency = Math.min(maxConcurrency, concurrency + 5);
+      console.log(`Low error rate (${(errorRate * 100).toFixed(1)}%), increasing concurrency to ${concurrency}`);
+    }
+  }
+  
+  return results;
+}
+```
+
+### Save Progress to Resume Later
+
+```typescript
+import fs from 'fs';
+
+async function scrapeResumable(
+  urls: string[],
+  progressFile = 'progress.json',
+  concurrency = 10
+): Promise<ScrapResult[]> {
+  // Load previous progress
+  let completed: ScrapResult[] = [];
+  if (fs.existsSync(progressFile)) {
+    completed = JSON.parse(fs.readFileSync(progressFile, 'utf-8'));
+    console.log(`Resuming: ${completed.length} already done`);
+  }
+  
+  // Filter remaining URLs
+  const completedUrls = new Set(completed.map(r => r.url));
+  const remaining = urls.filter(url => !completedUrls.has(url));
+  
+  if (remaining.length === 0) {
+    console.log('All URLs already processed');
+    return completed;
+  }
+  
+  console.log(`Processing ${remaining.length} remaining URLs`);
+  
+  // Process in chunks, saving after each
+  const chunkSize = 100;
+  for (let i = 0; i < remaining.length; i += chunkSize) {
+    const chunk = remaining.slice(i, i + chunkSize);
+    const results = await scrapeParallel(chunk, concurrency);
+    
+    completed.push(...results);
+    
+    // Save progress
+    fs.writeFileSync(progressFile, JSON.stringify(completed, null, 2));
+    console.log(`Progress saved: ${completed.length}/${urls.length}`);
+  }
+  
+  return completed;
+}
+```
+
+## Optimization Tips
+
+### 1. Choose Right Concurrency
+
+```typescript
+// Too low: slow
+await scrapeParallel(urls, 5);
+
+// Optimal for most cases
+await scrapeParallel(urls, 20);
+
+// High (for fast sites)
+await scrapeParallel(urls, 50);
+
+// Too high: errors, rate limits
+await scrapeParallel(urls, 200); // Not recommended
+```
+
+**Rule of thumb:** Start with 20, adjust based on results.
+
+### 2. Use Headless Mode
+
+```typescript
+// Headless is 2× faster and cheaper
+const kb = await kernel.browsers.create({ headless: true });
+```
+
+### 3. Block Unnecessary Resources
+
+```typescript
+async function scrapeUrlFast(kernel: Kernel, url: string) {
+  const kb = await kernel.browsers.create({ headless: true });
+  const browser = await chromium.connectOverCDP({ wsEndpoint: kb.cdp_ws_url });
+  const page = browser.contexts()[0].pages()[0];
+  
+  // Block images, fonts
+  await page.route('**/*', route => {
+    if (['image', 'font', 'stylesheet'].includes(route.request().resourceType())) {
+      return route.abort();
+    }
+    return route.continue();
+  });
+  
+  await page.goto(url);
+  // 50% faster
+}
+```
+
+### 4. Reuse Profiles for Auth
+
+```typescript
+// Don't log in 1000 times!
+const kb = await kernel.browsers.create({
+  profile_name: 'shared-auth',
+  headless: true
+});
+// Already logged in from previous session
+```
+
+## Real-World Example: E-Commerce Price Monitor
+
+```typescript
+interface Product {
+  url: string;
+  name: string;
+  price: number;
+}
+
+async function monitorPrices(productUrls: string[]): Promise<Product[]> {
+  const kernel = new Kernel({ apiKey: process.env.KERNEL_API_KEY! });
+  const limit = pLimit(30);
+  
+  const results = await Promise.all(
+    productUrls.map(url => limit(async () => {
+      try {
+        const kb = await kernel.browsers.create({ headless: true });
+        const browser = await chromium.connectOverCDP({ wsEndpoint: kb.cdp_ws_url });
+        const page = browser.contexts()[0].pages()[0];
+        
+        // Block images for speed
+        await page.route('**/*', r => 
+          r.request().resourceType() === 'image' ? r.abort() : r.continue()
+        );
+        
+        await page.goto(url, { timeout: 20000 });
+        
+        const name = await page.textContent('h1.product-title');
+        const priceText = await page.textContent('.price');
+        const price = parseFloat(priceText?.replace(/[^0-9.]/g, '') || '0');
+        
+        await browser.close();
+        await kernel.browsers.deleteByID(kb.session_id);
+        
+        return { url, name: name || '', price };
+      } catch (error) {
+        console.error(`Failed: ${url}`, error);
+        return { url, name: '', price: 0 };
+      }
+    }))
+  );
+  
+  return results.filter(r => r.price > 0);
+}
+
+// Monitor 500 products in ~1 minute
+const products = await monitorPrices(productUrls);
+```
+
+## Common Issues
+
+### Rate Limited
+
+If you're hitting rate limits:
+
+1. Reduce concurrency
+2. Add delays between batches
+3. Use proxies (stealth mode)
+4. Use profiles to appear as same user
+
+### Out of Memory (Node.js)
+
+For very large workloads:
+
+```bash
+# Increase Node.js memory
+node --max-old-space-size=4096 script.js
+```
+
+### Timeouts
+
+If pages timeout frequently:
+
+```typescript
+// Increase timeout
+await page.goto(url, { timeout: 60000 });
+
+// Or fail fast
+await page.goto(url, { timeout: 10000 });
+```
+
+## Cost Estimation
+
+**Scraping 10,000 URLs:**
+- Average 5s per URL
+- Sequential: 13.9 hours = 834 minutes @ $0.05/min = **$41.70**
+- Parallel (20×): 0.7 hours = 42 minutes @ $0.05/min = **$2.10** (per URL)
+- Total parallel cost: **$41.70** (same cost, 20× faster)
+
+**Note:** Total compute time is the same; you're paying for parallelism, not for faster execution.
+
+## Related Recipes
+
+- [Block Ads](/recipes/block-ads-trackers) - Speed up each request
+- [Auth & Cookies](/recipes/auth-cookies-sessions) - Reuse login across parallel sessions
+- [Download Files](/recipes/download-files-s3) - Parallel file downloads
+
+## Related Features
+
+- [Create a Browser](/browsers/create-a-browser)
+- [Headless Mode](/browsers/headless) - Faster & cheaper
+- [Stealth Mode](/browsers/stealth) - Avoid rate limits
+
+## Support
+
+Questions about scaling? Join our [Discord](https://discord.gg/FBrveQRcud).
+

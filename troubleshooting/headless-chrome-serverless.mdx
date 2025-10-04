@@ -1,0 +1,331 @@
+---
+title: "Headless Chrome on Vercel: What Works in 2025"
+sidebarTitle: "Serverless Chrome"
+description: "Complete guide to running headless Chrome on Vercel and other serverless platforms. Learn what's possible, what isn't, and how to build production-ready automations."
+---
+
+**Serverless platforms like Vercel cannot run bundled Chromium binaries due to filesystem, size, and timeout constraints.** The solution: connect to remote browsers via CDP while keeping your application code on serverless.
+
+## What You're Trying to Do
+
+You want to run browser automation (screenshots, scraping, testing) from your Vercel deployment. Common use cases:
+
+- Generate og:image screenshots for dynamic URLs
+- Scrape competitor pricing or content
+- Run E2E tests on preview deployments
+- Export reports from SaaS tools
+- Capture receipts or invoices
+
+## Why Bundled Chrome Doesn't Work
+
+### Vercel's Constraints
+
+| Constraint | Limit | Why It Breaks Chrome |
+|------------|-------|---------------------|
+| **Filesystem** | Read-only, ephemeral | Chrome needs to write temp files, cache, profiles |
+| **Binary Size** | 50MB limit | Chromium binaries are ~300MB uncompressed |
+| **Cold Start** | &lt;10s (Hobby), &lt;60s (Pro) | Extracting and starting Chrome takes 10-30s |
+| **Memory** | 1GB (Hobby), 3GB (Pro) | Chromium + Node.js can exceed limits |
+
+### What Happens When You Try
+
+```bash
+# With playwright or puppeteer in package.json
+npm run build
+# ✗ Error: Chromium binaries exceed deployment size limit
+
+# Or at runtime
+browserType.launch()
+# ✗ Error: Executable doesn't exist at /var/task/...
+```
+
+## What Works: Remote Browsers via CDP
+
+The Chrome DevTools Protocol (CDP) lets you control a browser over WebSocket. Your code runs on Vercel; the browser runs elsewhere.
+
+### Architecture
+
+```
+┌─────────────────┐         WebSocket             ┌──────────────────┐
+│  Vercel Function│ ◄────────────────────────►    │  Kernel Browser  │
+│  (Your Code)    │    chromium.connectOverCDP    │  (Cloud-hosted)  │
+└─────────────────┘                               └──────────────────┘
+```
+
+**Benefits:**
+
+- No binaries to deploy
+- Instant cold starts (browser pool is pre-warmed)
+- Unlimited concurrency (scale browsers independently)
+- Persistent sessions (reuse auth across requests)
+
+### Implementation
+
+<CodeGroup>
+```typescript Playwright
+import { chromium } from 'playwright-core';
+import { Kernel } from '@onkernel/sdk';
+
+export default async function handler(req, res) {
+  const kernel = new Kernel({ apiKey: process.env.KERNEL_API_KEY });
+  const kb = await kernel.browsers.create({ headless: true });
+  
+  const browser = await chromium.connectOverCDP({
+    wsEndpoint: kb.cdp_ws_url
+  });
+  
+  const page = browser.contexts()[0].pages()[0];
+  await page.goto(req.query.url);
+  const screenshot = await page.screenshot({ type: 'png' });
+  
+  await browser.close();
+  await kernel.browsers.deleteByID(kb.session_id);
+  
+  res.setHeader('Content-Type', 'image/png');
+  return res.send(screenshot);
+}
+```
+
+```typescript Puppeteer
+import puppeteer from 'puppeteer-core';
+import { Kernel } from '@onkernel/sdk';
+
+export default async function handler(req, res) {
+  const kernel = new Kernel({ apiKey: process.env.KERNEL_API_KEY });
+  const kb = await kernel.browsers.create({ headless: true });
+  
+  const browser = await puppeteer.connect({
+    browserWSEndpoint: kb.cdp_ws_url
+  });
+  
+  const page = await browser.newPage();
+  await page.goto(req.query.url);
+  const screenshot = await page.screenshot({ type: 'png' });
+  
+  await browser.close();
+  await kernel.browsers.deleteByID(kb.session_id);
+  
+  res.setHeader('Content-Type', 'image/png');
+  return res.send(screenshot);
+}
+```
+</CodeGroup>
+
+## Feature Comparison: What You Can Do
+
+| Feature | Bundled Chrome | Remote Browser (Kernel) |
+|---------|----------------|------------------------|
+| Screenshots | ✗ Won't deploy | ✓ Works |
+| DOM Scraping | ✗ Won't deploy | ✓ Works |
+| Network Interception | ✗ Won't deploy | ✓ Works (page.route) |
+| File Downloads | ✗ Won't deploy | ✓ Works (File I/O API) |
+| Persistent Sessions | ✗ Ephemeral only | ✓ Hours/days with standby |
+| Stealth/Proxies | ✗ Won't deploy | ✓ Built-in |
+| Live View | ✗ Not possible | ✓ Human-in-the-loop |
+| Video Replays | ✗ Not possible | ✓ Full session recording |
+| Concurrent Sessions | Limited by memory | ✓ Unlimited |
+
+## Other Serverless Platforms
+
+The same constraints apply to:
+
+### AWS Lambda
+
+- 512MB deployment size limit
+- 15-minute max execution
+- 10GB memory max
+- **Solution:** Same—use CDP to remote browsers
+
+### Cloudflare Workers
+
+- 1MB script size after compression
+- 10ms CPU time (paid), 50ms (free)
+- No filesystem
+- **Solution:** CDP via Cloudflare's Browser Rendering API or Kernel
+
+### Railway, Fly.io
+
+- More flexible than Vercel, but:
+- Still need to manage Chrome lifecycle
+- Cold starts with Docker images
+- **Solution:** Use Kernel for faster cold starts + managed infrastructure
+
+### Netlify Functions
+
+- Similar to Vercel constraints
+- 50MB deployment limit
+- **Solution:** CDP to remote browsers
+
+## Cost Comparison
+
+Let's compare 1,000 screenshot requests:
+
+### Self-Hosting (Cloud Run, Fly.io)
+
+```
+Container always-on: $30/month minimum
++ Chromium memory: 2GB RAM = $15/month
++ Maintenance time: 4 hours/month @ $100/hr = $400/month
+= $445/month
+```
+
+### Kernel (per-minute pricing)
+
+```
+1,000 requests @ 3 seconds each = 50 minutes
+50 minutes @ $0.10/min = $5/month
+```
+
+**90% cost savings** for typical workloads.
+
+## Setup Guide
+
+### 1. Install Dependencies
+
+```bash
+# Use -core versions (no browser binaries)
+npm install playwright-core @onkernel/sdk
+# or
+npm install puppeteer-core @onkernel/sdk
+```
+
+### 2. Get Kernel API Key
+
+1. Sign up at [dashboard.onkernel.com](https://dashboard.onkernel.com/sign-up)
+2. Go to Settings → API Keys
+3. Create new key
+
+### 3. Add to Vercel
+
+```bash
+vercel env add KERNEL_API_KEY
+# Paste your key
+# Select: Production, Preview, Development
+```
+
+### 4. Use in API Routes
+
+See code samples above. Place in:
+
+- `pages/api/screenshot.ts` (Pages Router)
+- `app/api/screenshot/route.ts` (App Router)
+
+### 5. Deploy
+
+```bash
+vercel deploy
+```
+
+No build errors. No runtime errors. Just works.
+
+## Advanced: Vercel Native Integration
+
+For automatic setup and QA deployment checks:
+
+1. Install [Kernel from Vercel Marketplace](https://vercel.com/integrations/kernel)
+2. Connect to your projects
+3. API key auto-provisioned
+4. QA agents run on every preview deployment
+
+See [Vercel Integration Guide](/integrations/vercel) for details.
+
+## Best Practices
+
+### Reuse Sessions for Auth
+
+Don't log in on every request. Use [persistent sessions](/browsers/persistence):
+
+```typescript
+const kb = await kernel.browsers.create({
+  persistent: true,
+  persistent_id: `user-${userId}`
+});
+
+// First request: logs in, Kernel saves state
+// Subsequent requests: reuses cookies/session
+```
+
+### Handle Timeouts
+
+Vercel functions timeout after 10s (Hobby) or 60s (Pro). For long tasks:
+
+1. Return early, process async
+2. Use [Kernel App Platform](/apps/develop) (no timeouts)
+3. Split into multiple requests
+
+### Block Unnecessary Resources
+
+Speed up by blocking images, fonts, analytics:
+
+```typescript
+await page.route('**/*', route => {
+  const type = route.request().resourceType();
+  if (['image', 'font', 'stylesheet'].includes(type)) {
+    return route.abort();
+  }
+  return route.continue();
+});
+```
+
+See [Network Interception guide](/troubleshooting/network-interception).
+
+### Use Headless Mode
+
+For non-interactive tasks (screenshots, scraping):
+
+```typescript
+const kb = await kernel.browsers.create({ headless: true });
+```
+
+Headless uses 1GB RAM vs 8GB for headful, starts faster, costs less.
+
+## FAQ
+
+### Is this slower than local Chrome?
+
+Network latency adds ~20-50ms. But:
+
+- No cold start (Kernel pre-warms browsers)
+- No binary extraction (saves 10-30s)
+- **Net result:** Usually faster for serverless
+
+### Can I use existing Playwright scripts?
+
+Yes. Replace `browser.launch()` with `chromium.connectOverCDP(cdpUrl)`. Everything else (selectors, actions, assertions) works identically.
+
+### What about CI/CD?
+
+For GitHub Actions, Vercel deployment checks, etc.:
+
+- Install Kernel's [native Vercel integration](/integrations/vercel)
+- Or use [Kernel CLI](/reference/cli) in CI workflows
+- Or deploy tests as [Kernel Apps](/apps/develop)
+
+### Does this work for testing?
+
+Yes. Playwright/Puppeteer's full test APIs work over CDP. Popular frameworks:
+
+- Playwright Test
+- Jest + Puppeteer
+- Cypress (via CDP adapter)
+
+### How do I debug?
+
+Kernel provides:
+
+- [Live View](/browsers/live-view): Watch browser in real-time
+- [Replays](/browsers/replays): Video recordings of sessions
+- Console logs forwarded to your app
+
+## Related Resources
+
+- [Fix Playwright Vercel Error](/troubleshooting/playwright-vercel-error)
+- [Vercel Integration Guide](/integrations/vercel)
+- [Network Interception](/troubleshooting/network-interception)
+- [Playwright Timeouts](/troubleshooting/playwright-timeouts-serverless)
+- [Create a Browser](/browsers/create-a-browser)
+
+## Still Stuck?
+
+Join our [Discord](https://discord.gg/FBrveQRcud) for help. Share your error message and we'll diagnose.
+
