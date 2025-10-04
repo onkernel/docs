@@ -1,0 +1,330 @@
+---
+title: "Kernel vs Browserless"
+sidebarTitle: "vs Browserless"
+description: "Compare Kernel and Browserless for headless browser automation. Feature-by-feature analysis covering CDP support, network interception, persistence, pricing, and Vercel integration."
+---
+
+Both Kernel and Browserless provide cloud-hosted browsers for automation. This guide compares features, use cases, and helps you choose.
+
+## Quick Comparison
+
+| Feature | Kernel | Browserless |
+|---------|--------|-------------|
+| **CDP WebSocket** | ✓ Full support | ✓ Full support |
+| **Network Interception** | ✓ Full `page.route()` | ✓ Full |
+| **Session Persistence** | ✓ Hours/days with standby | ✓ Limited (session-based) |
+| **Live View** | ✓ Human-in-the-loop | ✗ No |
+| **Video Replays** | ✓ MP4 recordings | ✗ No |
+| **Vercel Integration** | ✓ Native (marketplace) | ✗ Manual setup |
+| **QA Deployment Checks** | ✓ Automated | ✗ No |
+| **Stealth Mode** | ✓ With CAPTCHA solver | ✓ With add-ons |
+| **Proxies** | ✓ 4 types built-in | ✓ Via configuration |
+| **File I/O** | ✓ Read/write during session | ✗ Export at end only |
+| **Pricing Model** | Per-minute active | Per-session + duration |
+| **Cold Start** | &lt;1s (pre-warmed pool) | ~2-5s |
+| **Open Source** | ✓ Full platform | ✗ Client libraries only |
+
+## Detailed Feature Comparison
+
+### Browser Automation
+
+Both support Playwright and Puppeteer over CDP. Identical functionality for page navigation, selectors, and basic automation.
+
+**Kernel:**
+- Supports Playwright, Puppeteer, Selenium (via CDP), Stagehand, Browser Use, Computer Use APIs
+- Pre-warmed browser pool (&lt;1s cold start)
+- Headless and headful modes
+
+**Browserless:**
+- Supports Playwright, Puppeteer, Selenium
+- On-demand browser launch (~2-5s)
+- Headless only (headful deprecated)
+
+**Winner:** Tie for basic automation. Kernel has faster cold starts.
+
+### Network Interception
+
+Both support full network interception via CDP.
+
+**Kernel:**
+```typescript
+await page.route('**/*', route => {
+  if (route.request().resourceType() === 'image') {
+    return route.abort();
+  }
+  return route.continue();
+});
+```
+
+**Browserless:**
+```typescript
+await page.route('**/*', route => {
+  if (route.request().resourceType() === 'image') {
+    return route.abort();
+  }
+  return route.continue();
+});
+```
+
+Identical API. No difference.
+
+**Winner:** Tie.
+
+### Session Persistence
+
+**Kernel:**
+- Persist sessions for hours or days
+- Standby mode: Zero cost when idle, instant wake
+- Profiles: Save/load cookies, auth state across sessions
+
+```typescript
+const kb = await kernel.browsers.create({
+  persistent: true,
+  persistent_id: 'my-session'
+});
+// Session stays alive, goes to standby after 1min idle
+// Reuse in next request for instant auth
+```
+
+**Browserless:**
+- Sessions tied to active connection
+- Can keep alive with keep-alive tokens
+- No standby mode (always consuming resources)
+
+**Winner:** Kernel. More flexible persistence with zero idle cost.
+
+### Live View & Debugging
+
+**Kernel:**
+- Built-in live view (VNC over WebRTC)
+- Watch browser in real-time from web browser
+- Useful for human-in-the-loop workflows, debugging
+
+**Browserless:**
+- No live view (headful mode deprecated in v2)
+- Debug via logs only
+
+**Winner:** Kernel.
+
+### Video Replays
+
+**Kernel:**
+- Full MP4 video recordings
+- Start/stop programmatically
+- Useful for debugging, compliance, auditing
+
+**Browserless:**
+- No replay feature
+
+**Winner:** Kernel.
+
+### Vercel Integration
+
+**Kernel:**
+- Native integration via Vercel Marketplace
+- One-click install
+- Auto-provision API keys
+- QA deployment checks on every preview/production deploy
+- Configuration management via Vercel dashboard
+
+**Browserless:**
+- Manual setup (environment variables)
+- No deployment checks
+- No marketplace integration
+
+**Winner:** Kernel. Significantly easier for Vercel users.
+
+### File I/O
+
+**Kernel:**
+- Read/write files during session via API
+- Access downloads mid-session
+- Upload files to browser filesystem
+
+```typescript
+const files = await kernel.browsers.files.list(sessionId, '/downloads');
+const content = await kernel.browsers.files.read(sessionId, file.path);
+```
+
+**Browserless:**
+- Files only available after session ends
+- Must wait for session to complete
+
+**Winner:** Kernel. More flexible for file operations.
+
+### Stealth & Anti-Detection
+
+**Kernel:**
+- Built-in stealth mode
+- Automatic reCAPTCHA solver
+- 4 proxy types (mobile, residential, ISP, datacenter)
+- Custom proxy support
+
+**Browserless:**
+- Stealth plugins available
+- CAPTCHA solving via integrations (2Captcha, etc.)
+- Custom proxy support
+
+**Winner:** Kernel. Built-in CAPTCHA solver saves setup time.
+
+### Pricing
+
+**Kernel:**
+- Per-minute of active browser time
+- Headless: ~$0.05/min
+- Headful: ~$0.10/min
+- Standby mode: Free
+- No session fees
+
+Example: 1,000 scrapes @ 3s each = 50 minutes = $2.50
+
+**Browserless:**
+- Per-session + duration
+- Pricing tiers based on concurrency
+- Session-based charging (even if browser idle)
+
+Example: 1,000 sessions = varies by plan (~$0.01-0.05/session + duration)
+
+**Winner:** Depends on use case. Kernel better for short, frequent tasks. Browserless better for long-running sessions if you optimize for concurrency.
+
+### Open Source
+
+**Kernel:**
+- Fully open source (browser infrastructure, API, dashboard)
+- Self-hosting guide available
+- Community contributions welcome
+
+**Browserless:**
+- Client libraries open source
+- Server/infrastructure proprietary
+
+**Winner:** Kernel. Full platform transparency.
+
+## Use Case Recommendations
+
+### Choose Kernel if you:
+
+- Need Vercel integration with QA deployment checks
+- Want human-in-the-loop (live view)
+- Need video replays for debugging/compliance
+- Want session persistence with zero idle cost
+- Need file I/O during session
+- Prefer open-source platforms
+- Run many short automation tasks
+
+### Choose Browserless if you:
+
+- Have existing Browserless integration (migration cost)
+- Need maximum concurrency (1000+ simultaneous browsers)
+- Prefer session-based pricing for long-running tasks
+- Already familiar with their API
+
+## Migration from Browserless to Kernel
+
+Minimal code changes required:
+
+```typescript
+// Before (Browserless)
+const browser = await puppeteer.connect({
+  browserWSEndpoint: `wss://chrome.browserless.io?token=${TOKEN}`
+});
+
+// After (Kernel)
+const kernel = new Kernel({ apiKey: process.env.KERNEL_API_KEY });
+const kb = await kernel.browsers.create({ headless: true });
+const browser = await puppeteer.connect({
+  browserWSEndpoint: kb.cdp_ws_url
+});
+```
+
+Everything else (selectors, actions, tests) remains identical.
+
+## Real-World Comparison
+
+### Scenario 1: Generate OG Images on Vercel
+
+**Task:** Generate social preview images for blog posts.
+
+**With Kernel:**
+- Install from Vercel Marketplace (1 click)
+- API key auto-provisioned
+- Deploy Next.js API route
+- &lt;1s cold start, 2s total per image
+
+**With Browserless:**
+- Manually add API key to Vercel
+- Configure connection
+- Deploy Next.js API route
+- ~3-5s per image (slower cold start)
+
+**Winner:** Kernel. Easier setup, faster execution.
+
+### Scenario 2: Monitor Competitor Prices (Cron Job)
+
+**Task:** Scrape 100 competitor prices every hour.
+
+**With Kernel:**
+- Use persistent session with profile
+- First run: logs in, saves cookies
+- Subsequent runs: instant auth, scrape
+- Cost: ~5 min/day = $0.50/day = $15/month
+
+**With Browserless:**
+- Log in on each run (no long-term persistence)
+- Must re-auth every time
+- Cost: ~100 sessions/day = varies by plan
+
+**Winner:** Kernel. Persistence saves time and cost.
+
+### Scenario 3: E2E Testing (CI/CD)
+
+**Task:** Run Playwright tests on every PR.
+
+**With Kernel:**
+- Works with GitHub Actions, GitLab CI, etc.
+- Parallel test execution
+- Video replays for failed tests
+- Cost: Pay only for test duration
+
+**With Browserless:**
+- Works with CI/CD
+- Parallel execution
+- No video replays (screenshots only via Playwright)
+- Cost: Per test session
+
+**Winner:** Kernel. Video replays useful for debugging flaky tests.
+
+## FAQ
+
+### Can Kernel replace Browserless in my existing stack?
+
+Yes. Kernel supports the same protocols (CDP) and frameworks (Playwright, Puppeteer). Migration typically takes &lt;1 hour.
+
+### Does Kernel support the Browserless REST API?
+
+No. Kernel uses a different API design focused on SDK-first usage. However, CDP connection works identically, so your Playwright/Puppeteer code doesn't change.
+
+### Which is faster?
+
+Kernel has faster cold starts (&lt;1s vs 2-5s) due to pre-warmed browser pools. Both have similar performance for page loads and automation once browser is running.
+
+### Which is more reliable?
+
+Both are production-grade. Kernel's standby mode reduces cold start issues for persistent sessions. Browserless has longer market presence.
+
+### Can I use both?
+
+Yes. Both connect via CDP WebSocket. You can use Kernel for Vercel deployments and Browserless for other workloads if desired.
+
+## Related Resources
+
+- [Kernel Capabilities](/info/capabilities)
+- [Kernel vs Browserbase](/info/kernel-vs-browserbase)
+- [Kernel vs Self-Hosting](/info/kernel-vs-self-hosting)
+- [Vercel Integration](/integrations/vercel)
+- [Create a Browser](/browsers/create-a-browser)
+
+## Support
+
+Need help choosing or migrating? Join our [Discord](https://discord.gg/FBrveQRcud) or email support@onkernel.com.
+

@@ -1,0 +1,470 @@
+---
+title: "Playwright Timeouts on Serverless: Options That Scale"
+sidebarTitle: "Timeout Solutions"
+description: "Handle Vercel, Lambda, and serverless timeout constraints when running Playwright automations. Learn async patterns, timeout tuning, and the Kernel App Platform."
+---
+
+**Serverless functions have strict time limits.** Vercel allows 10s (Hobby) or 60s (Pro). For Playwright automations that need more time, you have three options: optimize for speed, return early with async processing, or use Kernel's App Platform (no timeouts).
+
+## The Problem
+
+Your Playwright script works locally but times out on Vercel:
+
+```
+Error: Function execution duration exceeded
+FUNCTION_INVOCATION_TIMEOUT
+```
+
+Or Playwright itself times out:
+
+```
+TimeoutError: page.goto: Timeout 30000ms exceeded
+```
+
+## Quick Solutions
+
+### 1. Increase Playwright Timeouts
+
+Playwright's default is 30s. Reduce it for serverless:
+
+```typescript
+import { chromium } from 'playwright-core';
+
+const browser = await chromium.connectOverCDP({
+  wsEndpoint: kernelBrowser.cdp_ws_url,
+  timeout: 15000 // 15 seconds instead of 30
+});
+
+// Or set per-page
+page.setDefaultTimeout(15000);
+
+// Or per-action
+await page.goto('https://example.com', { timeout: 10000 });
+await page.click('button', { timeout: 5000 });
+```
+
+### 2. Use Headless Mode
+
+Headless browsers start ~2x faster and use less memory:
+
+```typescript
+const kb = await kernel.browsers.create({ headless: true });
+```
+
+Headless uses 1GB RAM vs 8GB for headful. No GUI rendering = faster page loads.
+
+### 3. Block Unnecessary Resources
+
+Speed up by 30-70% by blocking images, fonts, ads:
+
+```typescript
+await page.route('**/*', route => {
+  const type = route.request().resourceType();
+  if (['image', 'font', 'stylesheet', 'media'].includes(type)) {
+    return route.abort();
+  }
+  return route.continue();
+});
+
+await page.goto('https://example.com');
+// Loads 50%+ faster
+```
+
+See [Network Interception guide](/troubleshooting/network-interception).
+
+### 4. Wait Only for What You Need
+
+Don't wait for full page load if you only need specific elements:
+
+```typescript
+// ✗ Slow: waits for everything
+await page.goto('https://example.com', { waitUntil: 'networkidle' });
+
+// ✓ Fast: returns as soon as DOM is ready
+await page.goto('https://example.com', { waitUntil: 'domcontentloaded' });
+
+// ✓ Fastest: wait only for specific element
+await page.goto('https://example.com', { waitUntil: 'commit' });
+await page.waitForSelector('.product-list', { timeout: 5000 });
+```
+
+### 5. Reuse Browser Sessions
+
+Don't create a new browser for every request. Use [persistent sessions](/browsers/persistence):
+
+```typescript
+const kb = await kernel.browsers.create({
+  persistent: true,
+  persistent_id: 'shared-browser'
+});
+
+// First request: browser created (~2s)
+// Subsequent requests: reuses existing browser (~0.1s)
+```
+
+## Platform-Specific Limits
+
+| Platform | Hobby/Free | Paid |
+|----------|-----------|------|
+| **Vercel** | 10s | 60s |
+| **Netlify** | 10s | 26s (background: 15min) |
+| **AWS Lambda** | - | 15 minutes |
+| **Cloudflare Workers** | 50ms CPU | 30s wall time |
+| **Railway** | None | None |
+| **Fly.io** | None | None |
+
+## Pattern: Return Early, Process Async
+
+For long-running tasks, return immediately and process in background:
+
+### Option A: Webhook Callback
+
+```typescript
+// pages/api/scrape.ts
+export default async function handler(req, res) {
+  const { url, callbackUrl } = req.body;
+  
+  // Return immediately
+  res.json({ status: 'processing', id: 'job-123' });
+  
+  // Process async (doesn't block response)
+  scrapeAsync(url).then(result => {
+    // POST result to callback
+    fetch(callbackUrl, {
+      method: 'POST',
+      body: JSON.stringify(result)
+    });
+  });
+}
+
+async function scrapeAsync(url) {
+  const kernel = new Kernel({ apiKey: process.env.KERNEL_API_KEY });
+  const kb = await kernel.browsers.create();
+  const browser = await chromium.connectOverCDP({ wsEndpoint: kb.cdp_ws_url });
+  
+  const page = browser.contexts()[0].pages()[0];
+  await page.goto(url);
+  const data = await page.textContent('.content');
+  
+  await browser.close();
+  await kernel.browsers.deleteByID(kb.session_id);
+  
+  return { data };
+}
+```
+
+**Caveat:** If the function finishes before async work completes, Vercel may kill the process. For reliable async, use Option B or C.
+
+### Option B: Queue (Redis, RabbitMQ)
+
+```typescript
+// pages/api/scrape.ts
+import { Queue } from 'bull';
+
+const scrapeQueue = new Queue('scrape', process.env.REDIS_URL);
+
+export default async function handler(req, res) {
+  const { url } = req.body;
+  
+  // Add to queue
+  const job = await scrapeQueue.add({ url });
+  
+  // Return job ID
+  res.json({ jobId: job.id, status: 'queued' });
+}
+
+// Separate worker process (runs on Railway, Fly.io, or Vercel cron)
+scrapeQueue.process(async job => {
+  const { url } = job.data;
+  // ... run Playwright automation ...
+  return result;
+});
+```
+
+Check job status at `GET /api/scrape/:jobId`.
+
+### Option C: Kernel App Platform
+
+Deploy your automation as a Kernel App—no timeout limits:
+
+```typescript
+// kernel-app/index.ts
+import { App } from '@onkernel/sdk';
+import { chromium } from 'playwright-core';
+
+const app = new App('scraper');
+
+app.action('scrape', async (ctx, payload) => {
+  const { url } = payload;
+  
+  // No timeout constraints
+  const kb = await ctx.kernel.browsers.create({
+    invocation_id: ctx.invocation_id
+  });
+  
+  const browser = await chromium.connectOverCDP({
+    wsEndpoint: kb.cdp_ws_url
+  });
+  
+  const page = browser.contexts()[0].pages()[0];
+  await page.goto(url);
+  
+  // Take as long as needed
+  await page.waitForTimeout(60000); // 60 seconds? No problem
+  const data = await page.textContent('.content');
+  
+  await browser.close();
+  
+  return { data };
+});
+
+export default app;
+```
+
+Deploy and invoke:
+
+```bash
+kernel deploy index.ts
+kernel invoke scraper scrape --payload '{"url": "https://example.com"}'
+```
+
+Or invoke from your Vercel function:
+
+```typescript
+// pages/api/scrape.ts
+import { Kernel } from '@onkernel/sdk';
+
+export default async function handler(req, res) {
+  const kernel = new Kernel({ apiKey: process.env.KERNEL_API_KEY });
+  
+  // Invoke Kernel app (returns immediately)
+  const invocation = await kernel.invocations.create({
+    app_name: 'scraper',
+    action_name: 'scrape',
+    payload: { url: req.body.url },
+    async: true
+  });
+  
+  res.json({ invocationId: invocation.id });
+}
+```
+
+Check status at `GET /api/v1/invocations/:id`.
+
+See [Kernel App Platform docs](/apps/develop).
+
+## Optimization Checklist
+
+Before moving off serverless, try these optimizations:
+
+- [ ] Use headless mode (`headless: true`)
+- [ ] Block images, fonts, stylesheets with `page.route()`
+- [ ] Use `waitUntil: 'domcontentloaded'` instead of `'networkidle'`
+- [ ] Reduce Playwright timeouts (`setDefaultTimeout(15000)`)
+- [ ] Reuse persistent browser sessions
+- [ ] Wait only for specific selectors, not full page load
+- [ ] Profile with `PWDEBUG=1` locally to find slow steps
+- [ ] Use faster selectors (ID, data-testid) instead of complex CSS
+
+If you've done all of this and still need more time, use Kernel Apps or a queue.
+
+## Measuring Performance
+
+Log each step to identify bottlenecks:
+
+```typescript
+const perf = {
+  start: Date.now(),
+  steps: [] as Array<{ name: string; duration: number }>
+};
+
+function logStep(name: string) {
+  const now = Date.now();
+  const duration = now - (perf.steps[perf.steps.length - 1]?.end || perf.start);
+  perf.steps.push({ name, duration });
+  console.log(`[${name}] ${duration}ms`);
+}
+
+logStep('start');
+
+const kb = await kernel.browsers.create({ headless: true });
+logStep('browser_created');
+
+const browser = await chromium.connectOverCDP({ wsEndpoint: kb.cdp_ws_url });
+logStep('connected');
+
+const page = browser.contexts()[0].pages()[0];
+await page.goto('https://example.com');
+logStep('page_loaded');
+
+const data = await page.textContent('.content');
+logStep('data_extracted');
+
+await browser.close();
+logStep('browser_closed');
+
+console.log('Total:', Date.now() - perf.start, 'ms');
+console.log('Steps:', perf.steps);
+```
+
+Example output:
+
+```
+[browser_created] 1200ms
+[connected] 300ms
+[page_loaded] 4500ms    ← bottleneck
+[data_extracted] 100ms
+[browser_closed] 50ms
+Total: 6150ms
+```
+
+Now you know to optimize page load (block resources, change `waitUntil`).
+
+## Common Timeout Scenarios
+
+### Scenario 1: Auth Flow Takes Too Long
+
+**Problem:** Login requires MFA, OTP, or manual approval.
+
+**Solution:** Use [persistent sessions with profiles](/browsers/profiles):
+
+```typescript
+// First time: manual login via Live View
+const kb = await kernel.browsers.create({
+  profile_name: 'my-auth-profile',
+  profile_save_changes: true
+});
+
+// Visit live view URL (printed in logs)
+// Manually log in, complete MFA
+// Close browser when done
+
+// Subsequent uses: instant auth
+const kb = await kernel.browsers.create({
+  profile_name: 'my-auth-profile'
+});
+
+// Already logged in, no timeout
+```
+
+### Scenario 2: Waiting for Dynamic Content
+
+**Problem:** Page uses infinite scroll, lazy loading, or polling.
+
+**Solution:** Wait for specific state, not arbitrary timeout:
+
+```typescript
+// ✗ Bad: arbitrary wait
+await page.waitForTimeout(10000);
+
+// ✓ Good: wait for specific condition
+await page.waitForSelector('.loaded', { state: 'visible' });
+
+// ✓ Better: wait for network to settle
+await page.waitForLoadState('networkidle');
+
+// ✓ Best: wait for specific API call
+await page.waitForResponse(resp => 
+  resp.url().includes('/api/data') && resp.status() === 200
+);
+```
+
+### Scenario 3: File Download Takes Long
+
+**Problem:** Downloading large files exceeds timeout.
+
+**Solution:** Use Kernel's [File I/O API](/browsers/file-io):
+
+```typescript
+const kb = await kernel.browsers.create({
+  invocation_id: ctx.invocation_id
+});
+
+// Trigger download in browser
+await page.click('a[download]');
+
+// Wait for file to appear (non-blocking)
+await page.waitForTimeout(2000);
+
+// Fetch file via Kernel API (browser can continue)
+const files = await kernel.browsers.files.list(kb.session_id, '/downloads');
+const file = files.find(f => f.name.endsWith('.pdf'));
+
+if (file) {
+  const content = await kernel.browsers.files.read(kb.session_id, file.path);
+  // Upload to S3, return URL, etc.
+}
+```
+
+## FAQ
+
+### Can I increase Vercel's timeout?
+
+On Hobby plan: No, hard limit of 10s.
+On Pro plan: 60s max, configurable in `vercel.json`:
+
+```json
+{
+  "functions": {
+    "api/scrape.ts": {
+      "maxDuration": 60
+    }
+  }
+}
+```
+
+### Should I use Railway/Fly.io instead?
+
+Railway and Fly.io have no timeout limits, but you manage infrastructure (Docker images, scaling, health checks). Trade-offs:
+
+| | Vercel + Kernel | Railway + Chrome |
+|-|----------------|-----------------|
+| **Setup** | Deploy code, done | Dockerfile, health checks, scaling |
+| **Cold Start** | &lt;1s | 5-30s (pull image) |
+| **Cost** | Pay per minute | Pay for always-on container |
+| **Maintenance** | Zero | Chrome updates, security patches |
+
+**Recommendation:** Start with Vercel + Kernel. Switch to self-hosted only if you need custom browser configs or regulatory constraints.
+
+### What about AWS Lambda's 15-minute limit?
+
+15 minutes is generous for most automations. If you need more:
+
+1. Split into multiple Lambda invocations (Step Functions)
+2. Use Kernel App Platform (no limits)
+3. Use ECS/Fargate for long-running jobs
+
+### Can I run multiple pages in parallel?
+
+Yes, but each page adds ~2s. For bulk scraping, use [Kernel Apps](/apps/develop) and invoke multiple actions in parallel:
+
+```typescript
+const urls = ['url1', 'url2', 'url3', ...];
+
+const invocations = await Promise.all(
+  urls.map(url => 
+    kernel.invocations.create({
+      app_name: 'scraper',
+      action_name: 'scrape',
+      payload: { url },
+      async: true
+    })
+  )
+);
+
+// Check status of all invocations
+// Each can take as long as needed
+```
+
+## Related Resources
+
+- [Headless Chrome on Serverless](/troubleshooting/headless-chrome-serverless)
+- [Network Interception](/troubleshooting/network-interception)
+- [Kernel App Platform](/apps/develop)
+- [Persistent Sessions](/browsers/persistence)
+- [File I/O](/browsers/file-io)
+
+## Need Help?
+
+Join our [Discord](https://discord.gg/FBrveQRcud) to discuss timeout strategies for your use case.
+

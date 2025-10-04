@@ -1,0 +1,472 @@
+---
+title: "Kernel vs Browserbase"
+sidebarTitle: "vs Browserbase"
+description: "Compare Kernel and Browserbase for browser automation infrastructure. Detailed analysis of CDP support, network interception, Vercel integration, pricing, and unique features."
+---
+
+Both Kernel and Browserbase provide cloud browser infrastructure for web automation. This guide compares features, pricing, and use cases to help you decide.
+
+## Quick Comparison
+
+| Feature | Kernel | Browserbase |
+|---------|--------|-------------|
+| **CDP WebSocket** | ✓ Full support | ✓ Full support |
+| **Network Interception** | ✓ Full `page.route()` | ✓ Full |
+| **Session Persistence** | ✓ Hours/days with standby | ✓ Hours (context persistence) |
+| **Live View** | ✓ VNC in browser | ✗ No |
+| **Video Replays** | ✓ Full MP4 recordings | ✓ Screenshots + debug logs |
+| **Vercel Integration** | ✓ Native with QA checks | ✗ Manual setup |
+| **QA Deployment Checks** | ✓ Automated web agents | ✗ No |
+| **Stealth Mode** | ✓ With CAPTCHA solver | ✓ Via configuration |
+| **Proxies** | ✓ 4 types + custom | ✓ Custom only |
+| **File I/O** | ✓ Read/write during session | ✓ Limited |
+| **App Platform** | ✓ Deploy & invoke | ✗ No |
+| **Pricing Model** | Per-minute active | Per-session + duration |
+| **Cold Start** | &lt;1s (pre-warmed) | ~1-2s |
+| **Open Source** | ✓ Full platform | ✗ No |
+
+## Detailed Feature Comparison
+
+### Browser Automation
+
+Both support Playwright and Puppeteer over CDP with identical APIs.
+
+**Kernel:**
+- Pre-warmed browser pool (&lt;1s cold start)
+- Headless and headful modes
+- Supports all CDP-based frameworks
+
+**Browserbase:**
+- Fast cold starts (~1-2s)
+- Headless only
+- Supports Playwright, Puppeteer, Selenium
+
+**Winner:** Tie for basic automation. Both are fast and reliable.
+
+### Network Interception
+
+Both support full network interception via CDP.
+
+**Kernel:**
+```typescript
+await page.route('**/*', route => {
+  if (route.request().resourceType() === 'image') {
+    return route.abort();
+  }
+  return route.continue();
+});
+```
+
+**Browserbase:**
+```typescript
+// Identical API
+await page.route('**/*', route => {
+  if (route.request().resourceType() === 'image') {
+    return route.abort();
+  }
+  return route.continue();
+});
+```
+
+**Winner:** Tie. Both support the full Playwright network API.
+
+### Session Persistence
+
+**Kernel:**
+- Persist sessions for hours or days
+- Standby mode: Zero cost when idle, instant wake
+- Profiles: Save/load cookies globally
+
+```typescript
+const kb = await kernel.browsers.create({
+  persistent: true,
+  persistent_id: 'my-session'
+});
+// Goes to standby after 1min idle (free)
+// Wakes in &lt;1s on next request
+```
+
+**Browserbase:**
+- Context persistence (save cookies, storage between sessions)
+- Sessions can last hours
+- No standby mode (session must be explicitly kept alive)
+
+**Winner:** Kernel. Standby mode provides zero-cost persistence.
+
+### Live View & Debugging
+
+**Kernel:**
+- Built-in live view via VNC over WebRTC
+- Watch browser in real-time from any browser
+- Human-in-the-loop workflows
+- Interactive debugging
+
+```typescript
+const kb = await kernel.browsers.create({ headless: false });
+console.log('Live view:', kb.browser_live_view_url);
+// Open URL in browser, watch automation live
+```
+
+**Browserbase:**
+- No live view
+- Debug via screenshots and logs
+
+**Winner:** Kernel. Live view is a significant advantage for debugging and HITL workflows.
+
+### Video Replays
+
+**Kernel:**
+- Full MP4 video recordings
+- Capture entire session or segments
+- Programmatic start/stop
+- Download or stream
+
+**Browserbase:**
+- Screenshots at intervals
+- Debug logs and traces
+- Not full video
+
+**Winner:** Kernel. Full video is better for debugging complex issues.
+
+### Vercel Integration
+
+**Kernel:**
+- Native Vercel Marketplace integration
+- One-click install
+- Auto-provision API keys
+- QA deployment checks (run tests on every preview/prod deploy)
+- Managed via Vercel dashboard
+
+**Browserbase:**
+- Manual environment variable setup
+- No marketplace integration
+- No deployment checks
+
+**Winner:** Kernel. Significantly better Vercel experience.
+
+### File I/O
+
+**Kernel:**
+- Read/write files during session via API
+- List directory contents
+- Download files mid-automation
+- Upload files to browser
+
+```typescript
+const files = await kernel.browsers.files.list(sessionId, '/downloads');
+const content = await kernel.browsers.files.read(sessionId, files[0].path);
+```
+
+**Browserbase:**
+- File access limited
+- Downloads available after session (via API)
+
+**Winner:** Kernel. More flexible for file operations.
+
+### App Platform
+
+**Kernel:**
+- Deploy full applications (not just scripts)
+- Invoke via API, webhooks, cron
+- No timeout limits
+- Environment variables, secrets
+- Streaming logs
+
+```bash
+kernel deploy index.ts
+kernel invoke app-name action-name --payload '{"url": "..."}'
+```
+
+**Browserbase:**
+- Browser infrastructure only
+- No app hosting
+
+**Winner:** Kernel. Unique capability.
+
+### Stealth & Anti-Detection
+
+**Kernel:**
+- Built-in stealth mode
+- Automatic reCAPTCHA solver
+- 4 proxy types: mobile, residential, ISP, datacenter
+- Custom proxy support
+
+**Browserbase:**
+- Stealth configuration available
+- Custom proxy support
+- CAPTCHA solving via third-party
+
+**Winner:** Kernel. Built-in CAPTCHA solver is a time-saver.
+
+### Pricing
+
+**Kernel:**
+- Per-minute of active browser time
+- Headless: ~$0.05/min
+- Headful: ~$0.10/min
+- Standby: Free
+- No session fees
+
+Example: 1,000 scrapes @ 3s each = 50 minutes = $2.50
+
+**Browserbase:**
+- Per-session + duration
+- Pricing based on usage tiers
+- Context persistence may incur additional charges
+
+Example: Varies by plan, generally $0.01-0.05 per session + duration
+
+**Winner:** Depends on use case. Kernel better for many short tasks. Browserbase competitive for longer sessions.
+
+### Open Source
+
+**Kernel:**
+- Fully open source platform
+- Self-hosting guide available
+- Community contributions
+
+**Browserbase:**
+- Proprietary (closed source)
+- Client SDKs open source
+
+**Winner:** Kernel. Full transparency.
+
+## Use Case Recommendations
+
+### Choose Kernel if you:
+
+- Need Vercel integration with deployment QA checks
+- Want human-in-the-loop workflows (live view)
+- Need full video replays for debugging
+- Want to deploy full applications (not just scripts)
+- Need session persistence with zero idle cost
+- Prefer open-source platforms
+- Need built-in CAPTCHA solving
+- Want to self-host in the future
+
+### Choose Browserbase if you:
+
+- Already invested in Browserbase infrastructure
+- Prefer a managed-only solution
+- Need proven reliability at scale
+- Don't need live view or full replays
+- Are comfortable with proprietary solutions
+
+## Migration from Browserbase to Kernel
+
+Minimal code changes:
+
+```typescript
+// Before (Browserbase)
+const browser = await chromium.connectOverCDP({
+  wsEndpoint: `wss://connect.browserbase.com?apiKey=${BROWSERBASE_KEY}`
+});
+
+// After (Kernel)
+const kernel = new Kernel({ apiKey: process.env.KERNEL_API_KEY });
+const kb = await kernel.browsers.create({ headless: true });
+const browser = await chromium.connectOverCDP({
+  wsEndpoint: kb.cdp_ws_url
+});
+```
+
+Everything else remains the same.
+
+## Real-World Comparison
+
+### Scenario 1: Vercel App with Preview QA
+
+**Task:** Run E2E tests on every preview deployment.
+
+**With Kernel:**
+- Install from Vercel Marketplace
+- Configure QA checks in dashboard
+- Tests run automatically on every deploy
+- Video replays available for failures
+
+**With Browserbase:**
+- Manual GitHub Actions setup
+- Configure environment variables
+- Trigger tests via workflow
+- Debug with screenshots only
+
+**Winner:** Kernel. Automated QA checks save setup time.
+
+### Scenario 2: Long-Running Scraping Job
+
+**Task:** Scrape 10,000 products over 2 hours.
+
+**With Kernel:**
+- Use persistent session with standby
+- Session stays alive, goes idle between batches
+- Pay only for active scraping time
+- Can watch progress via live view
+
+**With Browserbase:**
+- Keep session alive for duration
+- Pay for full session time
+- No live view
+
+**Winner:** Depends. Kernel saves on idle time; Browserbase may be simpler for always-active scraping.
+
+### Scenario 3: Debugging Flaky Test
+
+**Task:** Figure out why a test fails intermittently.
+
+**With Kernel:**
+- Enable video replays
+- Run test repeatedly
+- Watch full video of failure
+- See exact moment and state
+
+**With Browserbase:**
+- Enable debug mode
+- Review screenshots and logs
+- Infer failure from snapshots
+
+**Winner:** Kernel. Video is more informative than screenshots.
+
+## Feature Parity & Gaps
+
+### What Kernel has that Browserbase doesn't:
+
+- Native Vercel integration with QA checks
+- Live view (VNC)
+- Full video replays (not just screenshots)
+- App deployment platform
+- Built-in CAPTCHA solver
+- Standby mode (zero idle cost)
+- Open source
+
+### What Browserbase has that Kernel doesn't:
+
+- Longer market presence (more battle-tested at scale)
+- More enterprise customers (social proof)
+
+### What both have:
+
+- Full CDP support
+- Network interception
+- Session persistence
+- Stealth mode
+- Proxy support
+- Fast cold starts
+- Global regions
+
+## Technical Deep Dive
+
+### Connection Pattern
+
+Both use identical connection patterns:
+
+```typescript
+// Both support this
+const browser = await chromium.connectOverCDP({
+  wsEndpoint: cdpWebSocketUrl
+});
+
+const page = browser.contexts()[0].pages()[0];
+await page.goto('https://example.com');
+```
+
+### Session Management
+
+**Kernel:**
+```typescript
+// Create persistent session
+const kb = await kernel.browsers.create({
+  persistent: true,
+  persistent_id: 'user-123'
+});
+
+// Reuse later
+const existing = browsers.find(b => b.persistent_id === 'user-123');
+```
+
+**Browserbase:**
+```typescript
+// Create session with context
+const session = await browserbase.createSession({
+  projectId: 'proj-123',
+  persistContext: true
+});
+
+// Reuse context
+const session2 = await browserbase.createSession({
+  projectId: 'proj-123',
+  contextId: session.contextId
+});
+```
+
+Similar concepts, different APIs.
+
+## FAQ
+
+### Can Kernel replace Browserbase in my stack?
+
+Yes. Both use CDP, so Playwright/Puppeteer code is identical. Main changes are initialization and session management.
+
+### Which is faster?
+
+Both have fast cold starts (&lt;2s). Kernel is slightly faster with pre-warmed pools (&lt;1s).
+
+### Which is more reliable?
+
+Both are production-grade. Browserbase has longer track record at scale. Kernel is newer but fully open source.
+
+### Can I use both?
+
+Yes. Both connect via CDP WebSocket. Use Kernel for Vercel deployments and Browserbase for other workloads if desired.
+
+### Does Browserbase have live view?
+
+No. Browserbase doesn't offer live view. Use screenshots and logs for debugging.
+
+### Does Kernel support Browserbase's SDK?
+
+No. Kernel has its own SDK (`@onkernel/sdk`). But since both use CDP, the Playwright/Puppeteer code is identical.
+
+## Pricing Comparison (Real Example)
+
+**Use case:** Screenshot 5,000 product pages monthly.
+
+### Kernel
+```
+5,000 pages × 2 seconds = 167 minutes
+167 minutes × $0.05/min (headless) = $8.35/month
+```
+
+### Browserbase
+```
+5,000 sessions × $0.02/session (estimated) = $100/month
+```
+
+**Winner for this use case:** Kernel (significantly cheaper for short tasks).
+
+**Use case:** Continuous monitoring (24/7 browser).
+
+### Kernel
+```
+1 browser × 43,200 minutes × $0.05/min = $2,160/month
+(Or use standby mode for idle periods)
+```
+
+### Browserbase
+```
+1 session × flat monthly rate = $200-500/month (varies)
+```
+
+**Winner for this use case:** Browserbase (better for always-on scenarios).
+
+## Related Resources
+
+- [Kernel Capabilities](/info/capabilities)
+- [Kernel vs Browserless](/info/kernel-vs-browserless)
+- [Kernel vs Self-Hosting](/info/kernel-vs-self-hosting)
+- [Vercel Integration](/integrations/vercel)
+- [Create a Browser](/browsers/create-a-browser)
+
+## Support
+
+Questions about choosing or migrating? Join our [Discord](https://discord.gg/FBrveQRcud) or email support@onkernel.com.
+

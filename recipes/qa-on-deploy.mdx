@@ -1,0 +1,591 @@
+---
+title: "Automate QA Tests on Every Vercel Deployment"
+sidebarTitle: "QA on Deploy"
+description: "Run automated QA checks on every preview and production deployment using Kernel's Vercel integration. Catch bugs before users do."
+---
+
+Automatically test your Vercel deployments with web agents that check functionality, visuals, and performance. Catch regressions before they reach users.
+
+## What This Recipe Does
+
+1. Vercel triggers deployment (preview or production)
+2. Kernel receives webhook
+3. Web agent navigates deployment URL
+4. Tests run automatically (visual, functional, performance)
+5. Results posted to Vercel deployment checks
+6. Deployment blocked if tests fail
+
+## Use Cases
+
+- Visual regression testing
+- Broken link detection
+- Auth flow validation
+- Critical path testing (checkout, signup, etc.)
+- Performance monitoring
+- Accessibility checks
+- Content validation
+
+## Setup: Native Integration
+
+### 1. Install Kernel from Vercel Marketplace
+
+Visit [vercel.com/integrations/kernel](https://vercel.com/integrations/kernel) and click **Add Integration**.
+
+### 2. Connect Projects
+
+Select which Vercel projects should have QA checks.
+
+### 3. Configure Checks
+
+In Vercel dashboard → Project → Settings → Integrations → Kernel:
+
+- Enable checks: Visual Regression, Broken Links, etc.
+- Set baseline URLs
+- Configure test parameters
+
+## Manual Setup (Advanced)
+
+If you want custom QA logic beyond the built-in checks:
+
+### 1. Create Kernel QA App
+
+<CodeGroup>
+```typescript TypeScript (kernel-qa/index.ts)
+import { App, KernelContext } from '@onkernel/sdk';
+import { chromium } from 'playwright-core';
+
+const app = new App('qa-checks');
+
+interface QAPayload {
+  deploymentUrl: string;
+  baselineUrl?: string;
+  checks: string[]; // ['visual', 'links', 'performance']
+}
+
+app.action('run-checks', async (ctx: KernelContext, payload: QAPayload) => {
+  const { deploymentUrl, baselineUrl, checks } = payload;
+  
+  const results: Record<string, any> = {};
+  
+  // Create browser
+  const kb = await ctx.kernel.browsers.create({
+    invocation_id: ctx.invocation_id,
+    headless: true
+  });
+  
+  const browser = await chromium.connectOverCDP({
+    wsEndpoint: kb.cdp_ws_url
+  });
+  
+  const page = browser.contexts()[0].pages()[0];
+  
+  // Visual Regression Check
+  if (checks.includes('visual') && baselineUrl) {
+    console.log('Running visual regression check...');
+    
+    await page.goto(deploymentUrl);
+    const newScreenshot = await page.screenshot({ fullPage: true });
+    
+    await page.goto(baselineUrl);
+    const baselineScreenshot = await page.screenshot({ fullPage: true });
+    
+    // Compare screenshots (use pixelmatch or similar)
+    const diffPercentage = await compareImages(
+      newScreenshot,
+      baselineScreenshot
+    );
+    
+    results.visual = {
+      passed: diffPercentage < 0.5, // <0.5% change
+      diffPercentage,
+      message: `Visual diff: ${(diffPercentage * 100).toFixed(2)}%`
+    };
+  }
+  
+  // Broken Links Check
+  if (checks.includes('links')) {
+    console.log('Running broken links check...');
+    
+    await page.goto(deploymentUrl);
+    
+    const links = await page.$$eval('a[href]', anchors =>
+      anchors.map(a => a.getAttribute('href')).filter(Boolean)
+    );
+    
+    const brokenLinks = [];
+    
+    for (const href of links) {
+      try {
+        const url = new URL(href, deploymentUrl);
+        if (url.hostname === new URL(deploymentUrl).hostname) {
+          const response = await page.goto(url.toString());
+          if (!response || response.status() >= 400) {
+            brokenLinks.push(href);
+          }
+        }
+      } catch (error) {
+        brokenLinks.push(href);
+      }
+    }
+    
+    results.links = {
+      passed: brokenLinks.length === 0,
+      brokenCount: brokenLinks.length,
+      brokenLinks: brokenLinks.slice(0, 10), // First 10
+      message: brokenLinks.length > 0
+        ? `Found ${brokenLinks.length} broken links`
+        : 'All links working'
+    };
+  }
+  
+  // Performance Check
+  if (checks.includes('performance')) {
+    console.log('Running performance check...');
+    
+    const startTime = Date.now();
+    await page.goto(deploymentUrl, { waitUntil: 'networkidle' });
+    const loadTime = Date.now() - startTime;
+    
+    const metrics = await page.evaluate(() => {
+      const perf = performance.timing;
+      return {
+        domContentLoaded: perf.domContentLoadedEventEnd - perf.navigationStart,
+        fullyLoaded: perf.loadEventEnd - perf.navigationStart,
+        firstPaint: performance.getEntriesByType('paint')[0]?.startTime || 0
+      };
+    });
+    
+    results.performance = {
+      passed: loadTime < 5000, // <5s
+      loadTime,
+      metrics,
+      message: `Page loaded in ${loadTime}ms`
+    };
+  }
+  
+  await browser.close();
+  
+  // Overall result
+  const allPassed = Object.values(results).every((r: any) => r.passed);
+  
+  return {
+    passed: allPassed,
+    checks: results,
+    summary: allPassed ? 'All checks passed' : 'Some checks failed'
+  };
+});
+
+export default app;
+
+// Helper function (implement with pixelmatch or similar)
+async function compareImages(img1: Buffer, img2: Buffer): Promise<number> {
+  // Simple byte comparison (use proper image diff library in production)
+  const diff = Buffer.compare(img1, img2);
+  return diff === 0 ? 0 : 1.0;
+}
+```
+
+```python Python (kernel-qa/main.py)
+import kernel
+from playwright.async_api import async_playwright
+from typing import Dict, List, Any
+import time
+
+app = kernel.App('qa-checks')
+
+@app.action('run-checks')
+async def run_checks(ctx: kernel.KernelContext, payload: Dict[str, Any]):
+    deployment_url = payload['deployment_url']
+    baseline_url = payload.get('baseline_url')
+    checks = payload.get('checks', [])
+    
+    results = {}
+    
+    # Create browser
+    kb = await ctx.kernel.browsers.create(
+        invocation_id=ctx.invocation_id,
+        headless=True
+    )
+    
+    async with async_playwright() as p:
+        browser = await p.chromium.connect_over_cdp(kb.cdp_ws_url)
+        page = browser.contexts[0].pages[0]
+        
+        # Visual regression
+        if 'visual' in checks and baseline_url:
+            print('Running visual regression...')
+            
+            await page.goto(deployment_url)
+            new_screenshot = await page.screenshot(full_page=True)
+            
+            await page.goto(baseline_url)
+            baseline_screenshot = await page.screenshot(full_page=True)
+            
+            # Compare (implement with PIL or similar)
+            diff_pct = compare_images(new_screenshot, baseline_screenshot)
+            
+            results['visual'] = {
+                'passed': diff_pct < 0.5,
+                'diff_percentage': diff_pct,
+                'message': f'Visual diff: {diff_pct:.2f}%'
+            }
+        
+        # Broken links
+        if 'links' in checks:
+            print('Running broken links check...')
+            
+            await page.goto(deployment_url)
+            links = await page.eval_on_selector_all(
+                'a[href]',
+                'anchors => anchors.map(a => a.href)'
+            )
+            
+            broken_links = []
+            for href in links:
+                try:
+                    response = await page.goto(href)
+                    if response.status >= 400:
+                        broken_links.append(href)
+                except:
+                    broken_links.append(href)
+            
+            results['links'] = {
+                'passed': len(broken_links) == 0,
+                'broken_count': len(broken_links),
+                'broken_links': broken_links[:10],
+                'message': f'Found {len(broken_links)} broken links' if broken_links else 'All links working'
+            }
+        
+        # Performance
+        if 'performance' in checks:
+            print('Running performance check...')
+            
+            start = time.time()
+            await page.goto(deployment_url, wait_until='networkidle')
+            load_time = (time.time() - start) * 1000
+            
+            results['performance'] = {
+                'passed': load_time < 5000,
+                'load_time': load_time,
+                'message': f'Page loaded in {load_time:.0f}ms'
+            }
+        
+        await browser.close()
+    
+    # Overall
+    all_passed = all(r['passed'] for r in results.values())
+    
+    return {
+        'passed': all_passed,
+        'checks': results,
+        'summary': 'All checks passed' if all_passed else 'Some checks failed'
+    }
+
+def compare_images(img1: bytes, img2: bytes) -> float:
+    # Implement with PIL/Pillow
+    return 0.0 if img1 == img2 else 1.0
+```
+</CodeGroup>
+
+### 2. Deploy QA App
+
+```bash
+cd kernel-qa
+kernel deploy index.ts
+```
+
+### 3. Create Vercel Webhook
+
+In your Next.js app, create a webhook handler:
+
+```typescript
+// app/api/vercel-webhook/route.ts
+import { NextRequest } from 'next/server';
+import { Kernel } from '@onkernel/sdk';
+
+export async function POST(req: NextRequest) {
+  const event = await req.json();
+  
+  // Handle deployment.ready event
+  if (event.type === 'deployment.ready') {
+    const deploymentUrl = event.payload.deployment.url;
+    const deploymentId = event.payload.deployment.id;
+    
+    console.log(`New deployment: ${deploymentUrl}`);
+    
+    // Invoke QA checks
+    const kernel = new Kernel({ apiKey: process.env.KERNEL_API_KEY! });
+    
+    const invocation = await kernel.invocations.create({
+      app_name: 'qa-checks',
+      action_name: 'run-checks',
+      payload: {
+        deploymentUrl: `https://${deploymentUrl}`,
+        baselineUrl: 'https://production-site.com',
+        checks: ['visual', 'links', 'performance']
+      },
+      async: true
+    });
+    
+    // Poll for results
+    let result;
+    for (let i = 0; i < 60; i++) {
+      result = await kernel.invocations.retrieve(invocation.id);
+      
+      if (result.status === 'succeeded' || result.status === 'failed') {
+        break;
+      }
+      
+      await new Promise(resolve => setTimeout(resolve, 2000));
+    }
+    
+    // Update Vercel deployment check
+    const checkPassed = result.output?.passed || false;
+    
+    await fetch(`https://api.vercel.com/v1/deployments/${deploymentId}/checks`, {
+      method: 'PATCH',
+      headers: {
+        'Authorization': `Bearer ${process.env.VERCEL_TOKEN}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        name: 'Kernel QA',
+        status: 'completed',
+        conclusion: checkPassed ? 'succeeded' : 'failed',
+        output: {
+          summary: result.output?.summary || 'QA checks complete',
+          text: JSON.stringify(result.output?.checks, null, 2)
+        }
+      })
+    });
+  }
+  
+  return new Response('OK', { status: 200 });
+}
+```
+
+### 4. Configure Vercel Webhook
+
+In Vercel dashboard:
+1. Go to Project → Settings → Git → Deploy Hooks
+2. Add webhook URL: `https://your-app.com/api/vercel-webhook`
+3. Select events: `deployment.ready`
+
+## Built-In Check Types
+
+The native integration provides these checks out-of-the-box:
+
+### Visual Regression
+
+Compares screenshots pixel-by-pixel against baseline.
+
+**Configuration:**
+- Baseline URL: Production or staging URL
+- Threshold: % difference allowed (default: 0.5%)
+- Full page: Capture entire page or just viewport
+
+### Broken Links
+
+Crawls all internal links and checks HTTP status.
+
+**Configuration:**
+- Max depth: How many levels to crawl
+- Ignore patterns: Skip certain URLs (e.g., `/admin/*`)
+- External links: Check external links too
+
+### Auth Flows
+
+Tests login, signup, password reset flows.
+
+**Configuration:**
+- Test credentials: Username/password to use
+- Expected redirects: Where should user land after login
+- Profile: Reuse saved auth state
+
+### Critical Paths
+
+Custom paths like checkout, form submission.
+
+**Configuration:**
+- Selectors: Elements to click/fill
+- Expected outcomes: Text/URL to verify
+- Timeout: How long to wait
+
+### Accessibility
+
+WCAG compliance checks.
+
+**Configuration:**
+- Level: A, AA, or AAA
+- Ignore: Skip certain rules
+
+### Performance
+
+Lighthouse scores and load times.
+
+**Configuration:**
+- Thresholds: Min scores for performance, accessibility, etc.
+- Metrics: FCP, LCP, TTI
+
+## Example: Visual Regression Only
+
+Simplest setup - just check if homepage looks the same:
+
+```typescript
+// Deploy this as Kernel app
+import { App } from '@onkernel/sdk';
+import { chromium } from 'playwright-core';
+
+const app = new App('visual-check');
+
+app.action('check', async (ctx, payload: { newUrl: string; oldUrl: string }) => {
+  const kb = await ctx.kernel.browsers.create({
+    invocation_id: ctx.invocation_id,
+    headless: true
+  });
+  
+  const browser = await chromium.connectOverCDP({ wsEndpoint: kb.cdp_ws_url });
+  const page = browser.contexts()[0].pages()[0];
+  
+  // New deployment
+  await page.goto(payload.newUrl);
+  const newImg = await page.screenshot();
+  
+  // Production
+  await page.goto(payload.oldUrl);
+  const oldImg = await page.screenshot();
+  
+  await browser.close();
+  
+  // Compare (simplified)
+  const same = Buffer.compare(newImg, oldImg) === 0;
+  
+  return {
+    passed: same,
+    message: same ? 'No visual changes' : 'Visual changes detected'
+  };
+});
+
+export default app;
+```
+
+Invoke from Vercel webhook or GitHub Actions.
+
+## Best Practices
+
+### 1. Test Critical Paths Only
+
+Don't test everything - focus on:
+- Homepage
+- Auth flows
+- Checkout/payment
+- Key user journeys
+
+### 2. Use Baselines Wisely
+
+Compare preview against:
+- ✓ Production (catch regressions)
+- ✓ Previous preview (catch drift)
+- ✗ Localhost (too many differences)
+
+### 3. Set Reasonable Thresholds
+
+Visual diff threshold:
+- 0%: Too strict (fonts, timestamps vary)
+- 0.5-1%: Good for most cases
+- 5%: Loose (allows significant changes)
+
+### 4. Ignore Dynamic Content
+
+Mask or ignore elements that always change:
+```typescript
+// Hide timestamps before screenshot
+await page.evaluate(() => {
+  document.querySelectorAll('.timestamp, .date').forEach(el => {
+    el.textContent = 'MASKED';
+  });
+});
+
+const screenshot = await page.screenshot();
+```
+
+### 5. Use Parallel Checks
+
+Run multiple checks in parallel:
+```typescript
+const [visual, links, performance] = await Promise.all([
+  checkVisual(page, deploymentUrl),
+  checkLinks(page, deploymentUrl),
+  checkPerformance(page, deploymentUrl)
+]);
+```
+
+## Troubleshooting
+
+### Flaky Visual Tests
+
+If visual tests fail intermittently:
+
+1. **Wait for fonts:**
+```typescript
+await page.evaluate(() => document.fonts.ready);
+```
+
+2. **Wait for animations:**
+```typescript
+await page.evaluate(() => {
+  document.querySelectorAll('*').forEach(el => {
+    el.style.animation = 'none';
+    el.style.transition = 'none';
+  });
+});
+```
+
+3. **Fixed viewport:**
+```typescript
+await page.setViewportSize({ width: 1920, height: 1080 });
+```
+
+### Deployment Checks Not Appearing
+
+If checks don't show in Vercel:
+
+1. Check webhook is triggered (Vercel logs)
+2. Verify `VERCEL_TOKEN` has correct permissions
+3. Check deployment ID matches
+
+### Tests Time Out
+
+If QA takes too long:
+
+1. Reduce scope (fewer pages)
+2. Use headless mode
+3. Block images/fonts
+4. Run checks in parallel
+
+## Cost Estimation
+
+**Per deployment:**
+- Visual check: ~10s = $0.008
+- Broken links (50 links): ~30s = $0.025
+- Performance check: ~15s = $0.0125
+- **Total: ~$0.045 per deployment**
+
+**100 deployments/month:** ~$4.50
+
+## Related Recipes
+
+- [Screenshot + LLM](/recipes/screenshot-dom-llm) - AI-powered content checks
+- [Parallel Browsers](/recipes/parallel-browsers) - Test multiple pages faster
+- [Auth & Cookies](/recipes/auth-cookies-sessions) - Test authenticated flows
+
+## Related Features
+
+- [Vercel Integration](/integrations/vercel) - Setup guide
+- [Replays](/browsers/replays) - Debug failed tests
+- [App Platform](/apps/develop) - Deploy QA apps
+
+## Support
+
+Questions about QA automation? Join our [Discord](https://discord.gg/FBrveQRcud).
+

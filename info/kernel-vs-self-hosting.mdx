@@ -1,0 +1,472 @@
+---
+title: "Kernel vs Self-Hosting Chrome"
+sidebarTitle: "vs Self-Hosting"
+description: "Compare Kernel's managed browser infrastructure to self-hosting Chrome on Docker, Cloud Run, Fly.io, or Railway. TCO analysis, maintenance burden, and decision framework."
+---
+
+Should you use Kernel's managed browsers or self-host Chrome? This guide compares total cost, operational overhead, and helps you decide.
+
+## Quick Comparison
+
+| Aspect | Kernel (Managed) | Self-Hosted Chrome |
+|--------|------------------|-------------------|
+| **Setup Time** | Minutes (sign up, get API key) | Days (Docker, orchestration, monitoring) |
+| **Cold Start** | &lt;1s (pre-warmed pool) | 5-30s (container pull + Chrome launch) |
+| **Scaling** | Automatic (1 to 1000+ browsers) | Manual (configure autoscaling, limits) |
+| **Maintenance** | Zero (Chrome updates automatic) | Ongoing (security patches, Chrome updates) |
+| **Infrastructure** | Managed globally | You provision & manage |
+| **Cost (light use)** | $5-50/month typical | $50-200/month minimum (always-on) |
+| **Cost (heavy use)** | $100-500/month | $500-2000/month (servers + ops time) |
+| **Features** | Live view, replays, persistence, standby | What you build |
+| **Control** | API-based configuration | Full control (custom flags, builds) |
+| **Debugging** | Built-in (live view, replays, logs) | DIY (logs, VNC setup optional) |
+| **Compliance** | Kernel's infrastructure | Your infrastructure (full control) |
+
+## Detailed Comparison
+
+### Setup & Time to First Browser
+
+**Kernel:**
+```bash
+# 2 minutes to first automation
+npm install @onkernel/sdk
+export KERNEL_API_KEY=xxx
+node script.js
+```
+
+**Self-Hosted:**
+```bash
+# 1-2 days to production-ready setup
+# 1. Create Dockerfile with Chrome
+# 2. Set up container registry
+# 3. Configure orchestration (ECS/Cloud Run/Fly)
+# 4. Set up monitoring, logging, alerting
+# 5. Configure autoscaling
+# 6. Test cold starts, memory limits
+# 7. Set up health checks
+# 8. Deploy
+```
+
+**Winner:** Kernel. Faster by orders of magnitude.
+
+### Cost Analysis (Real Numbers)
+
+#### Light Use: 100 browser-hours/month
+
+**Kernel:**
+```
+100 hours = 6,000 minutes
+6,000 minutes × $0.05/min (headless) = $300/month
+```
+
+**Self-Hosted on Cloud Run:**
+```
+Cloud Run instance (1 vCPU, 2GB RAM):
+- Always-on: 730 hours × $0.048/hr = $35/month
+- CPU time: ~100 hours × $0.024/vCPU-hr = $2.40/month
+- Total infrastructure: $37.40/month
+
+Operational overhead:
+- Setup time: 16 hours @ $100/hr = $1,600 (one-time)
+- Monthly maintenance: 2 hours @ $100/hr = $200/month
+- Total monthly: $237.40/month
+```
+
+**Winner:** Cloud Run (cheaper), but Kernel if factoring in ops time.
+
+#### Medium Use: 500 browser-hours/month
+
+**Kernel:**
+```
+500 hours = 30,000 minutes
+30,000 minutes × $0.05/min = $1,500/month
+```
+
+**Self-Hosted on ECS Fargate:**
+```
+ECS Fargate (2 vCPU, 4GB RAM):
+- Compute: 730 hours × $0.12/hr = $87.60/month
+- Scaling overhead: 3 instances for peaks = $262.80/month
+
+Operational overhead:
+- Setup time: 20 hours @ $100/hr = $2,000 (one-time)
+- Monthly maintenance: 4 hours @ $100/hr = $400/month
+- Total monthly: $662.80/month
+```
+
+**Winner:** Self-hosted is cheaper at this scale.
+
+#### Heavy Use: 5,000 browser-hours/month
+
+**Kernel:**
+```
+5,000 hours = 300,000 minutes
+300,000 minutes × $0.05/min = $15,000/month
+```
+
+**Self-Hosted on Kubernetes (GKE/EKS):**
+```
+Kubernetes cluster (10 nodes, autoscaling):
+- Compute: ~$1,200/month (optimized)
+- Load balancer: $20/month
+- Monitoring (Datadog/New Relic): $200/month
+- Container registry: $50/month
+- Total infrastructure: $1,470/month
+
+Operational overhead:
+- Setup time: 40 hours @ $100/hr = $4,000 (one-time)
+- Monthly maintenance: 10 hours @ $100/hr = $1,000/month
+- Incident response: ~5 hours @ $100/hr = $500/month
+- Total monthly: $2,970/month
+```
+
+**Winner:** Self-hosted is 5× cheaper, but requires dedicated DevOps.
+
+### Maintenance & Operational Burden
+
+**Kernel:**
+- **Chrome updates:** Automatic, zero downtime
+- **Security patches:** Automatic
+- **Scaling:** Automatic (API handles 1 to 1000+ browsers)
+- **Monitoring:** Built-in dashboard
+- **Debugging:** Live view, replays, logs
+- **Your time:** 0 hours/month
+
+**Self-Hosted:**
+- **Chrome updates:** Manual (Dockerfile rebuild + deploy)
+- **Security patches:** Monitor CVEs, patch regularly
+- **Scaling:** Configure autoscaling, test under load
+- **Monitoring:** Set up Prometheus/Datadog/CloudWatch
+- **Debugging:** Set up logging, optionally VNC
+- **Your time:** 2-10 hours/month minimum
+
+**Winner:** Kernel. Zero ops burden.
+
+### Features & Capabilities
+
+**Kernel Includes:**
+- Pre-warmed browser pool (&lt;1s cold start)
+- Live view (watch browser in real-time)
+- Video replays (full MP4 recordings)
+- Session persistence with standby (zero idle cost)
+- Profiles (save/load cookies, auth)
+- File I/O API
+- Stealth mode with CAPTCHA solver
+- 4 proxy types (mobile, residential, ISP, datacenter)
+- Network interception
+- Vercel native integration
+- QA deployment checks
+
+**Self-Hosted Includes:**
+- Whatever you build
+- Chrome with custom flags (full control)
+- Your own infrastructure (compliance, data locality)
+
+**Winner:** Kernel for features. Self-hosted for control.
+
+### Cold Start Performance
+
+**Kernel:**
+- Pre-warmed browser pool
+- Connect time: &lt;1s
+- Total to first page load: ~2s
+
+**Self-Hosted:**
+- Container pull: 5-10s (first time)
+- Chrome launch: 2-5s
+- Total to first page load: 7-15s (cold), 2-5s (warm)
+
+**Winner:** Kernel. Significantly faster cold starts.
+
+### Scaling & Concurrency
+
+**Kernel:**
+```typescript
+// Launch 100 browsers concurrently
+const browsers = await Promise.all(
+  Array(100).fill(0).map(() => 
+    kernel.browsers.create({ headless: true })
+  )
+);
+// Just works, scales automatically
+```
+
+**Self-Hosted:**
+- Configure autoscaling policies
+- Set min/max instances
+- Test scaling behavior
+- Monitor resource utilization
+- Handle scale-down gracefully
+
+**Winner:** Kernel. Automatic scaling.
+
+### Control & Customization
+
+**Kernel:**
+- Configure via API (headless, proxies, stealth)
+- Standard Chrome (latest stable)
+- Can't modify Chrome flags or build
+
+**Self-Hosted:**
+- Full control over Chrome version
+- Custom Chrome flags
+- Custom extensions
+- Custom fonts, locales
+- Run specific Chrome builds
+
+**Winner:** Self-hosted. Full customization.
+
+### Compliance & Data Sovereignty
+
+**Kernel:**
+- Data processed in Kernel's infrastructure
+- SOC 2 Type II in progress (Q2 2025)
+- Can self-host (open source)
+
+**Self-Hosted:**
+- Data stays in your infrastructure
+- You control all compliance aspects
+- Data locality guarantees
+
+**Winner:** Self-hosted for strict compliance requirements.
+
+## Decision Framework
+
+### Choose Kernel if:
+
+- You're getting started with browser automation
+- Ops time is expensive or unavailable
+- You need fast cold starts (&lt;1s)
+- You want zero maintenance burden
+- You need advanced features (live view, replays, standby)
+- Your usage is variable (spiky traffic)
+- You use Vercel and want native integration
+- You're automating &lt;2,000 browser-hours/month
+
+### Choose Self-Hosting if:
+
+- You have dedicated DevOps team
+- Your usage is consistent and high (5,000+ hours/month)
+- You need custom Chrome builds or flags
+- You have strict data sovereignty requirements
+- You want full control over infrastructure
+- You're already managing Kubernetes/container orchestration
+- You can amortize setup costs over long term
+
+### Consider Hybrid:
+
+- Use Kernel for development and testing
+- Self-host for production (after validating at scale)
+- Use Kernel for variable workloads, self-host for baseline
+
+## Self-Hosting Platforms Compared
+
+If you decide to self-host, platform matters:
+
+### Docker on Cloud Run (Google Cloud)
+
+**Pros:**
+- Serverless (pay per use)
+- Auto-scaling
+- Relatively simple
+
+**Cons:**
+- Cold starts (5-15s)
+- Memory limits (8GB max)
+- Not ideal for long-running browsers
+
+**Cost:** ~$50/month minimum
+
+### Docker on Fly.io
+
+**Pros:**
+- Global edge network
+- Fast cold starts (3-5s)
+- Simple deployment
+
+**Cons:**
+- Smaller scale than GCP/AWS
+- Less mature than Cloud Run
+
+**Cost:** ~$30/month minimum
+
+### ECS Fargate (AWS)
+
+**Pros:**
+- No server management
+- Integrates with AWS ecosystem
+- Good for burst workloads
+
+**Cons:**
+- More expensive than EC2 for always-on
+- Cold starts (10-15s)
+
+**Cost:** ~$100/month minimum
+
+### Kubernetes (EKS, GKE, AKS)
+
+**Pros:**
+- Best for large scale
+- Full control
+- Advanced orchestration
+
+**Cons:**
+- Complex setup
+- Requires Kubernetes expertise
+- High minimum cost
+
+**Cost:** ~$200/month minimum (cluster + nodes)
+
+### Railway / Render
+
+**Pros:**
+- Simple deployment
+- Good developer experience
+- Affordable for small scale
+
+**Cons:**
+- Limited enterprise features
+- Smaller scale than AWS/GCP
+
+**Cost:** ~$20/month minimum
+
+## Migration Patterns
+
+### Start with Kernel, Migrate Later
+
+```typescript
+// Abstract browser creation
+async function getBrowser() {
+  if (process.env.USE_KERNEL) {
+    const kernel = new Kernel({ apiKey: process.env.KERNEL_API_KEY });
+    const kb = await kernel.browsers.create({ headless: true });
+    return await chromium.connectOverCDP({ wsEndpoint: kb.cdp_ws_url });
+  } else {
+    return await chromium.launch({ headless: true });
+  }
+}
+
+// Use same code in both environments
+const browser = await getBrowser();
+```
+
+Deploy on Kernel initially. Once usage grows, flip to self-hosted.
+
+### Hybrid: Kernel for Peaks, Self-Host for Baseline
+
+```typescript
+async function getBrowser() {
+  const load = await getCurrentLoad();
+  
+  if (load > SELF_HOSTED_CAPACITY) {
+    // Use Kernel for overflow
+    return await connectToKernel();
+  } else {
+    // Use self-hosted for baseline
+    return await connectToSelfHosted();
+  }
+}
+```
+
+Cost-optimize by using self-hosted for predictable load, Kernel for spikes.
+
+## Real-World Scenarios
+
+### Scenario 1: Startup Building MVP
+
+**Need:** Scrape competitor data, generate OG images.
+
+**Volume:** 100 browser-hours/month.
+
+**Recommendation:** **Use Kernel.** Focus on product, not infrastructure. Total cost ~$300/month including ops time. Self-hosting would cost ~$250/month plus 10+ hours setup.
+
+### Scenario 2: Mid-Size SaaS (E2E Testing)
+
+**Need:** Run Playwright tests on every PR (500 PRs/month).
+
+**Volume:** 300 browser-hours/month.
+
+**Recommendation:** **Use Kernel.** Tests run faster (cold start &lt;1s). Zero ops burden. Cost ~$900/month. Self-hosting would be ~$500/month but adds maintenance burden.
+
+### Scenario 3: Enterprise Web Scraping
+
+**Need:** Scrape 100,000 pages/day continuously.
+
+**Volume:** 10,000 browser-hours/month.
+
+**Recommendation:** **Self-host on Kubernetes.** At this scale, infrastructure cost becomes dominant. Self-hosting costs ~$3,000/month vs Kernel's ~$30,000/month. ROI on DevOps investment is clear.
+
+### Scenario 4: Regulatory/Compliance
+
+**Need:** Financial data scraping with PII.
+
+**Requirements:** Data cannot leave your infrastructure.
+
+**Recommendation:** **Self-host** (or use Kernel open source to self-host the Kernel platform). Compliance trumps cost.
+
+## TCO Calculator (5-Year)
+
+### Kernel
+
+```
+Year 1: $3,600 (300 hours/month)
+Year 2: $7,200 (600 hours/month, growing)
+Year 3: $10,800 (900 hours/month)
+Year 4: $14,400 (1,200 hours/month)
+Year 5: $18,000 (1,500 hours/month)
+
+Total 5-year: $54,000
+Total ops time: 0 hours
+```
+
+### Self-Hosted
+
+```
+Setup: $4,000 (40 hours)
+Year 1: $6,000 (infra) + $12,000 (ops) = $18,000
+Year 2: $8,000 + $12,000 = $20,000
+Year 3: $10,000 + $15,000 = $25,000
+Year 4: $12,000 + $15,000 = $27,000
+Year 5: $14,000 + $18,000 = $32,000
+
+Total 5-year: $126,000
+Total ops time: ~600 hours
+```
+
+**Winner:** Kernel at moderate scale. Self-hosted wins at very high scale (10,000+ hours/month) or with existing DevOps team.
+
+## FAQ
+
+### Can I self-host Kernel itself?
+
+**Yes.** Kernel is fully open source. See [github.com/onkernel/kernel](https://github.com/onkernel/kernel) for self-hosting guide. You get Kernel's features on your infrastructure.
+
+### What if I outgrow Kernel?
+
+You can always migrate to self-hosted later. Kernel uses standard CDP, so your Playwright/Puppeteer code is portable.
+
+### Is self-hosting more reliable?
+
+Depends on your ops maturity. Kernel's infrastructure is battle-tested. Self-hosted can be equally reliable if you invest in monitoring, redundancy, and on-call.
+
+### Can I start with Kernel and add self-hosted later?
+
+Yes. Run both in parallel (Kernel for dev/test, self-hosted for prod) or use Kernel for overflow.
+
+### What about vendor lock-in?
+
+Kernel uses standard protocols (CDP, WebSocket). Your automation code is portable. Switching cost is minimal (mostly initialization code).
+
+## Related Resources
+
+- [Kernel Capabilities](/info/capabilities)
+- [Kernel vs Browserless](/info/kernel-vs-browserless)
+- [Kernel vs Browserbase](/info/kernel-vs-browserbase)
+- [Create a Browser](/browsers/create-a-browser)
+- [Vercel Integration](/integrations/vercel)
+- [GitHub (Self-Hosting)](https://github.com/onkernel/kernel)
+
+## Support
+
+Need help deciding? Join our [Discord](https://discord.gg/FBrveQRcud) or email support@onkernel.com for a personalized analysis.
+

@@ -1,4 +1,648 @@
 ---
-title: "Vercel"
-url: "https://github.com/onkernel/vercel-template"
+title: "Vercel Integration"
+description: "Run Playwright and Puppeteer on Vercel with Kernel's native integration. One-click setup, automatic QA deployment checks, and zero infrastructure management."
 ---
+
+Kernel provides a native Vercel integration available in the [Vercel Marketplace](https://vercel.com/integrations/kernel). Get automatic API key provisioning, QA deployment checks on every preview, and seamless browser automation for your Next.js apps.
+
+## Why You Need This
+
+Vercel's serverless environment cannot run bundled Chromium binaries due to:
+
+- **Filesystem constraints:** Functions are read-only and ephemeral
+- **Size limits:** 50MB max; Chromium is ~300MB
+- **Memory limits:** 1GB (Hobby), 3GB (Pro); Chromium needs 1-2GB
+- **Timeout limits:** 10s (Hobby), 60s (Pro); cold start + page load often exceeds this
+
+**Kernel solves this** by hosting browsers in the cloud. Your code runs on Vercel; browsers run on Kernel. Connect via WebSocket using Playwright or Puppeteer.
+
+## Quick Start (Manual Setup)
+
+If you want to get started without installing the marketplace integration:
+
+### 1. Install Dependencies
+
+```bash
+# Use -core versions (no browser binaries)
+npm install playwright-core @onkernel/sdk
+# or
+npm install puppeteer-core @onkernel/sdk
+```
+
+### 2. Get API Key
+
+1. Sign up at [dashboard.onkernel.com](https://dashboard.onkernel.com/sign-up)
+2. Go to Settings → API Keys
+3. Create new API key
+
+### 3. Add to Vercel
+
+```bash
+vercel env add KERNEL_API_KEY
+# Paste your key
+# Select: Production, Preview, Development
+```
+
+### 4. Create API Route
+
+<CodeGroup>
+```typescript Next.js App Router (app/api/screenshot/route.ts)
+import { NextRequest } from 'next/server';
+import { chromium } from 'playwright-core';
+import { Kernel } from '@onkernel/sdk';
+
+export async function GET(req: NextRequest) {
+  const url = req.nextUrl.searchParams.get('url') || 'https://example.com';
+  
+  const kernel = new Kernel({ apiKey: process.env.KERNEL_API_KEY });
+  const kb = await kernel.browsers.create({ headless: true });
+  
+  const browser = await chromium.connectOverCDP({
+    wsEndpoint: kb.cdp_ws_url
+  });
+  
+  const page = browser.contexts()[0].pages()[0];
+  await page.goto(url);
+  const screenshot = await page.screenshot({ type: 'png' });
+  
+  await browser.close();
+  await kernel.browsers.deleteByID(kb.session_id);
+  
+  return new Response(screenshot, {
+    headers: { 'Content-Type': 'image/png' }
+  });
+}
+```
+
+```typescript Next.js Pages Router (pages/api/screenshot.ts)
+import type { NextApiRequest, NextApiResponse } from 'next';
+import { chromium } from 'playwright-core';
+import { Kernel } from '@onkernel/sdk';
+
+export default async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
+  const url = (req.query.url as string) || 'https://example.com';
+  
+  const kernel = new Kernel({ apiKey: process.env.KERNEL_API_KEY });
+  const kb = await kernel.browsers.create({ headless: true });
+  
+  const browser = await chromium.connectOverCDP({
+    wsEndpoint: kb.cdp_ws_url
+  });
+  
+  const page = browser.contexts()[0].pages()[0];
+  await page.goto(url);
+  const screenshot = await page.screenshot({ type: 'png' });
+  
+  await browser.close();
+  await kernel.browsers.deleteByID(kb.session_id);
+  
+  res.setHeader('Content-Type', 'image/png');
+  res.send(screenshot);
+}
+```
+</CodeGroup>
+
+### 5. Test Locally
+
+```bash
+npm run dev
+# Visit http://localhost:3000/api/screenshot?url=https://google.com
+```
+
+### 6. Deploy
+
+```bash
+vercel deploy
+```
+
+Done. No build errors, no runtime errors.
+
+## Native Integration (Recommended)
+
+For seamless setup and automatic QA checks:
+
+### 1. Install from Marketplace
+
+Visit [vercel.com/integrations/kernel](https://vercel.com/integrations/kernel) and click **Add Integration**.
+
+### 2. Connect Projects
+
+Select which Vercel projects should have access to Kernel.
+
+### 3. API Key Auto-Provisioned
+
+Kernel automatically adds `KERNEL_API_KEY` to your selected projects' environment variables. No manual setup needed.
+
+### 4. QA Deployment Checks Enabled
+
+Every preview and production deployment automatically runs QA checks using Kernel's web agents. See [QA Deployment Checks](#qa-deployment-checks) below.
+
+## QA Deployment Checks
+
+The native integration runs automated QA tests on every deployment using Kernel's AI web agents:
+
+### How It Works
+
+1. **deployment.created**: Kernel receives webhook from Vercel
+2. **Check registered**: Kernel creates a blocking deployment check
+3. **Agent runs**: Web agent navigates your preview URL, tests functionality
+4. **Results posted**: Pass/fail status appears in Vercel dashboard
+5. **Deployment proceeds**: If passing, deployment continues; if failing, you're notified
+
+### What Gets Tested
+
+Configure checks via Vercel dashboard (Integration Settings → Kernel):
+
+- **Visual regression:** Screenshot comparison vs baseline
+- **Broken links:** Crawl and verify all internal links load
+- **Auth flows:** Test login, signup, password reset
+- **Critical paths:** Custom scripts for checkout, forms, etc.
+- **Accessibility:** WCAG compliance checks
+- **Performance:** Lighthouse scores, load times
+
+### Example: Visual Regression
+
+```typescript
+// kernel-qa/visual-regression.ts
+import { App } from '@onkernel/sdk';
+import { chromium } from 'playwright-core';
+
+const app = new App('visual-regression');
+
+app.action('check-deployment', async (ctx, payload) => {
+  const { deploymentUrl, baseline Url } = payload;
+  
+  const kb = await ctx.kernel.browsers.create({
+    invocation_id: ctx.invocation_id,
+    headless: true
+  });
+  
+  const browser = await chromium.connectOverCDP({
+    wsEndpoint: kb.cdp_ws_url
+  });
+  
+  const page = browser.contexts()[0].pages()[0];
+  
+  // Capture new deployment
+  await page.goto(deploymentUrl);
+  const newScreenshot = await page.screenshot({ fullPage: true });
+  
+  // Capture baseline
+  await page.goto(baselineUrl);
+  const baselineScreenshot = await page.screenshot({ fullPage: true });
+  
+  // Compare (use pixelmatch, looks-same, or similar)
+  const diffPercentage = await compareScreenshots(
+    newScreenshot,
+    baselineScreenshot
+  );
+  
+  await browser.close();
+  
+  return {
+    passed: diffPercentage < 0.1, // <0.1% diff = pass
+    diffPercentage,
+    message: `Visual diff: ${(diffPercentage * 100).toFixed(2)}%`
+  };
+});
+
+export default app;
+```
+
+Deploy this as a Kernel App:
+
+```bash
+cd kernel-qa
+kernel deploy visual-regression.ts
+```
+
+Kernel invokes it automatically on each deployment.
+
+### Configure in Vercel Dashboard
+
+1. Go to your Vercel project
+2. Settings → Integrations → Kernel
+3. Enable checks: Visual Regression, Broken Links, etc.
+4. Set baseline URLs and thresholds
+5. Save
+
+Checks run on next deployment.
+
+### Manual Invocation
+
+You can also trigger checks manually via API:
+
+```typescript
+// pages/api/run-qa.ts
+import { Kernel } from '@onkernel/sdk';
+
+export default async function handler(req, res) {
+  const kernel = new Kernel({ apiKey: process.env.KERNEL_API_KEY });
+  
+  const invocation = await kernel.invocations.create({
+    app_name: 'visual-regression',
+    action_name: 'check-deployment',
+    payload: {
+      deploymentUrl: req.body.deploymentUrl,
+      baselineUrl: req.body.baselineUrl
+    },
+    async: true
+  });
+  
+  res.json({ invocationId: invocation.id });
+}
+```
+
+## Environment-Based Toggle
+
+Use local Playwright in development, Kernel in production:
+
+```typescript
+import { chromium } from 'playwright-core';
+import { Kernel } from '@onkernel/sdk';
+
+const isProduction = process.env.VERCEL_ENV === 'production';
+const isPreview = process.env.VERCEL_ENV === 'preview';
+const useKernel = isProduction || isPreview || process.env.USE_KERNEL;
+
+async function getBrowser() {
+  if (useKernel) {
+    // Use Kernel on Vercel
+    const kernel = new Kernel({ apiKey: process.env.KERNEL_API_KEY! });
+    const kb = await kernel.browsers.create({ headless: true });
+    const browser = await chromium.connectOverCDP({
+      wsEndpoint: kb.cdp_ws_url
+    });
+    return { browser, sessionId: kb.session_id, kernel };
+  } else {
+    // Use local Playwright in dev
+    const browser = await chromium.launch({ headless: true });
+    return { browser, sessionId: null, kernel: null };
+  }
+}
+
+// Usage
+const { browser, sessionId, kernel } = await getBrowser();
+
+// ... use browser ...
+
+await browser.close();
+if (kernel && sessionId) {
+  await kernel.browsers.deleteByID(sessionId);
+}
+```
+
+Force Kernel in local dev by setting:
+
+```bash
+export USE_KERNEL=true
+npm run dev
+```
+
+## Vercel Limits & How Kernel Handles Them
+
+| Limit | Hobby | Pro | How Kernel Helps |
+|-------|-------|-----|------------------|
+| **Function timeout** | 10s | 60s | Browser pre-warmed, connect in &lt;1s |
+| **Memory** | 1GB | 3GB | Browser runs remotely, function uses &lt;100MB |
+| **Deployment size** | 50MB | 50MB | No Chromium binaries to deploy |
+| **Cold start** | Slow | Slow | Kernel pools browsers, instant connect |
+
+## Network Interception
+
+Block resources to speed up page loads:
+
+```typescript
+const kernel = new Kernel({ apiKey: process.env.KERNEL_API_KEY });
+const kb = await kernel.browsers.create({ headless: true });
+const browser = await chromium.connectOverCDP({ wsEndpoint: kb.cdp_ws_url });
+const page = browser.contexts()[0].pages()[0];
+
+// Block images, fonts, stylesheets
+await page.route('**/*', route => {
+  const type = route.request().resourceType();
+  if (['image', 'font', 'stylesheet', 'media'].includes(type)) {
+    return route.abort();
+  }
+  return route.continue();
+});
+
+await page.goto('https://example.com');
+// Loads 50-70% faster
+```
+
+Full network interception works over CDP. See [Network Interception guide](/troubleshooting/network-interception).
+
+## File Downloads
+
+Download files from the browser and upload to S3, R2, etc.:
+
+```typescript
+import { Kernel } from '@onkernel/sdk';
+import { chromium } from 'playwright-core';
+import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+
+const kernel = new Kernel({ apiKey: process.env.KERNEL_API_KEY });
+const kb = await kernel.browsers.create();
+const browser = await chromium.connectOverCDP({ wsEndpoint: kb.cdp_ws_url });
+const page = browser.contexts()[0].pages()[0];
+
+// Trigger download
+await page.goto('https://example.com/reports');
+await page.click('a[download]');
+await page.waitForTimeout(2000); // Wait for download
+
+// Fetch file via Kernel File I/O API
+const files = await kernel.browsers.files.list(kb.session_id, '/downloads');
+const pdfFile = files.find(f => f.name.endsWith('.pdf'));
+
+if (pdfFile) {
+  const buffer = await kernel.browsers.files.read(kb.session_id, pdfFile.path);
+  
+  // Upload to S3
+  const s3 = new S3Client({ region: 'us-east-1' });
+  await s3.send(new PutObjectCommand({
+    Bucket: 'my-bucket',
+    Key: pdfFile.name,
+    Body: buffer
+  }));
+}
+
+await browser.close();
+await kernel.browsers.deleteByID(kb.session_id);
+```
+
+See [File I/O docs](/browsers/file-io).
+
+## Persistent Sessions
+
+Reuse browser sessions across multiple requests to preserve auth:
+
+```typescript
+const SESSION_ID = 'vercel-app-session';
+
+const kernel = new Kernel({ apiKey: process.env.KERNEL_API_KEY });
+
+// Try to reuse existing session
+let browsers = await kernel.browsers.list();
+let kb = browsers.find(b => b.persistent_id === SESSION_ID);
+
+// Create if doesn't exist
+if (!kb) {
+  kb = await kernel.browsers.create({
+    persistent: true,
+    persistent_id: SESSION_ID,
+    headless: true
+  });
+}
+
+const browser = await chromium.connectOverCDP({
+  wsEndpoint: kb.cdp_ws_url
+});
+
+// ... use browser (cookies/session preserved) ...
+
+await browser.close();
+// Don't delete - keeps session for next request
+```
+
+See [Persistence docs](/browsers/persistence).
+
+## Migration from Browserless/Browserbase
+
+If you're switching from another hosted browser provider:
+
+### From Browserless
+
+```typescript
+// Before (Browserless)
+const browser = await puppeteer.connect({
+  browserWSEndpoint: `wss://chrome.browserless.io?token=${BROWSERLESS_TOKEN}`
+});
+
+// After (Kernel)
+const kernel = new Kernel({ apiKey: process.env.KERNEL_API_KEY });
+const kb = await kernel.browsers.create({ headless: true });
+const browser = await puppeteer.connect({
+  browserWSEndpoint: kb.cdp_ws_url
+});
+```
+
+### From Browserbase
+
+```typescript
+// Before (Browserbase)
+const browser = await chromium.connectOverCDP({
+  wsEndpoint: `wss://connect.browserbase.com?apiKey=${BROWSERBASE_KEY}`
+});
+
+// After (Kernel)
+const kernel = new Kernel({ apiKey: process.env.KERNEL_API_KEY });
+const kb = await kernel.browsers.create({ headless: true });
+const browser = await chromium.connectOverCDP({
+  wsEndpoint: kb.cdp_ws_url
+});
+```
+
+Everything else (selectors, actions, assertions) remains identical.
+
+## Troubleshooting
+
+### Error: "KERNEL_API_KEY is not set"
+
+Add API key to Vercel environment variables:
+
+```bash
+vercel env add KERNEL_API_KEY
+```
+
+Or via Vercel dashboard: Settings → Environment Variables → Add.
+
+### Error: "Timeout connecting to browser"
+
+Check:
+
+1. API key is valid (test with `kernel.browsers.list()`)
+2. Network allows outbound WebSocket connections
+3. Vercel function timeout is sufficient (increase if needed)
+
+### Error: "Cannot find module 'playwright-core'"
+
+Make sure you're using `playwright-core` (not `playwright`) in package.json:
+
+```json
+{
+  "dependencies": {
+    "playwright-core": "^1.47.0",
+    "@onkernel/sdk": "^latest"
+  }
+}
+```
+
+### Slow cold starts
+
+Use [persistent sessions](#persistent-sessions) to reuse browsers across requests. First request creates browser (~2s), subsequent requests connect instantly (~0.1s).
+
+### Out of memory errors
+
+Use headless mode (`headless: true`) and block unnecessary resources. This reduces memory usage from 2GB to &lt;500MB.
+
+## Examples
+
+### Generate OG Images
+
+```typescript
+// app/api/og/route.tsx
+import { ImageResponse } from 'next/og';
+import { Kernel } from '@onkernel/sdk';
+import { chromium } from 'playwright-core';
+
+export async function GET(req: Request) {
+  const { searchParams } = new URL(req.url);
+  const title = searchParams.get('title') || 'Default Title';
+  
+  const kernel = new Kernel({ apiKey: process.env.KERNEL_API_KEY! });
+  const kb = await kernel.browsers.create({ headless: true });
+  const browser = await chromium.connectOverCDP({
+    wsEndpoint: kb.cdp_ws_url
+  });
+  
+  const page = browser.contexts()[0].pages()[0];
+  await page.setContent(`
+    <html>
+      <body style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; font-family: sans-serif; display: flex; align-items: center; justify-content: center; height: 630px; width: 1200px;">
+        <h1 style="font-size: 72px; margin: 0;">${title}</h1>
+      </body>
+    </html>
+  `);
+  
+  const screenshot = await page.screenshot({ type: 'png' });
+  
+  await browser.close();
+  await kernel.browsers.deleteByID(kb.session_id);
+  
+  return new Response(screenshot, {
+    headers: { 'Content-Type': 'image/png' }
+  });
+}
+```
+
+### Scrape Competitor Prices
+
+```typescript
+// app/api/scrape-prices/route.ts
+import { Kernel } from '@onkernel/sdk';
+import { chromium } from 'playwright-core';
+
+export async function GET() {
+  const kernel = new Kernel({ apiKey: process.env.KERNEL_API_KEY! });
+  const kb = await kernel.browsers.create({ headless: true, stealth: true });
+  const browser = await chromium.connectOverCDP({
+    wsEndpoint: kb.cdp_ws_url
+  });
+  
+  const page = browser.contexts()[0].pages()[0];
+  await page.goto('https://competitor.com/pricing');
+  
+  const prices = await page.$$eval('.price', elements => 
+    elements.map(el => el.textContent?.trim())
+  );
+  
+  await browser.close();
+  await kernel.browsers.deleteByID(kb.session_id);
+  
+  return Response.json({ prices });
+}
+```
+
+### Run E2E Tests on Preview
+
+```typescript
+// tests/e2e/checkout.spec.ts
+import { test, expect } from '@playwright/test';
+import { Kernel } from '@onkernel/sdk';
+import { chromium } from 'playwright-core';
+
+test('checkout flow', async () => {
+  const kernel = new Kernel({ apiKey: process.env.KERNEL_API_KEY! });
+  const kb = await kernel.browsers.create({ headless: true });
+  const browser = await chromium.connectOverCDP({
+    wsEndpoint: kb.cdp_ws_url
+  });
+  
+  const page = browser.contexts()[0].pages()[0];
+  
+  // Use VERCEL_URL for preview deployments
+  const baseUrl = process.env.VERCEL_URL 
+    ? `https://${process.env.VERCEL_URL}`
+    : 'http://localhost:3000';
+  
+  await page.goto(`${baseUrl}/products`);
+  await page.click('text=Add to Cart');
+  await page.click('text=Checkout');
+  await page.fill('#email', 'test@example.com');
+  await page.click('text=Place Order');
+  
+  await expect(page.locator('text=Order confirmed')).toBeVisible();
+  
+  await browser.close();
+  await kernel.browsers.deleteByID(kb.session_id);
+});
+```
+
+Run on Vercel with GitHub Actions:
+
+```yaml
+name: E2E Tests
+on: [deployment_status]
+
+jobs:
+  test:
+    if: github.event.deployment_status.state == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - run: npm ci
+      - run: npx playwright test
+        env:
+          KERNEL_API_KEY: ${{ secrets.KERNEL_API_KEY }}
+          VERCEL_URL: ${{ github.event.deployment_status.target_url }}
+```
+
+## Related Resources
+
+- [Playwright Vercel Error](/troubleshooting/playwright-vercel-error)
+- [Headless Chrome on Serverless](/troubleshooting/headless-chrome-serverless)
+- [Network Interception](/troubleshooting/network-interception)
+- [Playwright Timeouts](/troubleshooting/playwright-timeouts-serverless)
+- [Create a Browser](/browsers/create-a-browser)
+- [File I/O](/browsers/file-io)
+- [Persistence](/browsers/persistence)
+- [Stealth Mode](/browsers/stealth)
+
+## Support
+
+- **Discord:** [discord.gg/FBrveQRcud](https://discord.gg/FBrveQRcud)
+- **Email:** support@onkernel.com
+- **GitHub:** [github.com/onkernel](https://github.com/onkernel)
+
+## Starter Template
+
+Clone our Vercel + Kernel starter:
+
+```bash
+npx create-kernel-app my-vercel-app --template vercel
+cd my-vercel-app
+vercel deploy
+```
+
+Includes:
+
+- Next.js App Router
+- Playwright + Kernel setup
+- Example API routes (screenshot, scrape, test)
+- Environment variables configured
+- TypeScript, ESLint, Prettier

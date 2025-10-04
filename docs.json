@@ -128,9 +128,18 @@
             "group": "Info",
             "pages": [
               "info/concepts",
+              "info/capabilities",
               "info/pricing",
               "info/unikernels",
-              "info/changelog"
+              "info/changelog",
+              {
+                "group": "Comparisons",
+                "pages": [
+                  "info/kernel-vs-browserless",
+                  "info/kernel-vs-browserbase",
+                  "info/kernel-vs-self-hosting"
+                ]
+              }
             ]
           },
           {
@@ -142,6 +151,54 @@
               "careers/engineer-new-grad",
               "careers/devrel-engineer",
               "careers/technical-content-marketer"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Recipes",
+        "icon": "book-bookmark",
+        "groups": [
+          {
+            "group": "Data Extraction",
+            "pages": [
+              "recipes/screenshot-dom-llm",
+              "recipes/block-ads-trackers"
+            ]
+          },
+          {
+            "group": "Authentication & Files",
+            "pages": [
+              "recipes/auth-cookies-sessions",
+              "recipes/download-files-s3"
+            ]
+          },
+          {
+            "group": "Scaling & Testing",
+            "pages": [
+              "recipes/parallel-browsers",
+              "recipes/qa-on-deploy"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Troubleshooting",
+        "icon": "wrench",
+        "groups": [
+          {
+            "group": "Platform-Specific",
+            "pages": [
+              "troubleshooting/playwright-vercel-error",
+              "troubleshooting/headless-chrome-serverless",
+              "troubleshooting/playwright-lambda-limits"
+            ]
+          },
+          {
+            "group": "Advanced Features",
+            "pages": [
+              "troubleshooting/network-interception",
+              "troubleshooting/playwright-timeouts-serverless"
             ]
           }
         ]

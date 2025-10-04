@@ -1,0 +1,457 @@
+---
+title: "Network Interception with Playwright via CDP"
+sidebarTitle: "Network Interception"
+description: "Complete guide to intercepting network requests with Playwright on hosted browsers. Block resources, modify requests, capture API responses, and rewrite headers."
+---
+
+**Network interception works fully with Kernel's hosted browsers.** Use Playwright's `page.route()` to block ads, modify requests, capture API responses, and control network traffic—even when your browser is remote.
+
+## What is Network Interception?
+
+Network interception lets you:
+
+- **Block resources:** Skip images, fonts, ads, analytics to speed up page loads
+- **Modify requests:** Change headers, post data, or URLs before sending
+- **Capture responses:** Extract API data, monitor backend calls
+- **Mock responses:** Return fake data for testing without hitting real APIs
+
+## Does This Work with Hosted Browsers?
+
+**Yes.** Some hosted browser providers only support basic screenshot/DOM extraction. Kernel supports the full Chrome DevTools Protocol, including network interception via `page.route()`, `page.on('request')`, and `page.on('response')`.
+
+## Basic Example: Block Images
+
+Speed up page loads by blocking image requests:
+
+<CodeGroup>
+```typescript Playwright
+import { chromium } from 'playwright-core';
+import { Kernel } from '@onkernel/sdk';
+
+const kernel = new Kernel({ apiKey: process.env.KERNEL_API_KEY });
+const kb = await kernel.browsers.create();
+const browser = await chromium.connectOverCDP({ wsEndpoint: kb.cdp_ws_url });
+
+const page = browser.contexts()[0].pages()[0];
+
+// Block all image requests
+await page.route('**/*', route => {
+  if (route.request().resourceType() === 'image') {
+    return route.abort();
+  }
+  return route.continue();
+});
+
+await page.goto('https://example.com');
+// Page loads without images, ~50% faster
+```
+
+```python Python
+from playwright.async_api import async_playwright
+from kernel import Kernel
+
+kernel = Kernel()
+kb = kernel.browsers.create()
+
+async with async_playwright() as p:
+    browser = await p.chromium.connect_over_cdp(kb.cdp_ws_url)
+    page = browser.contexts[0].pages[0]
+    
+    # Block all image requests
+    async def handle_route(route):
+        if route.request.resource_type == 'image':
+            await route.abort()
+        else:
+            await route.continue_()
+    
+    await page.route('**/*', handle_route)
+    await page.goto('https://example.com')
+```
+</CodeGroup>
+
+## Block Multiple Resource Types
+
+Block images, fonts, stylesheets, and analytics:
+
+```typescript
+const BLOCKED_RESOURCES = ['image', 'font', 'stylesheet', 'media'];
+const BLOCKED_DOMAINS = [
+  'googletagmanager.com',
+  'google-analytics.com',
+  'facebook.net',
+  'doubleclick.net'
+];
+
+await page.route('**/*', route => {
+  const request = route.request();
+  const url = request.url();
+  const type = request.resourceType();
+  
+  // Block by resource type
+  if (BLOCKED_RESOURCES.includes(type)) {
+    return route.abort();
+  }
+  
+  // Block by domain
+  if (BLOCKED_DOMAINS.some(domain => url.includes(domain))) {
+    return route.abort();
+  }
+  
+  return route.continue();
+});
+
+await page.goto('https://example.com');
+// Loads only HTML, JS, and first-party requests
+```
+
+## Modify Request Headers
+
+Add custom headers or override user-agent:
+
+```typescript
+await page.route('**/*', route => {
+  const headers = {
+    ...route.request().headers(),
+    'Authorization': 'Bearer YOUR_TOKEN',
+    'X-Custom-Header': 'custom-value',
+    'User-Agent': 'Mozilla/5.0 (Custom Bot)'
+  };
+  
+  return route.continue({ headers });
+});
+
+await page.goto('https://api.example.com');
+// All requests include custom headers
+```
+
+## Capture API Responses
+
+Extract API data without parsing HTML:
+
+```typescript
+const apiData = [];
+
+page.on('response', async response => {
+  const url = response.url();
+  
+  // Capture specific API endpoint
+  if (url.includes('/api/products')) {
+    try {
+      const json = await response.json();
+      apiData.push(json);
+      console.log('Captured API response:', json);
+    } catch (e) {
+      // Not JSON, ignore
+    }
+  }
+});
+
+await page.goto('https://example.com/products');
+await page.waitForTimeout(2000); // Wait for API calls
+
+console.log('All API data:', apiData);
+```
+
+## Mock API Responses
+
+Return fake data for testing:
+
+```typescript
+await page.route('**/api/user', route => {
+  if (route.request().method() === 'GET') {
+    return route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        id: 123,
+        name: 'Test User',
+        email: 'test@example.com'
+      })
+    });
+  }
+  return route.continue();
+});
+
+await page.goto('https://example.com/dashboard');
+// App receives mocked user data
+```
+
+## Modify POST Data
+
+Change form submissions or API payloads:
+
+```typescript
+await page.route('**/api/submit', route => {
+  if (route.request().method() === 'POST') {
+    const postData = route.request().postDataJSON();
+    
+    // Modify the payload
+    const modifiedData = {
+      ...postData,
+      extra_field: 'added_by_script',
+      timestamp: Date.now()
+    };
+    
+    return route.continue({
+      postData: JSON.stringify(modifiedData),
+      headers: {
+        ...route.request().headers(),
+        'Content-Type': 'application/json'
+      }
+    });
+  }
+  return route.continue();
+});
+
+await page.click('button[type="submit"]');
+// Form submits with modified data
+```
+
+## Redirect Requests
+
+Change URLs before they load:
+
+```typescript
+await page.route('**/*', route => {
+  const url = route.request().url();
+  
+  // Redirect old domain to new domain
+  if (url.includes('old-domain.com')) {
+    const newUrl = url.replace('old-domain.com', 'new-domain.com');
+    return route.continue({ url: newUrl });
+  }
+  
+  return route.continue();
+});
+```
+
+## Monitor Network Activity
+
+Log all requests and responses:
+
+```typescript
+const networkLog = [];
+
+page.on('request', request => {
+  networkLog.push({
+    type: 'request',
+    method: request.method(),
+    url: request.url(),
+    headers: request.headers(),
+    timestamp: Date.now()
+  });
+});
+
+page.on('response', response => {
+  networkLog.push({
+    type: 'response',
+    status: response.status(),
+    url: response.url(),
+    headers: response.headers(),
+    timestamp: Date.now()
+  });
+});
+
+await page.goto('https://example.com');
+console.log('Network activity:', networkLog);
+```
+
+## Advanced: Conditional Blocking
+
+Block resources based on file size or timing:
+
+```typescript
+await page.route('**/*', async route => {
+  const request = route.request();
+  
+  // Fetch to check size without loading into page
+  const response = await route.fetch();
+  const headers = response.headers();
+  const contentLength = parseInt(headers['content-length'] || '0');
+  
+  // Block files larger than 1MB
+  if (contentLength > 1024 * 1024) {
+    console.log(`Blocked large file: ${request.url()} (${contentLength} bytes)`);
+    return route.abort();
+  }
+  
+  // Otherwise, fulfill with the fetched response
+  return route.fulfill({ response });
+});
+```
+
+## Use with Stealth Mode
+
+Combine network interception with [stealth mode](/browsers/stealth):
+
+```typescript
+const kb = await kernel.browsers.create({ stealth: true });
+const browser = await chromium.connectOverCDP({ wsEndpoint: kb.cdp_ws_url });
+const page = browser.contexts()[0].pages()[0];
+
+// Block bot-detection analytics
+await page.route('**/*', route => {
+  const url = route.request().url();
+  const botDetectors = ['datadome.co', 'px-cloud.net', 'perimeterx.net'];
+  
+  if (botDetectors.some(d => url.includes(d))) {
+    return route.abort();
+  }
+  return route.continue();
+});
+
+await page.goto('https://protected-site.com');
+// Stealth mode + blocked trackers = harder to detect
+```
+
+## Performance Tips
+
+### 1. Use Specific URL Patterns
+
+Instead of `**/*`, use specific patterns to reduce overhead:
+
+```typescript
+// Only intercept API calls
+await page.route('**/api/**', route => { /* ... */ });
+
+// Only intercept specific domain
+await page.route('https://cdn.example.com/**', route => { /* ... */ });
+```
+
+### 2. Unroute After Setup
+
+Remove route handlers when no longer needed:
+
+```typescript
+const handler = route => { /* ... */ };
+await page.route('**/*', handler);
+
+// ... do work ...
+
+await page.unroute('**/*', handler);
+// Faster for subsequent navigations
+```
+
+### 3. Batch Modifications
+
+Modify multiple requests with one handler instead of multiple route calls.
+
+## Common Patterns
+
+### Extract All API Data
+
+```typescript
+const apiResponses = new Map();
+
+page.on('response', async response => {
+  if (response.url().includes('/api/')) {
+    try {
+      const json = await response.json();
+      apiResponses.set(response.url(), json);
+    } catch {}
+  }
+});
+
+await page.goto('https://example.com');
+// Wait for page to settle
+await page.waitForLoadState('networkidle');
+
+console.log('API data:', Object.fromEntries(apiResponses));
+```
+
+### Block All External Domains
+
+Only load resources from the main domain:
+
+```typescript
+const mainDomain = new URL(page.url()).hostname;
+
+await page.route('**/*', route => {
+  const requestDomain = new URL(route.request().url()).hostname;
+  
+  if (requestDomain !== mainDomain) {
+    return route.abort();
+  }
+  return route.continue();
+});
+```
+
+### Add Authentication to All Requests
+
+```typescript
+const token = 'your-auth-token';
+
+await page.route('**/*', route => {
+  const url = route.request().url();
+  
+  // Only add auth to API calls
+  if (url.includes('/api/')) {
+    return route.continue({
+      headers: {
+        ...route.request().headers(),
+        'Authorization': `Bearer ${token}`
+      }
+    });
+  }
+  
+  return route.continue();
+});
+```
+
+## Troubleshooting
+
+### Route Handler Not Called
+
+Make sure to call `route.continue()`, `route.abort()`, or `route.fulfill()` in every route handler. If you forget, the request hangs.
+
+```typescript
+// ✗ BAD: No route action
+await page.route('**/*', route => {
+  console.log(route.request().url());
+  // Request hangs!
+});
+
+// ✓ GOOD: Always call an action
+await page.route('**/*', route => {
+  console.log(route.request().url());
+  return route.continue();
+});
+```
+
+### CORS Errors
+
+If modifying requests causes CORS errors, you may need to also modify CORS headers in responses:
+
+```typescript
+await page.route('**/*', async route => {
+  const response = await route.fetch();
+  const headers = {
+    ...response.headers(),
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': '*',
+    'Access-Control-Allow-Headers': '*'
+  };
+  
+  return route.fulfill({ response, headers });
+});
+```
+
+### Timeout Errors
+
+Network interception adds latency. If requests timeout:
+
+1. Increase timeout: `page.setDefaultTimeout(60000)`
+2. Use more specific route patterns (don't intercept everything)
+3. Avoid slow operations in route handlers
+
+## Related Resources
+
+- [Create a Browser](/browsers/create-a-browser)
+- [Stealth Mode](/browsers/stealth)
+- [Block Ads/Trackers Recipe](/recipes/block-ads-trackers)
+- [Vercel Integration](/integrations/vercel)
+
+## Need Help?
+
+Join our [Discord](https://discord.gg/FBrveQRcud) for support with network interception patterns.
+
