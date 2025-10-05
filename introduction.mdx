@@ -3,11 +3,11 @@ title: "Introduction"
 description: "Browsers-as-a-service API for web agents, automations, and more"
 ---
 
-Kernel is a developer platform that provides Crazy Fast Browser Infrastructure for browser automations and web agents. Our API and MCP server allow you to instantly launch browsers in the cloud without managing infrastructure.
+Kernel is a developer platform that provides Crazy Fast Browsers-as-a-Service for browser automations and web agents. Our API and MCP server allow you to instantly launch browsers in the cloud without managing infrastructure.
 
-## kernel.browsers.create()
+## Connect over CDP
 
-If you are already familiar with browser vendors, you can immediately start using our browsers with `kernel.browsers.create()`. We return a CDP url that you can connect any Playwright or Puppeteer automation to.
+If you are already familiar with browser vendors, you can immediately start using our browsers with `kernel.browsers.create()`. We return a **CDP url** that you can connect any Playwright or Puppeteer automation to.
 
 <Info>
 Install the Kernel SDK with `npm install @onkernel/sdk` or `uv pip install kernel`
@@ -17,14 +17,14 @@ Install the Kernel SDK with `npm install @onkernel/sdk` or `uv pip install kerne
 
 ```typescript Typescript/Javascript
 import { Kernel } from '@onkernel/sdk';
-const kernel = new Kernel();
+const kernel = new Kernel({api_key: 'your_api_key'});
 const kernelBrowser = await kernel.browsers.create();
 const browser = await chromium.connectOverCDP(kernelBrowser.cdp_ws_url);
 ```
 
 ```python Python
 import kernel
-client = Kernel()
+client = Kernel(api_key='your_api_key')
 kernel_browser = client.browsers.create()
 browser = await chromium.connectOverCDP(kernel_browser.cdp_ws_url)
 ```
