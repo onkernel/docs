@@ -23,7 +23,7 @@ const browser = await chromium.connectOverCDP(kernelBrowser.cdp_ws_url);
 ```
 
 ```python Python
-import kernel
+from kernel import Kernel
 client = Kernel(api_key='your_api_key')
 kernel_browser = client.browsers.create()
 browser = await chromium.connectOverCDP(kernel_browser.cdp_ws_url)
