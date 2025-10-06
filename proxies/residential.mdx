@@ -16,7 +16,7 @@ const kernel = new Kernel();
 
 const proxy = await kernel.proxies.create({
   type: 'residential',
-  name: 'my-california-residential',
+  name: 'my-la-residential',
   config: {
     country: 'US',
     city: 'los_angeles'
@@ -51,7 +51,7 @@ browser = client.browsers.create(
 ## Configuration Parameters
 
 - **`country`** - ISO 3166 country code. Must be provided when providing other targeting options.
-- **`state`** - Two-letter state code. Only supported for US and Australia. Cannot be used with `city`
-- **`city`** - City name (lowercase, no spaces, e.g., `sanfrancisco`, `newyork`). Required if `zip` is provided
-- **`zip`** - US ZIP code (5 digits). Requires `city` to be provided
+- **`state`** - Two-letter state code. Only supported for US.
+- **`city`** - City name (lowercase, no spaces, e.g., `sanfrancisco`, `newyork`).
+- **`zip`** - US ZIP code (5 digits). Conflicts with city and state.
 - **`asn`** - Autonomous System Number. Conflicts with city and state.
