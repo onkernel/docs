@@ -16,10 +16,7 @@ const kernel = new Kernel();
 
 const proxy = await kernel.proxies.create({
   type: 'mobile',
-  name: 'my-tmobile-proxy',
-  config: {
-    carrier: 'tmobile'
-  }
+  name: 'mobile-proxy'
 });
 
 const browser = await kernel.browsers.create({
@@ -33,10 +30,7 @@ client = kernel.Kernel()
 
 proxy = client.proxies.create(
     type='mobile',
-    name='my-tmobile-proxy',
-    config={
-        'carrier': 'tmobile'
-    }
+    name='mobile-proxy'
 )
 
 browser = client.browsers.create(
