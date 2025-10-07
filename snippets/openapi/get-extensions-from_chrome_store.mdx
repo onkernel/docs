@@ -1,0 +1,31 @@
+<CodeGroup>
+```typescript Typescript/Javascript
+import Kernel from '@onkernel/sdk';
+
+const client = new Kernel({
+  apiKey: 'My API Key',
+});
+
+const response = await client.extensions.downloadFromChromeStore({ url: 'url' });
+
+console.log(response);
+
+const content = await response.blob();
+console.log(content);
+```
+
+
+```python Python
+from kernel import Kernel
+
+client = Kernel(
+    api_key="My API Key",
+)
+response = client.extensions.download_from_chrome_store(
+    url="url",
+)
+print(response)
+content = response.read()
+print(content)
+```
+</CodeGroup>
