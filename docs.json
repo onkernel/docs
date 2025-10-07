@@ -73,7 +73,6 @@
                     "pages": [
                       "proxies/overview",
                       "proxies/custom",
-                      "proxies/mobile",
                       "proxies/residential",
                       "proxies/isp",
                       "proxies/datacenter"
