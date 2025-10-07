@@ -73,7 +73,6 @@
                     "pages": [
                       "proxies/overview",
                       "proxies/custom",
-                      "proxies/mobile",
                       "proxies/residential",
                       "proxies/isp",
                       "proxies/datacenter"
@@ -142,6 +141,7 @@
               "careers/backend-engineer",
               "careers/engineer-new-grad",
               "careers/devrel-engineer",
+              "careers/customer-engineer",
               "careers/technical-content-marketer"
             ]
           }
