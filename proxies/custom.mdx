@@ -21,6 +21,7 @@ const kernel = new Kernel();
 const proxy = await kernel.proxies.create({
   type: 'custom',
   name: 'my-private-proxy',
+  protocol: 'https',
   config: {
     host: 'proxy.example.com',
     port: 443,
@@ -41,6 +42,7 @@ client = kernel.Kernel()
 proxy = client.proxies.create(
     type='custom',
     name='my-private-proxy',
+    protocol='https',
     config={
         'host': 'proxy.example.com',
         'port': 443,

@@ -1,0 +1,26 @@
+<CodeGroup>
+```typescript Typescript/Javascript
+import Kernel from '@onkernel/sdk';
+
+const client = new Kernel({
+  apiKey: 'My API Key',
+});
+
+const response = await client.extensions.upload({ file: fs.createReadStream('path/to/file') });
+
+console.log(response.id);
+```
+
+
+```python Python
+from kernel import Kernel
+
+client = Kernel(
+    api_key="My API Key",
+)
+response = client.extensions.upload(
+    file=b"raw file contents",
+)
+print(response.id)
+```
+</CodeGroup>
