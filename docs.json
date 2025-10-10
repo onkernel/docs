@@ -57,6 +57,7 @@
             "pages": [
               "browsers/create-a-browser",
               "browsers/headless",
+              "browsers/viewport",
               "browsers/standby",
               "browsers/persistence",
               "browsers/profiles",

@@ -1,0 +1,169 @@
+---
+title: "Viewport Configuration"
+description: "Configure browser viewport size and refresh rate for your automations"
+---
+
+Kernel browsers allow you to configure the viewport size and refresh rate when creating a browser session. The viewport configuration determines the initial browser window dimensions and display refresh rate.
+
+## Setting viewport configuration
+
+You can configure the viewport when creating a browser by specifying the `viewport` parameter with `width`, `height`, and `refresh_rate`:
+
+<CodeGroup>
+
+```typescript Typescript/Javascript
+const kernelBrowser = await kernel.browsers.create({
+    viewport: {
+        width: 1920,
+        height: 1080,
+        refresh_rate: 25
+    }
+});
+```
+
+```python Python
+kernel_browser = client.browsers.create(
+    viewport={
+        "width": 1920,
+        "height": 1080,
+        "refresh_rate": 25
+    }
+)
+```
+
+</CodeGroup>
+
+## Supported viewport configurations
+
+Kernel supports specific viewport configurations. The server will reject unsupported combinations. The following resolutions are supported:
+
+| Resolution | Width | Height | Refresh Rate |
+|------------|-------|--------|--------------|
+| QHD | 2560 | 1440 | 10 Hz |
+| Full HD | 1920 | 1080 | 25 Hz |
+| WUXGA | 1920 | 1200 | 25 Hz |
+| WXGA+ | 1440 | 900 | 25 Hz |
+| XGA | 1024 | 768 | 60 Hz |
+
+<Warning>
+Higher resolutions may affect the responsiveness of [live view](/browsers/live-view) browser sessions.
+</Warning>
+
+## Example configurations
+
+<CodeGroup>
+
+```typescript Typescript/Javascript
+// Full HD (1920x1080) at 25Hz
+const fullHD = await kernel.browsers.create({
+    viewport: {
+        width: 1920,
+        height: 1080,
+        refresh_rate: 25
+    }
+});
+
+// QHD (2560x1440) at 10Hz - Note: May affect live view responsiveness
+const qhd = await kernel.browsers.create({
+    viewport: {
+        width: 2560,
+        height: 1440,
+        refresh_rate: 10
+    }
+});
+
+// XGA (1024x768) at 60Hz - Default configuration
+const xga = await kernel.browsers.create({
+    viewport: {
+        width: 1024,
+        height: 768,
+        refresh_rate: 60
+    }
+});
+
+// WUXGA (1920x1200) at 25Hz
+const wuxga = await kernel.browsers.create({
+    viewport: {
+        width: 1920,
+        height: 1200,
+        refresh_rate: 25
+    }
+});
+```
+
+```python Python
+# Full HD (1920x1080) at 25Hz
+full_hd = await client.browsers.create(
+    viewport={
+        "width": 1920,
+        "height": 1080,
+        "refresh_rate": 25
+    }
+)
+
+# QHD (2560x1440) at 10Hz - Note: May affect live view responsiveness
+qhd = await client.browsers.create(
+    viewport={
+        "width": 2560,
+        "height": 1440,
+        "refresh_rate": 10
+    }
+)
+
+# XGA (1024x768) at 60Hz - Default configuration
+xga = await client.browsers.create(
+    viewport={
+        "width": 1024,
+        "height": 768,
+        "refresh_rate": 60
+    }
+)
+
+# WUXGA (1920x1200) at 25Hz
+wuxga = await client.browsers.create(
+    viewport={
+        "width": 1920,
+        "height": 1200,
+        "refresh_rate": 25
+    }
+)
+```
+
+</CodeGroup>
+
+## Default viewport
+
+If the `viewport` parameter is omitted when creating a browser, the default configuration is typically 1024x768 at 60Hz.
+
+<CodeGroup>
+
+```typescript Typescript/Javascript
+// Uses default viewport (1024x768@60Hz)
+const defaultViewport = await kernel.browsers.create();
+```
+
+```python Python
+# Uses default viewport (1024x768@60Hz)
+default_viewport = await client.browsers.create()
+```
+
+</CodeGroup>
+
+## Viewport constraints
+
+The viewport configuration has the following constraints:
+- **Width**: Minimum 320px, Maximum 7680px
+- **Height**: Minimum 240px, Maximum 4320px
+- **Refresh Rate**: Must match the supported configurations listed above
+
+<Note>
+While the API accepts width and height values within the min/max ranges, only the specific resolution and refresh rate combinations listed in the supported configurations table are actually supported. The server will reject any unsupported combinations.
+</Note>
+
+## Considerations
+
+- The viewport configuration is set when the browser is created and applies to the initial browser window
+- Higher resolutions (like 2560x1440) may impact the performance and responsiveness of live view sessions
+- The viewport size affects how websites render, especially those with responsive designs
+- Screenshots taken from the browser will match the configured viewport dimensions
+- In [headless mode](/browsers/headless), the viewport configuration still applies for rendering and screenshots
