@@ -9,11 +9,77 @@ Once you deploy an app on Kernel, you can schedule its actions on a job or run t
 
 ## Deploy the app
 
+You can deploy your app in two ways: from a local directory or directly from a GitHub repository.
+
+### Deploy from local directory
+
 Use our CLI from the root directory of your project:
 ```bash
 # entrypoint_file_name should be where you've defined your Kernel app
 kernel deploy <entrypoint_file_name>
 ```
+
+### Deploy from GitHub
+
+Deploy directly from a GitHub repository using the API:
+
+<CodeGroup>
+```bash Public repository
+curl -X POST https://api.kernel.com/v1/deployments \
+  -H "Authorization: Bearer $KERNEL_API_KEY" \
+  -H "Content-Type: multipart/form-data" \
+  -F 'source={
+    "type": "github",
+    "url": "https://github.com/org/repo",
+    "ref": "main",
+    "entrypoint": "src/app.py"
+  }' \
+  -F 'version=1.0.0' \
+  -F 'env_vars={"FOO": "bar"}'
+```
+
+```bash Private repository
+curl -X POST https://api.kernel.com/v1/deployments \
+  -H "Authorization: Bearer $KERNEL_API_KEY" \
+  -H "Content-Type: multipart/form-data" \
+  -F 'source={
+    "type": "github",
+    "url": "https://github.com/org/private-repo",
+    "ref": "main",
+    "entrypoint": "index.ts",
+    "auth": {
+      "method": "github_token",
+      "token": "ghp_your_token_here"
+    }
+  }' \
+  -F 'version=1.0.0'
+```
+
+```bash With subpath
+curl -X POST https://api.kernel.com/v1/deployments \
+  -H "Authorization: Bearer $KERNEL_API_KEY" \
+  -H "Content-Type: multipart/form-data" \
+  -F 'source={
+    "type": "github",
+    "url": "https://github.com/org/monorepo",
+    "ref": "main",
+    "path": "apps/api",
+    "entrypoint": "src/index.ts"
+  }' \
+  -F 'version=1.0.0'
+```
+</CodeGroup>
+
+#### GitHub deployment parameters
+
+- `type`: Must be `"github"`
+- `url`: Base repository URL (without `/blob/` or `/tree/` suffixes)
+- `ref`: Git branch, tag, or commit SHA to deploy
+- `entrypoint`: Relative path to your app entrypoint within the selected path
+- `path` (optional): Subdirectory within the repo to deploy (omit to use repo root)
+- `auth` (optional): Required for private repositories
+  - `method`: Must be `"github_token"`
+  - `token`: GitHub personal access token or installation access token
 
 ## Environment variables
 
