@@ -12,34 +12,29 @@ Terminating an invocation also destroys any browsers associated with it.
 You can stop an invocation by setting its status to `failed`. This will cancel the invocation and mark it as terminated.
 
 <CodeGroup>
-
 ```typescript Typescript/Javascript
 import Kernel from '@onkernel/sdk';
 
-const client = new Kernel({
+const kernel = new Kernel({
   apiKey: 'My API Key',
 });
 
-const invocation = await client.invocations.update('invocation_id', {
+const invocation = await kernel.invocations.update('invocation_id', {
   status: 'failed',
-  output: JSON.stringify({ error: 'Invocation cancelled by user' })
+  output: JSON.stringify({ error: 'Invocation cancelled by user' }),
 });
 ```
 
 ```python Python
 from kernel import Kernel
 
-client = Kernel(
-    api_key="My API Key",
-)
-
-invocation = client.invocations.update(
+kernel = Kernel(api_key="My API Key")
+invocation = kernel.invocations.update(
     id="invocation_id",
-    status='failed',
-    output='{"error":"Invocation cancelled by user"}'
+    status="failed",
+    output='{"error":"Invocation cancelled by user"}',
 )
 ```
-
 </CodeGroup>
 
 ## Via CLI

@@ -2,21 +2,78 @@
 title: "Termination & Timeouts"
 ---
 
-import DeleteBrowser from '/snippets/openapi/delete-browsers-id.mdx';
-import CreateBrowserTimeout from '/snippets/openapi/post-browsers-timeout.mdx';
-
 Kernel browsers should be terminated after you're done with them.
 
-## Via API
+## Deleting a browser via session ID
 
-You can delete a browser by making a `DELETE` request to Kernel's API:
+Every browser instance has a `session_id`. You can delete any browser (persistent or non-persistent) using its session ID:
 
-<DeleteBrowser />
+<CodeGroup>
+```typescript Typescript/Javascript
+import Kernel from '@onkernel/sdk';
 
-## Timeouts for non-persisted browsers
+const kernel = new Kernel();
 
-If you don't manually delete a `non-persisted` browser, deletion will happen automatically after a configurable `timeout` (default 60 seconds). If the browser does not see a CDP or live view connection within that timeout, then it is automatically deleted.
+await kernel.browsers.deleteByID('htzv5orfit78e1m2biiifpbv');
+```
 
-You can set a custom timeout of up to 24 hours via the API:
+```python Python
+from kernel import Kernel
 
-<CreateBrowserTimeout />
+kernel = Kernel()
+kernel.browsers.delete_by_id("htzv5orfit78e1m2biiifpbv")
+```
+</CodeGroup>
+
+## Deleting a persistent browser by persistence ID
+
+For convenience, [persistent browsers](/browsers/persistence) can also be deleted using their `persistence_id`:
+
+<CodeGroup>
+```typescript Typescript/Javascript
+import Kernel from '@onkernel/sdk';
+
+const kernel = new Kernel();
+
+await kernel.browsers.deleteByPersistenceID('unique-browser-id-for-persistence');
+```
+
+```python Python
+from kernel import Kernel
+
+kernel = Kernel()
+kernel.browsers.delete_by_persistence_id("unique-browser-id-for-persistence")
+```
+</CodeGroup>
+
+This will permanently delete the persistent browser and all its saved state.
+
+## Automatic deletion via timeout
+
+If you don't manually delete a non-persisted browser, it will be automatically deleted after a configurable `timeout` (default 60 seconds). The timeout begins when the browser does not see a CDP or live view connection.
+
+You can set a custom timeout of up to 24 hours when creating a browser:
+
+<CodeGroup>
+```typescript Typescript/Javascript
+import Kernel from '@onkernel/sdk';
+
+const kernel = new Kernel();
+
+const browser = await kernel.browsers.create({ timeout_seconds: 300 });
+console.log(browser.session_id);
+```
+
+```python Python
+from kernel import Kernel
+
+kernel = Kernel()
+
+browser = kernel.browsers.create(timeout_seconds=300)
+print(browser.session_id)
+```
+</CodeGroup>
+
+<Note>
+Persistent browsers are **not** automatically deleted via timeout. They exist indefinitely until you manually delete them.
+</Note>

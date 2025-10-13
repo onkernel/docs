@@ -8,7 +8,7 @@ After you [invoke](/apps/invoke) an action, you can stream the invocation's logs
 
 <CodeGroup>
 ```typescript Typescript/Javascript
-import { Kernel } from '@onkernel/sdk';
+import Kernel from '@onkernel/sdk';
 
 const kernel = new Kernel();
 
@@ -16,13 +16,11 @@ const logs = await kernel.invocations.follow(invocation_id);
 ```
 
 ```python Python
-import kernel
+from kernel import Kernel
 
-client = Kernel()
-
-logs = client.invocations.follow(invocation_id)
+kernel = Kernel()
+logs = kernel.invocations.follow(invocation_id)
 ```
-
 </CodeGroup>
 
 ## Via CLI
