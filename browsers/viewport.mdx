@@ -183,14 +183,20 @@ default_viewport = await client.browsers.create()
 
 ## Viewport constraints
 
-The viewport configuration has the following constraints:
-- **Width** (required): Minimum 320px, Maximum 7680px
-- **Height** (required): Minimum 240px, Maximum 4320px
-- **Refresh Rate** (optional): If provided, must match the supported configurations listed above. If omitted, automatically determined from width and height.
+Only the specific viewport configurations listed in the [supported configurations table](#supported-viewport-configurations) above are supported:
+- **2560x1440** (QHD) at 10 Hz
+- **1920x1080** (Full HD) at 25 Hz
+- **1920x1200** (WUXGA) at 25 Hz
+- **1440x900** (WXGA+) at 25 Hz
+- **1024x768** (XGA) at 60 Hz
 
-<Note>
-While the API accepts width and height values within the min/max ranges, only the specific resolution and refresh rate combinations listed in the supported configurations table are actually supported. When refresh_rate is omitted, it will be automatically determined if the width and height match a supported configuration exactly. The server will reject any unsupported combinations.
-</Note>
+When specifying a viewport:
+- **Width** and **Height** are required and must match one of the supported configurations exactly
+- **Refresh Rate** is optional - if omitted, it will be automatically determined from the width and height combination
+
+<Warning>
+The server will reject any viewport configuration that doesn't exactly match one of the supported combinations listed above.
+</Warning>
 
 ## Considerations
 
