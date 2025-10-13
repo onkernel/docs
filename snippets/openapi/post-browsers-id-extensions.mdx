@@ -6,7 +6,7 @@ const client = new Kernel({
   apiKey: 'My API Key',
 });
 
-await client.browsers.uploadExtensions('id', {
+await client.browsers.loadExtensions('id', {
   extensions: [{ name: 'name', zip_file: fs.createReadStream('path/to/file') }],
 });
 ```
@@ -18,7 +18,7 @@ from kernel import Kernel
 client = Kernel(
     api_key="My API Key",
 )
-client.browsers.upload_extensions(
+client.browsers.load_extensions(
     id="id",
     extensions=[{
         "name": "name",
