@@ -9,11 +9,40 @@ Once you deploy an app on Kernel, you can schedule its actions on a job or run t
 
 ## Deploy the app
 
+### From local directory
+
 Use our CLI from the root directory of your project:
 ```bash
 # entrypoint_file_name should be where you've defined your Kernel app
 kernel deploy <entrypoint_file_name>
 ```
+
+#### Notes
+
+- The `entrypoint_file_name` is the file name where you [defined](/apps/develop) your app.
+- Include a `.gitignore` file to exclude dependency folders like `node_modules` and `.venv`.
+
+### From GitHub
+
+You can deploy an app directly from a public or private GitHub repository using the Kernel CLI — no need to clone or manually push code.
+
+```bash
+kernel deploy github \
+  --url https://github.com/<owner>/<repo> \
+  --ref <branch|tag|commit> \
+  --entrypoint <path/to/entrypoint> \
+  [--path <optional/subdir>] \
+  [--github-token <token>] \
+  [--env KEY=value ...] \
+  [--env-file .env] \
+  [--version latest] \
+  [--force]
+```
+
+#### Notes
+
+- The CLI automatically downloads and extracts the GitHub source, prunes large dependency folders (like `node_modules`), and uploads your app for deployment.
+- For private repositories, provide a `--github-token` or set the `GITHUB_TOKEN` environment variable.
 
 ## Environment variables
 
@@ -31,9 +60,8 @@ kernel deploy my_app.py --env MY_ENV_VAR=my_value # Can add multiple env vars de
 
 ## Deployment notes
 
-- The `entrypoint_file_name` is the file name where you [defined](/apps/develop) your app.
 - **The entrypoint file and dependency manifest (`package.json` for JS/TS, `pyproject.toml` for Python) must both be in the root directory of your project.**
-- Include a `.gitignore` file to exclude dependency folders like `node_modules` and `.venv`.
+- View deployment logs using: `kernel deploy logs <deployment_id> --follow`
 - Kernel assumes the root directory contains at least this file structure:
 
 <CodeGroup>
