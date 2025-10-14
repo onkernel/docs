@@ -65,6 +65,7 @@
               "browsers/file-io",
               "browsers/live-view",
               "browsers/replays",
+              "browsers/extensions",
               {
                 "group": "Bot Anti-Detection",
                 "pages": [
