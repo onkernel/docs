@@ -13,13 +13,17 @@ To specify a browser for persistence, specify its `persistence` settings in the 
 <CodeGroup>
 ```typescript Typescript/Javascript
 const kernelBrowser = await kernel.browsers.create({
-  persistence: { id: 'unique-browser-id-for-persistence' },
+  persistence: {
+    id: 'unique-browser-id-for-persistence'
+  },
 });
 ```
 
 ```python Python
 kernel_browser = await kernel.browsers.create(
-    persistence={"id": "unique-browser-id-for-persistence"}
+    persistence={
+      "id": "unique-browser-id-for-persistence",
+    }
 )
 ```
 </CodeGroup>

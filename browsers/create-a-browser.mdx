@@ -84,7 +84,7 @@ await kernel.browsers.delete_by_id(kernel_browser.session_id)
 ```
 </CodeGroup>
 
-Non-persistent browsers automatically delete after a timeout (default 60 seconds) if they don't receive a CDP or live view connection. You can [configure this timeout](/browsers/termination#timeouts-for-non-persisted-browsers) when creating the browser.
+Non-persisted browsers automatically delete after a timeout (default 60 seconds) if they don't receive a CDP or live view connection. You can [configure this timeout](/browsers/termination#automatic-deletion-via-timeout) when creating the browser.
 
 ## Full example
 
