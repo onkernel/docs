@@ -35,14 +35,19 @@ import Kernel from '@onkernel/sdk';
 
 const kernel = new Kernel();
 
-await kernel.browsers.deleteByPersistenceID('unique-browser-id-for-persistence');
+await kernel.browsers.delete({
+  persistence_id: 'unique-browser-id-for-persistence',
+})
 ```
 
 ```python Python
 from kernel import Kernel
 
 kernel = Kernel()
-kernel.browsers.delete_by_persistence_id("unique-browser-id-for-persistence")
+
+kernel.browsers.delete(
+    persistent_id='unique-browser-id-for-persistence',
+)
 ```
 </CodeGroup>
 
