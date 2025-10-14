@@ -13,7 +13,6 @@ Once you deploy an app on Kernel, you can schedule its actions on a job or run t
 
 Use our CLI from the root directory of your project:
 ```bash
-# entrypoint_file_name should be where you've defined your Kernel app
 kernel deploy <entrypoint_file_name>
 ```
 
@@ -40,8 +39,8 @@ kernel deploy github \
 ```
 
 #### Notes
-
-- The CLI automatically downloads and extracts the GitHub source, prunes large dependency folders (like `node_modules`), and uploads your app for deployment.
+- **`--path` vs `--entrypoint`:** Use `--path` to specify a subdirectory within the repo (useful for monorepos), and `--entrypoint` for the path to your app's entry file relative to that directory (or repo root if no `--path` is specified).
+- The CLI automatically downloads and extracts the GitHub source code and uploads your app for deployment.
 - For private repositories, provide a `--github-token` or set the `GITHUB_TOKEN` environment variable.
 
 ## Environment variables
@@ -60,7 +59,7 @@ kernel deploy my_app.py --env MY_ENV_VAR=my_value # Can add multiple env vars de
 
 ## Deployment notes
 
-- **The entrypoint file and dependency manifest (`package.json` for JS/TS, `pyproject.toml` for Python) must both be in the root directory of your project.**
+- **The dependency manifest (`package.json` for JS/TS, `pyproject.toml` for Python) must be present in the root directory of your project.**
 - View deployment logs using: `kernel deploy logs <deployment_id> --follow`
 - Kernel assumes the root directory contains at least this file structure:
 
@@ -68,7 +67,7 @@ kernel deploy my_app.py --env MY_ENV_VAR=my_value # Can add multiple env vars de
 ```bash Typescript/Javascript
 project-root/
   ├─ .gitignore # Exclude dependency folders like node_modules
-  ├─ my_app.ts # Entrypoint file
+  ├─ my_app.ts # Entrypoint file (can be located in a subdirectory, e.g. src/my_app.ts)
   ├─ package.json
   ├─ tsconfig.json # If using TypeScript
   └─ bun.lock | package-lock.json | pnpm-lock.yaml # One of these lockfiles
