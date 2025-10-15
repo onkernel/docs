@@ -48,12 +48,20 @@ kernel deploy github \
 You can set environment variables for your app using the `--env` flag. For example:
 
 <CodeGroup>
-```bash Typescript/Javascript
+```bash Typescript/Javascript (inline)
 kernel deploy my_app.ts --env MY_ENV_VAR=my_value # Can add multiple env vars delimited by space
 ```
 
-```bash Python
+```bash Typescript/Javascript (from file)
+kernel deploy my_app.ts --env-file .env
+```
+
+```bash Python (inline)
 kernel deploy my_app.py --env MY_ENV_VAR=my_value # Can add multiple env vars delimited by space
+```
+
+```bash Python (from file)
+kernel deploy my_app.py --env-file .env
 ```
 </CodeGroup>
 
@@ -61,6 +69,7 @@ kernel deploy my_app.py --env MY_ENV_VAR=my_value # Can add multiple env vars de
 
 - **The dependency manifest (`package.json` for JS/TS, `pyproject.toml` for Python) must be present in the root directory of your project.**
 - View deployment logs using: `kernel deploy logs <deployment_id> --follow`
+- If you encounter a 500 error during deployment, verify that your entrypoint file name and extension are correct (e.g., `app.py` not `app` or `app.js`).
 - Kernel assumes the root directory contains at least this file structure:
 
 <CodeGroup>
