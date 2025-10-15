@@ -15,6 +15,34 @@ To access the live view, visit the `browser_live_view_url` provided when you cre
 The `browser_live_view_url` supports additional query parameters to customize the live view:
 - `readOnly` (bool): when set to `true`, the view will be non-interactive.
 
+## Kiosk mode
+
+You can enable kiosk mode when creating a browser by setting the `kiosk_mode` parameter to `true`. Kiosk mode provides a fullscreen live view experience without browser UI elements like the address bar and tabs.
+
+<CodeGroup>
+
+```typescript Typescript/Javascript
+const kernelBrowser = await kernel.browsers.create({
+    viewport: {
+        width: 1920,
+        height: 1080
+    },
+    kiosk_mode: true
+});
+```
+
+```python Python
+kernel_browser = client.browsers.create(
+    viewport={
+        "width": 1920,
+        "height": 1080
+    },
+    kiosk_mode=True
+)
+```
+
+</CodeGroup>
+
 ## Browser persistence
 
  `browser_live_view_url` becomes invalid once the browser is [deleted](/browsers/termination) manually or via timeout.
