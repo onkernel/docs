@@ -1,0 +1,105 @@
+---
+title: "Overview"
+---
+
+Kernel's browsers are designed to be compatible with every agent framework out there. Whether you're building with popular frameworks like Browser Use, Stagehand, or Computer Use APIs, or developing with your own custom solution, Kernel provides seamless integration capabilities.
+
+## Universal Compatibility
+
+Kernel browsers work with any framework or tool that supports the Chrome DevTools Protocol (CDP). This means you can:
+
+- **Use any agent framework**: Integrate with popular frameworks like Browser Use, Stagehand, Playwright, Puppeteer, Selenium, and more
+- **Connect via CDP**: All browsers expose a CDP WebSocket URL for direct connection
+- **No vendor lock-in**: Switch between frameworks or use multiple frameworks simultaneously
+- **Standard protocols**: Built on open standards that work with the entire browser automation ecosystem
+
+## Key Integration Features
+
+### Chrome DevTools Protocol Support
+
+Every Kernel browser provides a `cdp_ws_url` that you can use to connect any CDP-compatible framework or library. This standard protocol ensures broad compatibility across the ecosystem.
+
+### Cloud-Hosted Browsers
+
+Run your agent frameworks with Kernel's cloud infrastructure, eliminating the need to manage browsers locally:
+
+- **Zero local setup**: No browser installation or maintenance required
+- **Instant scaling**: Launch multiple browser sessions in parallel
+- **Reliable infrastructure**: Production-grade browser environments
+- **Cross-platform**: Works from any development environment
+
+### Anti-Detection & Privacy
+
+Kernel browsers come with built-in features that work seamlessly with any framework:
+
+- **[Stealth mode](/browsers/stealth)**: Advanced bot detection avoidance
+- **[Proxy support](/proxies/overview)**: Route traffic through datacenter, ISP, residential, or custom proxies
+- **[Browser profiles](/browsers/profiles)**: Maintain consistent browser fingerprints
+
+### Development & Debugging Tools
+
+- **[Live view](/browsers/live-view)**: Watch your automations run in real-time
+- **[Replays](/browsers/replays)**: Review past sessions for debugging
+- **[Session persistence](/browsers/persistence)**: Maintain state across runs
+
+## Popular Framework Integrations
+
+Kernel provides detailed guides for popular agent frameworks:
+
+- **[Browser Use](/integrations/browser-use)** - Python-based AI browser agent framework
+- **[Stagehand](/integrations/stagehand)** - AI browser automation with natural language
+- **[Computer Use (Anthropic)](/integrations/computer-use/anthropic)** - Claude's computer use capability
+- **[Computer Use (OpenAI)](/integrations/computer-use/openai)** - OpenAI's computer use capability
+- **[Magnitude](/integrations/magnitude)** - AI-powered web automation
+- **[Val Town](/integrations/valtown)** - Serverless function runtime
+- **[Vercel](/integrations/vercel)** - Deploy browser automations to Vercel
+
+## Getting Started
+
+To integrate Kernel with any framework:
+
+1. **Install the Kernel SDK** for your language ([TypeScript/JavaScript](https://www.npmjs.com/package/@onkernel/sdk) or [Python](https://pypi.org/project/kernel/))
+2. **Create a browser session** and get the CDP WebSocket URL
+3. **Connect your framework** using the `cdp_ws_url` from the browser session
+4. **Run your automation** with all of Kernel's cloud features
+
+```typescript TypeScript/JavaScript
+import Kernel from '@onkernel/sdk';
+
+const client = new Kernel({
+  apiKey: process.env.KERNEL_API_KEY
+});
+
+// Create a browser with stealth mode
+const browser = await client.browsers.create({
+  stealth: true
+});
+
+// Use browser.cdp_ws_url with your framework
+console.log('CDP URL:', browser.cdp_ws_url);
+console.log('Live view:', browser.browser_live_view_url);
+```
+
+```python Python
+from kernel import Kernel
+
+client = Kernel(api_key='your-api-key')
+
+# Create a browser with stealth mode
+browser = client.browsers.create(stealth=True)
+
+# Use browser.cdp_ws_url with your framework
+print(f'CDP URL: {browser.cdp_ws_url}')
+print(f'Live view: {browser.browser_live_view_url}')
+```
+
+## Custom Integrations
+
+Don't see your framework listed? No problem! Kernel works with any tool that supports CDP. Check out our [browser creation guide](/browsers/create-a-browser) to learn how to connect your custom solution.
+
+## Next Steps
+
+- Browse our [framework-specific integration guides](/integrations/browser-use)
+- Learn about [creating browsers](/browsers/create-a-browser)
+- Explore [stealth features](/browsers/stealth) for production use
+- Set up [proxies](/proxies/overview) for enhanced privacy
