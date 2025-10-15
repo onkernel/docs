@@ -5,6 +5,10 @@ description: "Configure browser viewport size and refresh rate for your automati
 
 Kernel browsers allow you to configure the viewport size and refresh rate when creating a browser session. The viewport configuration determines the initial browser window dimensions and display refresh rate. The refresh rate can be explicitly specified or automatically determined based on the width and height if they match a supported configuration.
 
+<Note>
+The `refresh_rate` parameter only applies to live view sessions and is ignored for [headless](/browsers/headless) browsers.
+</Note>
+
 ## Setting viewport configuration
 
 You can configure the viewport when creating a browser by specifying the `viewport` parameter with `width` and `height`. The `refresh_rate` is optional and will be automatically determined from the dimensions if they match a supported configuration:
@@ -204,4 +208,4 @@ The server will reject any viewport configuration that doesn't exactly match one
 - Higher resolutions (like 2560x1440) may impact the performance and responsiveness of live view sessions
 - The viewport size affects how websites render, especially those with responsive designs
 - Screenshots taken from the browser will match the configured viewport dimensions
-- In [headless mode](/browsers/headless), the viewport configuration still applies for rendering and screenshots
+- In [headless mode](/browsers/headless), the viewport width and height still apply for rendering and screenshots, but the `refresh_rate` parameter is ignored
