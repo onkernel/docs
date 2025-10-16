@@ -99,6 +99,7 @@
           {
             "group": "Integrations",
             "pages": [
+              "integrations/overview",
               "integrations/browser-use",
               {
                 "group": "Computer Use",
