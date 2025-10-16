@@ -99,11 +99,13 @@
           {
             "group": "Integrations",
             "pages": [
+              "integrations/overview",
               "integrations/browser-use",
               {
                 "group": "Computer Use",
                 "pages": [
                   "integrations/computer-use/anthropic",
+                  "integrations/computer-use/gemini",
                   "integrations/computer-use/openai"
                 ]
               },
