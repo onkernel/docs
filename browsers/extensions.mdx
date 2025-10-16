@@ -1,0 +1,99 @@
+---
+title: "Extensions"
+description: "Use browser extensions in Kernel browsers"
+---
+
+Kernel's browsers support running with custom Chrome extensions.
+Chrome extensions must be unpacked and can be uploaded to Kernel via the CLI or API.
+
+## Uploading extensions
+
+Here is a simple example of an unpacked extension:
+
+<CodeGroup>
+```js ./my-extension/content-script.js
+document.body.innerHTML = document.body.innerHTML.replace(/AI/g, "A1");
+```
+
+```json ./my-extension/manifest.json
+{
+    "manifest_version": 3,
+    "version": "1.0",
+    "name": "AI to A1",
+    "description": "Replace AI with A1",
+    "content_scripts": [
+        {
+            "matches": [
+                "https://*/*"
+            ],
+            "js": [
+                "content-script.js"
+            ]
+        }
+    ]
+}
+```
+</CodeGroup>
+
+Once these files are in place, you can upload them to Kernel via the CLI (or [API](/api-reference/extensions/upload-a-browser-extension)):
+
+```bash
+kernel extensions upload ./my-extension --name my-extension
+```
+
+Extensions uploaded to Kernel are assigned a random ID, but you can also give them a name for easier reference.
+This name must be unique within your organization.
+
+## Using extensions in a browser
+
+Passing the extension name or ID to the `create` method will load it into the browser:
+
+<CodeGroup>
+```typescript Typescript/Javascript
+import { Kernel } from '@onkernel/sdk';
+
+const kernel = new Kernel();
+const kernelBrowser = await kernel.browsers.create({
+    extensions: [{ name: "my-extension" }],
+});
+```
+
+```python Python
+import kernel
+
+client = kernel.Kernel()
+kernel_browser = client.browsers.create(extensions=[{name: 'my-extension'}])
+```
+
+```bash CLI
+kernel browsers create --extension my-extension
+```
+</CodeGroup>
+
+
+## Using extensions directly from the Chrome Web Store
+
+Kernel's CLI offers a command for fetching and unpacking extensions directly from the Chrome Web Store.
+Simply pass the URL of the extension you want to download and the CLI will download the extension and unpack it into the specified directory.
+
+```bash CLI
+kernel extensions download-web-store https://chromewebstore.google.com/detail/shutterfly-address-book-e/lddlpciejomhjehckimopnomegilaocb --to ./downloaded-extension
+```
+
+From here you can upload the extension to Kernel as normal.
+
+```bash CLI
+kernel extensions upload ./downloaded-extension --name my-extension
+```
+
+## Loading an extension into a running browser
+
+If you have a browser running and would like to load an extension into it after the browser session has started, Kernel also allows you to do that via the CLI (or [API](/api-reference/browsers/ad-hoc-upload-one-or-more-unpacked-extensions-to-a-running-browser-instance)):
+
+```bash CLI
+kernel browsers extensions upload <session_id> ./my-extension
+```
+
+<Info>
+Note that this will restart the browser process and break any connections to the browser CDP URL.
+</Info>
