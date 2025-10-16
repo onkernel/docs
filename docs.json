@@ -105,8 +105,8 @@
                 "group": "Computer Use",
                 "pages": [
                   "integrations/computer-use/anthropic",
-                  "integrations/computer-use/openai",
-                  "integrations/computer-use/gemini"
+                  "integrations/computer-use/gemini",
+                  "integrations/computer-use/openai"
                 ]
               },
               "integrations/magnitude",
