@@ -5,10 +5,6 @@ description: "Configure browser viewport size and refresh rate for your automati
 
 Kernel browsers allow you to configure the viewport size and refresh rate when creating a browser session. The viewport configuration determines the initial browser window dimensions and display refresh rate. The refresh rate can be explicitly specified or automatically determined based on the width and height if they match a supported configuration.
 
-<Note>
-The `refresh_rate` parameter only applies to live view sessions and is ignored for [headless](/browsers/headless) browsers.
-</Note>
-
 ## Setting viewport configuration
 
 You can configure the viewport when creating a browser by specifying the `viewport` parameter with `width` and `height`. The `refresh_rate` is optional and will be automatically determined from the dimensions if they match a supported configuration:
@@ -54,6 +50,10 @@ kernel_browser_auto = client.browsers.create(
 ```
 
 </CodeGroup>
+
+<Note>
+The `refresh_rate` parameter only applies to live view sessions and is ignored for [headless](/browsers/headless) browsers.
+</Note>
 
 ## Supported viewport configurations
 
