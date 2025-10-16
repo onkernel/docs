@@ -48,7 +48,10 @@ const agent = await startBrowserAgent({
     browser: {
         cdp: kernelBrowser.cdp_ws_url,
         contextOptions: {
-            viewport: { width: 1920, height: 1080 }
+            viewport: {
+                width: 1920,
+                height: 1080
+            }
         }
     },
     llm: {
