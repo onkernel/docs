@@ -2,18 +2,18 @@
 title: "Standby Mode"
 ---
 
-Kernel browsers go into standby mode if there aren't any network requests for a given amount of time. When a browser goes into standby mode, the browser's state remains the same but incurs zero usage costs. The browser is reactivated the moment it receives an incoming network request.
-
-This means you don't pay for the browser's idle clock time. This is especially useful for use cases that run over long periods of time or require periods of inactivity, such as **human-in-the-loop (HITL) workflows**.
+Kernel browsers can enter standby mode during periods of inactivity. When a browser goes into standby mode, the browser's state remains the same but incurs zero usage costs. However, standby behavior differs between persistent and ephemeral browsers.
 
 <Info>
     See [here](/browsers/termination) to learn about destroying browsers.
 </Info>
 
-The current time-to-idle is `4 seconds`.
+## Persistent Browsers
 
-## Ephemeral Browsers and Standby
+Persistent browsers go into standby mode if there aren't any network requests for the time-to-idle period (currently `4 seconds`). The browser is reactivated the moment it receives an incoming network request.
 
-For ephemeral browsers, standby mode behaves differently. When an ephemeral browser enters standby mode (i.e., when no CDP or Live View client is connected), the browser's timeout countdown begins. This is because the standby state is tied to heartbeats sent at the CDP/Live View websocket proxy layer. These heartbeats stop being sent as soon as a client disconnects.
+This means you don't pay for the browser's idle clock time. This is especially useful for use cases that run over long periods of time or require periods of inactivity, such as **human-in-the-loop (HITL) workflows**.
 
-In practical terms, this means ephemeral browsers will begin counting down toward their timeout period once they enter standby, rather than remaining in a true standby state indefinitely. This ensures ephemeral browsers are cleaned up appropriately when they're no longer actively being used.
+## Ephemeral Browsers
+
+For ephemeral browsers, standby mode works differently. When an ephemeral browser enters standby (when no CDP or Live View client is connected), the browser's timeout countdown begins rather than staying idle indefinitely.
