@@ -1,0 +1,31 @@
+<CodeGroup>
+```typescript Typescript/Javascript
+import Kernel from '@onkernel/sdk';
+
+const client = new Kernel({
+  apiKey: 'My API Key',
+});
+
+const response = await client.browsers.computer.captureScreenshot('id');
+
+console.log(response);
+
+const content = await response.blob();
+console.log(content);
+```
+
+
+```python Python
+from kernel import Kernel
+
+client = Kernel(
+    api_key="My API Key",
+)
+response = client.browsers.computer.capture_screenshot(
+    id="id",
+)
+print(response)
+content = response.read()
+print(content)
+```
+</CodeGroup>

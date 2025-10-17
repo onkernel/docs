@@ -1,0 +1,29 @@
+<CodeGroup>
+```typescript Typescript/Javascript
+import Kernel from '@onkernel/sdk';
+
+const client = new Kernel({
+  apiKey: 'My API Key',
+});
+
+await client.browsers.computer.dragMouse('id', {
+  path: [
+    [0, 0],
+    [0, 0],
+  ],
+});
+```
+
+
+```python Python
+from kernel import Kernel
+
+client = Kernel(
+    api_key="My API Key",
+)
+client.browsers.computer.drag_mouse(
+    id="id",
+    path=[[0, 0], [0, 0]],
+)
+```
+</CodeGroup>
