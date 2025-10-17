@@ -1,0 +1,362 @@
+---
+title: "Computer Controls"
+description: "Control the computer's mouse, keyboard, and screen"
+---
+
+Use OS-level controls to move and click the mouse, type and press keys, scroll, drag, and capture screenshots from a running browser session.
+
+## Click the mouse
+
+Simulate mouse clicks at specific coordinates. You can select the button, click type (down, up, click), number of clicks, and optional modifier keys to hold.
+
+<CodeGroup>
+```typescript Typescript/Javascript
+import { Kernel } from '@onkernel/sdk';
+
+const kernel = new Kernel();
+const kernelBrowser = await kernel.browsers.create();
+
+// Basic left click at (100, 200)
+await kernel.browsers.computer.clickMouse(kernelBrowser.session_id, {
+  x: 100,
+  y: 200,
+});
+
+// Double right-click while holding Shift
+await kernel.browsers.computer.clickMouse(kernelBrowser.session_id, {
+  x: 100,
+  y: 200,
+  button: 'right',
+  click_type: 'click',
+  num_clicks: 2,
+  hold_keys: ['Shift'],
+});
+```
+
+```python Python
+import kernel
+
+client = kernel.Kernel()
+kernel_browser = client.browsers.create()
+
+# Basic left click at (100, 200)
+client.browsers.computer.click_mouse(
+    id=kernel_browser.session_id,
+    x=100,
+    y=200,
+)
+
+# Double right-click while holding Shift
+client.browsers.computer.click_mouse(
+    id=kernel_browser.session_id,
+    x=100,
+    y=200,
+    button="right",
+    click_type="click",
+    num_clicks=2,
+    hold_keys=["Shift"],
+)
+```
+
+```bash CLI
+# Click the mouse at coordinates (100, 200)
+kernel browsers computer click-mouse <session id> --x 100 --y 200
+
+# Double-click the right mouse button
+kernel browsers computer click-mouse <session id> --x 100 --y 200 --num-clicks 2 --button right
+```
+</CodeGroup>
+
+## Move the mouse
+
+Move the cursor to specific screen coordinates. Optionally hold modifier keys during the move.
+
+<CodeGroup>
+```typescript Typescript/Javascript
+import { Kernel } from '@onkernel/sdk';
+
+const kernel = new Kernel();
+const kernelBrowser = await kernel.browsers.create();
+
+await kernel.browsers.computer.moveMouse(kernelBrowser.session_id, {
+  x: 500,
+  y: 300,
+  hold_keys: ['Alt'],
+});
+```
+
+```python Python
+import kernel
+
+client = kernel.Kernel()
+kernel_browser = client.browsers.create()
+
+client.browsers.computer.move_mouse(
+    id=kernel_browser.session_id,
+    x=500,
+    y=300,
+    hold_keys=["Alt"],
+)
+```
+
+```bash CLI
+# Move the mouse to coordinates (500, 300)
+kernel browsers computer move-mouse <session id> --x 500 --y 300
+```
+</CodeGroup>
+
+## Take screenshots
+
+Capture a full-screen PNG or a specific region.
+
+<CodeGroup>
+```typescript Typescript/Javascript
+import fs from 'fs';
+import { Buffer } from 'buffer';
+import { Kernel } from '@onkernel/sdk';
+
+const kernel = new Kernel();
+const kernelBrowser = await kernel.browsers.create();
+
+// Full screenshot
+{
+  const response = await kernel.browsers.computer.captureScreenshot(kernelBrowser.session_id);
+  const blob = await response.blob();
+  const buffer = Buffer.from(await blob.arrayBuffer());
+  fs.writeFileSync('screenshot.png', buffer);
+}
+
+// Region screenshot
+{
+  const response = await kernel.browsers.computer.captureScreenshot(kernelBrowser.session_id, {
+    region: { x: 0, y: 0, width: 800, height: 600 },
+  });
+  const blob = await response.blob();
+  const buffer = Buffer.from(await blob.arrayBuffer());
+  fs.writeFileSync('region.png', buffer);
+}
+```
+
+```python Python
+import kernel
+
+client = kernel.Kernel()
+kernel_browser = client.browsers.create()
+
+# Full screenshot
+with open('screenshot.png', 'wb') as f:
+    image_data = client.browsers.computer.capture_screenshot(id=kernel_browser.session_id)
+    f.write(image_data.read())
+
+# Region screenshot
+with open('region.png', 'wb') as f:
+    image_data = client.browsers.computer.capture_screenshot(
+        id=kernel_browser.session_id,
+        region={"x": 0, "y": 0, "width": 800, "height": 600},
+    )
+    f.write(image_data.read())
+```
+
+```bash CLI
+# Take a full screenshot
+kernel browsers computer screenshot <session id> --to screenshot.png
+
+# Take a screenshot of a specific region
+kernel browsers computer screenshot <session id> --to region.png --x 0 --y 0 --width 800 --height 600
+```
+</CodeGroup>
+
+## Type text
+
+Type literal text, optionally with a delay in milliseconds between keystrokes.
+
+<CodeGroup>
+```typescript Typescript/Javascript
+import { Kernel } from '@onkernel/sdk';
+
+const kernel = new Kernel();
+const kernelBrowser = await kernel.browsers.create();
+
+await kernel.browsers.computer.typeText(kernelBrowser.session_id, {
+  text: 'Hello, World!',
+});
+
+await kernel.browsers.computer.typeText(kernelBrowser.session_id, {
+  text: 'Slow typing...',
+  delay: 100,
+});
+```
+
+```python Python
+import kernel
+
+client = kernel.Kernel()
+kernel_browser = client.browsers.create()
+
+client.browsers.computer.type_text(
+    id=kernel_browser.session_id,
+    text="Hello, World!",
+)
+
+client.browsers.computer.type_text(
+    id=kernel_browser.session_id,
+    text="Slow typing...",
+    delay=100,
+)
+```
+
+```bash CLI
+# Type text in the browser
+kernel browsers computer type <session id> --text "Hello, World!"
+
+# Type text with a 100ms delay between keystrokes
+kernel browsers computer type <session id> --text "Slow typing..." --delay 100
+```
+</CodeGroup>
+
+## Press keys
+
+Press one or more key symbols (including combinations like "Ctrl+t" or "Ctrl+Shift+Tab"). Optionally hold modifiers and/or set a duration to hold keys down.
+
+<CodeGroup>
+```typescript Typescript/Javascript
+import { Kernel } from '@onkernel/sdk';
+
+const kernel = new Kernel();
+const kernelBrowser = await kernel.browsers.create();
+
+// Tap a key combination
+await kernel.browsers.computer.pressKey(kernelBrowser.session_id, {
+  keys: ['Ctrl+t'],
+});
+
+// Hold keys for 250ms while also holding Alt
+await kernel.browsers.computer.pressKey(kernelBrowser.session_id, {
+  keys: ['Ctrl+Shift+Tab'],
+  duration: 250,
+  hold_keys: ['Alt'],
+});
+```
+
+```python Python
+import kernel
+
+client = kernel.Kernel()
+kernel_browser = client.browsers.create()
+
+# Tap a key combination
+client.browsers.computer.press_key(
+    id=kernel_browser.session_id,
+    keys=["Ctrl+t"],
+)
+
+# Hold keys for 250ms while also holding Alt
+client.browsers.computer.press_key(
+    id=kernel_browser.session_id,
+    keys=["Ctrl+Shift+Tab"],
+    duration=250,
+    hold_keys=["Alt"],
+)
+```
+
+```bash CLI
+# Press one or more keys (repeatable --key)
+kernel browsers computer press-key <session id> --key Ctrl+t
+
+# Hold for a duration and add optional modifiers
+kernel browsers computer press-key <session id> --key Ctrl+Shift+Tab --duration 250 --hold-key Alt
+```
+</CodeGroup>
+
+## Scroll
+
+Scroll the mouse wheel at a specific position. Positive `delta_y` scrolls down; negative scrolls up. Positive `delta_x` scrolls right; negative scrolls left.
+
+<CodeGroup>
+```typescript Typescript/Javascript
+import { Kernel } from '@onkernel/sdk';
+
+const kernel = new Kernel();
+const kernelBrowser = await kernel.browsers.create();
+
+await kernel.browsers.computer.scroll(kernelBrowser.session_id, {
+  x: 300,
+  y: 400,
+  delta_x: 0,
+  delta_y: 120,
+});
+```
+
+```python Python
+import kernel
+
+client = kernel.Kernel()
+kernel_browser = client.browsers.create()
+
+client.browsers.computer.scroll(
+    id=kernel_browser.session_id,
+    x=300,
+    y=400,
+    delta_x=0,
+    delta_y=120,
+)
+```
+
+```bash CLI
+# Scroll at a position
+kernel browsers computer scroll <session id> --x 300 --y 400 --delta-y 120
+```
+</CodeGroup>
+
+## Drag the mouse
+
+Drag by pressing a button, moving along a path of points, then releasing. You can control delay before starting, the granularity and speed of the drag via `steps_per_segment` and `step_delay_ms`, and optionally hold modifier keys.
+
+<CodeGroup>
+```typescript Typescript/Javascript
+import { Kernel } from '@onkernel/sdk';
+
+const kernel = new Kernel();
+const kernelBrowser = await kernel.browsers.create();
+
+await kernel.browsers.computer.dragMouse(kernelBrowser.session_id, {
+  path: [
+    [100, 200],
+    [150, 220],
+    [200, 260],
+  ],
+  button: 'left',
+  delay: 0,
+  steps_per_segment: 10,
+  step_delay_ms: 50,
+  hold_keys: ['Shift'],
+});
+```
+
+```python Python
+import kernel
+
+client = kernel.Kernel()
+kernel_browser = client.browsers.create()
+
+client.browsers.computer.drag_mouse(
+    id=kernel_browser.session_id,
+    path=[[100, 200], [150, 220], [200, 260]],
+    button="left",
+    delay=0,
+    steps_per_segment=10,
+    step_delay_ms=50,
+    hold_keys=["Shift"],
+)
+```
+
+```bash CLI
+# Drag the mouse along a path
+kernel browsers computer drag-mouse <session id> \
+  --point 100,200 \
+  --point 150,220 \
+  --point 200,260 \
+  --button left \
+  --delay 0
+```
+</CodeGroup>
