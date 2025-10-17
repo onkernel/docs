@@ -32,6 +32,11 @@ print(browser.browser_live_view_url)
 The `browser_live_view_url` supports additional query parameters to customize the live view:
 - `readOnly` (bool): when set to `true`, the view will be non-interactive.
 
+Example:
+```
+https://api.onkernel.com/browser/live/<TOKEN>?readOnly=true
+```
+
 ## Kiosk mode
 
 Kiosk mode provides a fullscreen live view experience without browser UI elements like the address bar and tabs. You can enable kiosk mode when creating a browser by setting the `kiosk_mode` parameter to `true`.
@@ -39,7 +44,7 @@ Kiosk mode provides a fullscreen live view experience without browser UI element
 <CodeGroup>
 
 ```typescript Typescript/Javascript
-const kernelBrowser = await kernel.browsers.create({
+const browser = await kernel.browsers.create({
     viewport: {
         width: 1920,
         height: 1080
@@ -49,7 +54,7 @@ const kernelBrowser = await kernel.browsers.create({
 ```
 
 ```python Python
-kernel_browser = client.browsers.create(
+kernel_browser = kernel.browsers.create(
     viewport={
         "width": 1920,
         "height": 1080

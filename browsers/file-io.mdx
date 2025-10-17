@@ -106,11 +106,11 @@ kernel = Kernel()
 
 
 async def main():
-    kbrowser = await kernel.browsers.create()
-    print("Kernel browser live view url:", kbrowser.browser_live_view_url)
+    kernel_browser = await kernel.browsers.create()
+    print("Kernel browser live view url:", kernel_browser.browser_live_view_url)
 
     async with async_playwright() as playwright:
-        browser = await playwright.chromium.connect_over_cdp(kbrowser.cdp_ws_url)
+        browser = await playwright.chromium.connect_over_cdp(kernel_browser.cdp_ws_url)
         context = browser.contexts[0]
         page = context.pages[0] if len(context.pages) > 0 else await context.new_page()
 
@@ -150,7 +150,7 @@ async def main():
             print("Download timed out after 10 seconds")
 
         resp = await kernel.browsers.fs.read_file(
-            kbrowser.session_id, path=f"{DOWNLOAD_DIR}/{download_filename}"
+            kernel_browser.session_id, path=f"{DOWNLOAD_DIR}/{download_filename}"
         )
         local_path = f"./downloads/{download_filename}"
         os.makedirs("./downloads", exist_ok=True)

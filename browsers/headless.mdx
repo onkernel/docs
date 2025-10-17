@@ -11,12 +11,20 @@ To launch a Kernel browser in `Headless` mode, set its config:
 
 <CodeGroup>
 ```typescript Typescript/Javascript
+import Kernel from '@onkernel/sdk';
+
+const kernel = new Kernel();
+
 const kernelBrowser = await kernel.browsers.create({
   headless: true,
 });
 ```
 
 ```python Python
+from kernel import Kernel
+
+kernel = Kernel()
+
 kernel_browser = kernel.browsers.create(headless=True)
 ```
 </CodeGroup>

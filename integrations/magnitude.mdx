@@ -23,11 +23,9 @@ import { startBrowserAgent } from "magnitude-core";
 import Kernel from '@onkernel/sdk';
 import z from 'zod';
 
-const client = new Kernel({
-    apiKey: process.env.KERNEL_API_KEY,
-});
+const kernel = new Kernel();
 
-const kernelBrowser = await client.browsers.create({
+const kernelBrowser = await kernel.browsers.create({
     viewport: {
         width: 1920,
         height: 1080
@@ -78,7 +76,7 @@ const assignee = await agent.extract('Extract the task Assignee', z.string());
 await agent.stop();
 
 // Clean up the Kernel Browser Session
-await client.browsers.deleteByID(kernelBrowser.session_id);
+await kernel.browsers.deleteByID(kernelBrowser.session_id);
 ```
 
 ## Quick setup with our Magnitude example app

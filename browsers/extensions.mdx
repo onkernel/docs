@@ -59,10 +59,10 @@ const kernelBrowser = await kernel.browsers.create({
 ```
 
 ```python Python
-import kernel
+from kernel import Kernel
 
-client = kernel.Kernel()
-kernel_browser = client.browsers.create(extensions=[{name: 'my-extension'}])
+kernel = Kernel()
+kernel_browser = kernel.browsers.create(extensions=[{"name": "my-extension"}])
 ```
 
 ```bash CLI

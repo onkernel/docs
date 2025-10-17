@@ -12,9 +12,7 @@ You can invoke your app by making a `POST` request to Kernel's API or via the CL
 ```typescript Typescript/Javascript
 import Kernel from '@onkernel/sdk';
 
-const kernel = new Kernel({
-  apiKey: 'My API Key',
-});
+const kernel = new Kernel();
 
 const invocation = await kernel.invocations.create({
   action_name: 'analyze',
@@ -28,7 +26,7 @@ console.log(invocation.id);
 ```python Python
 from kernel import Kernel
 
-kernel = Kernel(api_key="My API Key")
+kernel = Kernel()
 invocation = kernel.invocations.create(
     action_name="analyze",
     app_name="my-app",
@@ -48,9 +46,7 @@ For long running jobs, use asynchronous invocations to trigger Kernel actions wi
 ```typescript Typescript/Javascript
 import Kernel from '@onkernel/sdk';
 
-const kernel = new Kernel({
-  apiKey: 'My API Key',
-});
+const kernel = new Kernel();
 
 const invocation = await kernel.invocations.create({
   async: true,
@@ -65,7 +61,7 @@ console.log(invocation.id);
 ```python Python
 from kernel import Kernel
 
-kernel = Kernel(api_key="My API Key")
+kernel = Kernel()
 invocation = kernel.invocations.create(
     action_name="analyze",
     app_name="my-app",

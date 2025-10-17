@@ -12,6 +12,10 @@ You can configure the viewport when creating a browser by specifying the `viewpo
 <CodeGroup>
 
 ```typescript Typescript/Javascript
+import Kernel from '@onkernel/sdk';
+
+const kernel = new Kernel();
+
 // Explicitly specify refresh rate
 const kernelBrowser = await kernel.browsers.create({
   viewport: {
@@ -31,6 +35,10 @@ const kernelBrowserAuto = await kernel.browsers.create({
 ```
 
 ```python Python
+from kernel import Kernel
+
+kernel = Kernel()
+
 # Explicitly specify refresh rate
 kernel_browser = kernel.browsers.create(
     viewport={

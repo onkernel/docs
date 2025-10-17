@@ -8,15 +8,21 @@ To turn on stealth mode, set its flag when instantiating Kernel browsers:
 
 <CodeGroup>
 ```typescript Typescript/Javascript
+import Kernel from '@onkernel/sdk';
+
+const kernel = new Kernel();
+
 const kernelBrowser = await kernel.browsers.create({
-  invocation_id: ctx.invocation_id,
   stealth: true,
 });
 ```
 
 ```python Python
+from kernel import Kernel
+
+kernel = Kernel()
+
 kernel_browser = kernel.browsers.create(
-    invocation_id=ctx.invocation_id,
     stealth=True,
 )
 ```

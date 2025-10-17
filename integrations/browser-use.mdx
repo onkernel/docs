@@ -23,10 +23,10 @@ from kernel import Kernel
 from browser_use import Browser, Agent
 
 # Initialize Kernel client
-client = Kernel(api_key="your-api-key")
+kernel = Kernel()
 
 # Create a Kernel browser session
-kernel_browser = client.browsers.create()
+kernel_browser = kernel.browsers.create()
 ```
 
 ### 3. Update your Browser definition
@@ -64,7 +64,7 @@ agent = Agent(
 result = agent.run()
 
 # Clean up
-client.browsers.delete_by_id(kernel_browser.session_id)
+kernel.browsers.delete_by_id(kernel_browser.session_id)
 ```
 
 <Info>

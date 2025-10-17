@@ -12,6 +12,10 @@ To specify a browser for persistence, specify its `persistence` settings in the 
 
 <CodeGroup>
 ```typescript Typescript/Javascript
+import Kernel from '@onkernel/sdk';
+
+const kernel = new Kernel();
+
 const kernelBrowser = await kernel.browsers.create({
   persistence: {
     id: 'unique-browser-id-for-persistence'
@@ -20,6 +24,10 @@ const kernelBrowser = await kernel.browsers.create({
 ```
 
 ```python Python
+from kernel import Kernel
+
+kernel = Kernel()
+
 kernel_browser = await kernel.browsers.create(
     persistence={
       "id": "unique-browser-id-for-persistence",
