@@ -37,6 +37,11 @@ table thead th {
   line-height: 1.5rem !important;
   background-color: rgba(0, 0, 0, 0.02) !important;
   border-bottom: 1px solid rgba(0, 0, 0, 0.1) !important;
+  word-wrap: break-word !important;
+  word-break: break-word !important;
+  overflow-wrap: break-word !important;
+  white-space: normal !important;
+  max-width: 0 !important;
 }
 
 :is(.dark) .prose table thead th,
@@ -84,6 +89,11 @@ table tbody td {
   padding: 10px 16px !important;
   font-size: 0.875rem !important;
   line-height: 1.5rem !important;
+  word-wrap: break-word !important;
+  word-break: break-word !important;
+  overflow-wrap: break-word !important;
+  white-space: normal !important;
+  max-width: 0 !important;
 }
 
 /* code in tables */
