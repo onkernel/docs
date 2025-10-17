@@ -3,3 +3,101 @@
   font-weight: bold;
   font-size: 15px;
 }
+
+/* enhanced table styling - matches code group design */
+.prose table,
+article table,
+table {
+  width: 100% !important;
+  border-collapse: separate !important;
+  border-spacing: 0 !important;
+  border-radius: 1rem !important;
+  overflow: hidden !important;
+  border: 1px solid rgb(var(--gray-950) / 0.1) !important;
+  background-color: rgb(249, 250, 251) !important;
+  margin: 1.25rem 0 !important;
+  display: table !important;
+}
+
+:is(.dark) .prose table,
+:is(.dark) article table,
+:is(.dark) table {
+  border-color: rgb(255 255 255 / 0.2) !important;
+  background-color: rgba(16, 17, 19, 1) !important;
+}
+
+/* table headers */
+.prose table thead th,
+article table thead th,
+table thead th {
+  padding: 10px 16px !important;
+  text-align: left !important;
+  font-weight: 600 !important;
+  font-size: 0.875rem !important;
+  line-height: 1.5rem !important;
+  background-color: rgba(0, 0, 0, 0.02) !important;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1) !important;
+}
+
+:is(.dark) .prose table thead th,
+:is(.dark) article table thead th,
+:is(.dark) table thead th {
+  background-color: rgb(41, 41, 41) !important;
+  border-bottom-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* table body */
+.prose table tbody tr,
+article table tbody tr,
+table tbody tr {
+  transition: background-color 0.15s ease !important;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06) !important;
+}
+
+:is(.dark) .prose table tbody tr,
+:is(.dark) article table tbody tr,
+:is(.dark) table tbody tr {
+  border-bottom-color: rgba(255, 255, 255, 0.06) !important;
+}
+
+.prose table tbody tr:last-child,
+article table tbody tr:last-child,
+table tbody tr:last-child {
+  border-bottom: none !important;
+}
+
+.prose table tbody tr:hover,
+article table tbody tr:hover,
+table tbody tr:hover {
+  background-color: rgba(0, 0, 0, 0.02) !important;
+}
+
+:is(.dark) .prose table tbody tr:hover,
+:is(.dark) article table tbody tr:hover,
+:is(.dark) table tbody tr:hover {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+}
+
+.prose table tbody td,
+article table tbody td,
+table tbody td {
+  padding: 10px 16px !important;
+  font-size: 0.875rem !important;
+  line-height: 1.5rem !important;
+}
+
+/* code in tables */
+.prose table code,
+article table code,
+table code {
+  font-size: 0.8125rem !important;
+  padding: 2px 6px !important;
+  border-radius: 0.375rem !important;
+}
+
+/* first column bold for reference tables */
+.prose table tbody td:first-child,
+article table tbody td:first-child,
+table tbody td:first-child {
+  font-weight: 500 !important;
+}
