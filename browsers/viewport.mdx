@@ -14,25 +14,25 @@ You can configure the viewport when creating a browser by specifying the `viewpo
 ```typescript Typescript/Javascript
 // Explicitly specify refresh rate
 const kernelBrowser = await kernel.browsers.create({
-    viewport: {
-        width: 1920,
-        height: 1080,
-        refresh_rate: 25
-    }
+  viewport: {
+    width: 1920,
+    height: 1080,
+    refresh_rate: 25
+  }
 });
 
 // Auto-determine refresh rate from dimensions (25Hz for 1920x1080)
 const kernelBrowserAuto = await kernel.browsers.create({
-    viewport: {
-        width: 1920,
-        height: 1080
-    }
+  viewport: {
+    width: 1920,
+    height: 1080
+  }
 });
 ```
 
 ```python Python
 # Explicitly specify refresh rate
-kernel_browser = client.browsers.create(
+kernel_browser = kernel.browsers.create(
     viewport={
         "width": 1920,
         "height": 1080,
@@ -41,7 +41,7 @@ kernel_browser = client.browsers.create(
 )
 
 # Auto-determine refresh rate from dimensions (25Hz for 1920x1080)
-kernel_browser_auto = client.browsers.create(
+kernel_browser_auto = kernel.browsers.create(
     viewport={
         "width": 1920,
         "height": 1080
@@ -78,51 +78,51 @@ Higher resolutions may affect the responsiveness of [live view](/browsers/live-v
 ```typescript Typescript/Javascript
 // Full HD (1920x1080) at 25Hz - explicit refresh rate
 const fullHD = await kernel.browsers.create({
-    viewport: {
-        width: 1920,
-        height: 1080,
-        refresh_rate: 25
-    }
+  viewport: {
+    width: 1920,
+    height: 1080,
+    refresh_rate: 25
+  }
 });
 
 // Full HD (1920x1080) - auto-determined 25Hz
 const fullHDAuto = await kernel.browsers.create({
-    viewport: {
-        width: 1920,
-        height: 1080
-    }
+  viewport: {
+    width: 1920,
+    height: 1080
+  }
 });
 
 // QHD (2560x1440) - auto-determined 10Hz
 // Note: May affect live view responsiveness
 const qhd = await kernel.browsers.create({
-    viewport: {
-        width: 2560,
-        height: 1440
-    }
+  viewport: {
+    width: 2560,
+    height: 1440
+  }
 });
 
 // XGA (1024x768) - auto-determined 60Hz (Default configuration)
 const xga = await kernel.browsers.create({
-    viewport: {
-        width: 1024,
-        height: 768
-    }
+  viewport: {
+    width: 1024,
+    height: 768
+  }
 });
 
 // WUXGA (1920x1200) at 25Hz - explicit refresh rate
 const wuxga = await kernel.browsers.create({
-    viewport: {
-        width: 1920,
-        height: 1200,
-        refresh_rate: 25
-    }
+  viewport: {
+    width: 1920,
+    height: 1200,
+    refresh_rate: 25
+  }
 });
 ```
 
 ```python Python
 # Full HD (1920x1080) at 25Hz - explicit refresh rate
-full_hd = await client.browsers.create(
+full_hd = kernel.browsers.create(
     viewport={
         "width": 1920,
         "height": 1080,
@@ -131,7 +131,7 @@ full_hd = await client.browsers.create(
 )
 
 # Full HD (1920x1080) - auto-determined 25Hz
-full_hd_auto = await client.browsers.create(
+full_hd_auto = kernel.browsers.create(
     viewport={
         "width": 1920,
         "height": 1080
@@ -140,7 +140,7 @@ full_hd_auto = await client.browsers.create(
 
 # QHD (2560x1440) - auto-determined 10Hz
 # Note: May affect live view responsiveness
-qhd = await client.browsers.create(
+qhd = kernel.browsers.create(
     viewport={
         "width": 2560,
         "height": 1440
@@ -148,7 +148,7 @@ qhd = await client.browsers.create(
 )
 
 # XGA (1024x768) - auto-determined 60Hz (Default configuration)
-xga = await client.browsers.create(
+xga = kernel.browsers.create(
     viewport={
         "width": 1024,
         "height": 768
@@ -156,7 +156,7 @@ xga = await client.browsers.create(
 )
 
 # WUXGA (1920x1200) at 25Hz - explicit refresh rate
-wuxga = await client.browsers.create(
+wuxga = kernel.browsers.create(
     viewport={
         "width": 1920,
         "height": 1200,
@@ -180,7 +180,7 @@ const defaultViewport = await kernel.browsers.create();
 
 ```python Python
 # Uses default viewport (1024x768@60Hz)
-default_viewport = await client.browsers.create()
+default_viewport = kernel.browsers.create()
 ```
 
 </CodeGroup>
