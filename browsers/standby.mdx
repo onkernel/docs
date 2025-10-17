@@ -11,3 +11,9 @@ This means you don't pay for the browser's idle clock time. This is especially u
 </Info>
 
 The current time-to-idle is `4 seconds`.
+
+## Ephemeral Browsers and Standby
+
+For ephemeral browsers, standby mode behaves differently. When an ephemeral browser enters standby mode (i.e., when no CDP or Live View client is connected), the browser's timeout countdown begins. This is because the standby state is tied to heartbeats sent at the CDP/Live View websocket proxy layer. These heartbeats stop being sent as soon as a client disconnects.
+
+In practical terms, this means ephemeral browsers will begin counting down toward their timeout period once they enter standby, rather than remaining in a true standby state indefinitely. This ensures ephemeral browsers are cleaned up appropriately when they're no longer actively being used.
