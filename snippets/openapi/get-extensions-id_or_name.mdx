@@ -6,11 +6,11 @@ const client = new Kernel({
   apiKey: 'My API Key',
 });
 
-const response = await client.extensions.download('id_or_name');
+const extension = await client.extensions.retrieve('id_or_name');
 
-console.log(response);
+console.log(extension);
 
-const content = await response.blob();
+const content = await extension.blob();
 console.log(content);
 ```
 
@@ -21,11 +21,11 @@ from kernel import Kernel
 client = Kernel(
     api_key="My API Key",
 )
-response = client.extensions.download(
+extension = client.extensions.retrieve(
     "id_or_name",
 )
-print(response)
-content = response.read()
+print(extension)
+content = extension.read()
 print(content)
 ```
 </CodeGroup>

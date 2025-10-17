@@ -8,7 +8,10 @@ const client = new Kernel({
 
 const deployment = await client.deployments.create({
   entrypoint_rel_path: 'src/app.py',
+  env_vars: { FOO: 'bar' },
   file: fs.createReadStream('path/to/file'),
+  region: 'aws.us-east-1a',
+  version: '1.0.0',
 });
 
 console.log(deployment.id);
@@ -23,7 +26,13 @@ client = Kernel(
 )
 deployment = client.deployments.create(
     entrypoint_rel_path="src/app.py",
-    file=b"raw file contents",
+    env_vars={
+        "FOO": "bar"
+    },
+    file=b"<binary>",
+    force=False,
+    region="aws.us-east-1a",
+    version="1.0.0",
 )
 print(deployment.id)
 ```
