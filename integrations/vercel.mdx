@@ -5,7 +5,7 @@ description: "Integrate Kernel through the Vercel Marketplace"
 
 ## Integrate Kernel through the Vercel Marketplace
 
-The Vercel Marketplace allows Vercel users to install and configure third-party services, like Kernel, directly from the Vercel dashboard. Kernel offers an [official integration](https://vercel.com/marketplace/kernel) that Vercel users can install to integrate Kernel into their Vercel projects.
+The Vercel Marketplace allows Vercel users to install and configure third-party services, like Kernel, directly from the Vercel dashboard. Kernel offers an [official integration](https://vercel.com/marketplace/kernel) that Vercel users can install to integrate Kernel cloud browsers into their Vercel projects.
 
 ### Installing the Kernel Integration
 
@@ -16,16 +16,16 @@ The Vercel Marketplace allows Vercel users to install and configure third-party 
 1. Navigate to the [Kernel integration](https://vercel.com/marketplace/kernel) in the Vercel Marketplace.
 2. Click **Install** to add Kernel to your Vercel team.
 3. Select your pricing plan.
-4. Provide a name for your Kernel installation. (this is not used for billing or anything else)
+4. Provide a name for your Kernel installation (this is not used for billing or anything else).
 5. Click **Create**.
 
-Vercel will automatically provision a Kernel account, organization, and API key for you. Vercel calls the provisioned account, organization, and API key a **Resource**.
+Vercel will automatically provision a Kernel User account, Organization, and API key for you. Vercel calls the provisioned account, Organization, and API key a **Resource**.
 
-Each Vercel team has an associated Kernel Organization. Kernel will automatically provision a new account for you, or link to an existing Kernel account if an account is found with the same email address. An equivalent role in Kernel is assigned to the user based on their Vercel team role. Roles and Vercel team membership are automatically synced to Kernel.
+Each Vercel team has an associated Kernel Organization. Kernel will automatically provision a new User account for you, or link to an existing Kernel User account if an account is found with the same email address. An equivalent role in Kernel is assigned to the user based on their Vercel team role. Roles and Vercel team membership are automatically synced to Kernel.
 
 ### Connecting to your Vercel projects
 
-Once you've installed Kernel, you will need to connect it to one of your Vercel projects. Generally, a Kernel organization should be connected to a single Vercel project.
+Once you've installed Kernel, you will need to connect it to one of your Vercel projects. Generally, a Kernel Organization should be connected to a single Vercel project.
 
 Connecting to a project will automatically sync your Kernel API key to your Vercel project's environment variables. The following environment variable will be automatically synced to all environments:
 
@@ -99,12 +99,11 @@ For more examples and features like profiles, stealth mode, and live view, check
 
 The pricing for plans purchased through the Vercel Marketplace is the same as the pricing when purchased directly through Kernel. For more information on Kernel's pricing and available plans, see the [Pricing page](https://onkernel.com/#pricing).
 
-Billing and usage data are reported hourly to Vercel and can be viewed directly in the Vercel Dashboard.
+Billing and usage data are reported hourly to Vercel and can be viewed directly in the Vercel Dashboard. Billing plan management can be done through both the Vercel Dashboard and the Kernel Dashboard.
 
 ### Limitations
 
 The following limitations apply when using Kernel through the Vercel Marketplace:
 
-- Vercel-managed Organizations cannot be deleted from the Kernel Dashboard, they can only be deleted by uninstalling the Kernel integration.
-- Billing plan management can be done through both the Vercel Dashboard and the Kernel Dashboard.
-- Existing Kernel organizations cannot be moved to be managed by the Kernel Vercel Integration.
+- Vercel-managed Organizations cannot be deleted from the Kernel Dashboard, they can only be deleted by uninstalling the Kernel integration in Vercel.
+- Existing Kernel Organizations cannot be moved to be managed by the Kernel Vercel Integration.
