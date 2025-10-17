@@ -136,7 +136,32 @@ def my_action_method(runtime_context, payload):
 
 ## Return values
 
-Action methods can return values, which will be included in the [invocation's](/apps/invoke#return-values) final response. The examples above show actions returning data.
+Action methods can return values, which will be included in the [invocation's](/apps/invoke#return-values) final response.
+
+<CodeGroup>
+```typescript Typescript/Javascript
+const myActionMethod = async (runtimeContext, payload) => {
+  const { tshirt_size, color, shipping_address } = payload;
+  // ...
+  return {
+    order_id: "example-order-id",
+  }
+};
+```
+
+```python Python
+def my_action_method(runtime_context, payload):
+    tshirt_size, color, shipping_address = (
+        payload["tshirt_size"],
+        payload["color"],
+        payload["shipping_address"]
+    )
+    # ...
+    return {"order_id": "example-order-id"}
+```
+</CodeGroup>
+
+The examples above show actions returning data.
 
 ## Building browser automations with Kernel apps
 

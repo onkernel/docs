@@ -23,6 +23,27 @@ logs = kernel.invocations.follow(invocation_id)
 ```
 </CodeGroup>
 
+### Example
+
+Here's an example showing how to handle streaming logs:
+
+```typescript Typescript/Javascript
+const follow = await kernel.invocations.follow(invocation.id);
+
+for await (const evt of follow) {
+  if (evt.event === 'log') {
+    console.log(`[${evt.timestamp}] ${evt.message}`);
+  } else if (evt.event === 'error') {
+    console.error('Error:', evt.error.message);
+    break;
+  } else if (evt.event === 'invocation_state') {
+    if (evt.invocation.status === 'succeeded' || evt.invocation.status === 'failed') {
+      break;
+    }
+  }
+}
+```
+
 ## Via CLI
 
 You can also stream the logs to your terminal via the CLI:
