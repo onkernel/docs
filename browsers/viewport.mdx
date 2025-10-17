@@ -51,6 +51,10 @@ kernel_browser_auto = client.browsers.create(
 
 </CodeGroup>
 
+<Note>
+The `refresh_rate` parameter only applies to live view sessions and is ignored for [headless](/browsers/headless) browsers.
+</Note>
+
 ## Supported viewport configurations
 
 Kernel supports specific viewport configurations. The server will reject unsupported combinations. When you provide width and height without specifying refresh_rate, it will be automatically determined if the dimensions match one of the supported resolutions exactly. The following resolutions are supported:
@@ -204,4 +208,4 @@ The server will reject any viewport configuration that doesn't exactly match one
 - Higher resolutions (like 2560x1440) may impact the performance and responsiveness of live view sessions
 - The viewport size affects how websites render, especially those with responsive designs
 - Screenshots taken from the browser will match the configured viewport dimensions
-- In [headless mode](/browsers/headless), the viewport configuration still applies for rendering and screenshots
+- In [headless mode](/browsers/headless), the viewport width and height still apply for rendering and screenshots, but the `refresh_rate` parameter is ignored
