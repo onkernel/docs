@@ -9,38 +9,74 @@ Once you deploy an app on Kernel, you can schedule its actions on a job or run t
 
 ## Deploy the app
 
+### From local directory
+
 Use our CLI from the root directory of your project:
 ```bash
-# entrypoint_file_name should be where you've defined your Kernel app
 kernel deploy <entrypoint_file_name>
 ```
+
+#### Notes
+
+- The `entrypoint_file_name` is the file name where you [defined](/apps/develop) your app.
+- Include a `.gitignore` file to exclude dependency folders like `node_modules` and `.venv`.
+
+### From GitHub
+
+You can deploy an app directly from a public or private GitHub repository using the Kernel CLI — no need to clone or manually push code.
+
+```bash
+kernel deploy github \
+  --url https://github.com/<owner>/<repo> \
+  --ref <branch|tag|commit> \
+  --entrypoint <path/to/entrypoint> \
+  [--path <optional/subdir>] \
+  [--github-token <token>] \
+  [--env KEY=value ...] \
+  [--env-file .env] \
+  [--version latest] \
+  [--force]
+```
+
+#### Notes
+- **`--path` vs `--entrypoint`:** Use `--path` to specify a subdirectory within the repo (useful for monorepos), and `--entrypoint` for the path to your app's entry file relative to that directory (or repo root if no `--path` is specified).
+- The CLI automatically downloads and extracts the GitHub source code and uploads your app for deployment.
+- For private repositories, provide a `--github-token` or set the `GITHUB_TOKEN` environment variable.
 
 ## Environment variables
 
 You can set environment variables for your app using the `--env` flag. For example:
 
 <CodeGroup>
-```bash Typescript/Javascript
+```bash Typescript/Javascript (inline)
 kernel deploy my_app.ts --env MY_ENV_VAR=my_value # Can add multiple env vars delimited by space
 ```
 
-```bash Python
+```bash Typescript/Javascript (from file)
+kernel deploy my_app.ts --env-file .env
+```
+
+```bash Python (inline)
 kernel deploy my_app.py --env MY_ENV_VAR=my_value # Can add multiple env vars delimited by space
+```
+
+```bash Python (from file)
+kernel deploy my_app.py --env-file .env
 ```
 </CodeGroup>
 
 ## Deployment notes
 
-- The `entrypoint_file_name` is the file name where you [defined](/apps/develop) your app.
-- **The entrypoint file and dependency manifest (`package.json` for JS/TS, `pyproject.toml` for Python) must both be in the root directory of your project.**
-- Include a `.gitignore` file to exclude dependency folders like `node_modules` and `.venv`.
+- **The dependency manifest (`package.json` for JS/TS, `pyproject.toml` for Python) must be present in the root directory of your project.**
+- View deployment logs using: `kernel deploy logs <deployment_id> --follow`
+- If you encounter a 500 error during deployment, verify that your entrypoint file name and extension are correct (e.g., `app.py` not `app` or `app.js`).
 - Kernel assumes the root directory contains at least this file structure:
 
 <CodeGroup>
 ```bash Typescript/Javascript
 project-root/
   ├─ .gitignore # Exclude dependency folders like node_modules
-  ├─ my_app.ts # Entrypoint file
+  ├─ my_app.ts # Entrypoint file (can be located in a subdirectory, e.g. src/my_app.ts)
   ├─ package.json
   ├─ tsconfig.json # If using TypeScript
   └─ bun.lock | package-lock.json | pnpm-lock.yaml # One of these lockfiles
