@@ -9,35 +9,33 @@ ISP (Internet Service Provider) proxies combine the speed of datacenter proxies 
 Create an ISP proxy with optional targeting:
 
 <CodeGroup>
-
 ```typescript Typescript/Javascript
-import { Kernel } from '@onkernel/sdk';
+import Kernel from '@onkernel/sdk';
+
 const kernel = new Kernel();
 
 const proxy = await kernel.proxies.create({
   type: 'isp',
-  name: 'my-isp-proxy'
+  name: 'my-isp-proxy',
 });
 
 const browser = await kernel.browsers.create({
-  proxy_id: proxy.id
+  proxy_id: proxy.id,
 });
 ```
 
-```Python Python
-import kernel
-client = kernel.Kernel()
+```python Python
+from kernel import Kernel
 
-proxy = client.proxies.create(
-    type='isp',
-    name='my-isp-proxy'
+kernel = Kernel()
+
+proxy = kernel.proxies.create(
+    type="isp",
+    name="my-isp-proxy",
 )
 
-browser = client.browsers.create(
-    proxy_id=proxy.id
-)
+browser = kernel.browsers.create(proxy_id=proxy.id)
 ```
-
 </CodeGroup>
 
 ## Configuration Parameters

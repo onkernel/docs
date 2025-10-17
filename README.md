@@ -32,7 +32,7 @@ How it affects the repository:
 Notes and gotchas:
 
 - The generator runs remotely against the OpenAPI URL defined in the script, so it needs network access and the spec to include `x-codeSamples` for useful output.
-- The override parsing and code injection are heuristic — complex sample sources might not be transformed exactly as intended. See the script for details on how keys/`log` overrides are applied.
+- The override parsing and code injection are heuristic. Complex sample sources might not be transformed exactly as intended. See the script for details on how keys/`log` overrides are applied.
 - The GitHub Action installs Bun and runs the script; if you run it locally, install Bun and run `bun run .github/scripts/generate_code_samples.ts` from the repo root.
 
 Example: to add a snippet placeholder to a page, add `<OpenAPICodeGroup>get /api/v1/users</OpenAPICodeGroup>` and let the generator fill `snippets/openapi` and update the page during the next run.

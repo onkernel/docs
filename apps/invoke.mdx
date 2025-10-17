@@ -2,16 +2,39 @@
 title: "Invoking"
 ---
 
-import SynchronousInvocation from '/snippets/openapi/post-invocations.mdx';
-import AsyncInvocation from '/snippets/openapi/post-invocations-async.mdx';
-
 ## Via API
 
 You can invoke your app by making a `POST` request to Kernel's API or via the CLI. Both support passing a payload. **For automations and agents that take longer than 100 seconds, use [async invocations](/apps/invoke#asynchronous-invocations).**
 
 <Info>Synchronous invocations time out after 100 seconds.</Info>
 
-<SynchronousInvocation />
+<CodeGroup>
+```typescript Typescript/Javascript
+import Kernel from '@onkernel/sdk';
+
+const kernel = new Kernel();
+
+const invocation = await kernel.invocations.create({
+  action_name: 'analyze',
+  app_name: 'my-app',
+  version: '1.0.0',
+});
+
+console.log(invocation.id);
+```
+
+```python Python
+from kernel import Kernel
+
+kernel = Kernel()
+invocation = kernel.invocations.create(
+    action_name="analyze",
+    app_name="my-app",
+    version="1.0.0",
+)
+print(invocation.id)
+```
+</CodeGroup>
 
 ### Asynchronous invocations
 
@@ -19,7 +42,35 @@ For long running jobs, use asynchronous invocations to trigger Kernel actions wi
 
 <Info>Asynchronous invocations time out after 15 minutes.</Info>
 
-<AsyncInvocation />
+<CodeGroup>
+```typescript Typescript/Javascript
+import Kernel from '@onkernel/sdk';
+
+const kernel = new Kernel();
+
+const invocation = await kernel.invocations.create({
+  async: true,
+  action_name: 'analyze',
+  app_name: 'my-app',
+  version: '1.0.0',
+});
+
+console.log(invocation.id);
+```
+
+```python Python
+from kernel import Kernel
+
+kernel = Kernel()
+invocation = kernel.invocations.create(
+    action_name="analyze",
+    app_name="my-app",
+    version="1.0.0",
+    async_=True,
+)
+print(invocation.id)
+```
+</CodeGroup>
 
 ## Via CLI
 

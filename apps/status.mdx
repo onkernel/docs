@@ -2,9 +2,6 @@
 title: "Status"
 ---
 
-import GetInvocationStatus from '/snippets/openapi/get-invocations-id.mdx';
-import GetInvocationEvents from '/snippets/openapi/get-invocations-id-events.mdx';
-
 Once you've [deployed](/apps/deploy) an app and invoked it, you can monitor its status using streaming for real-time updates or polling for periodic checks.
 
 <Info>
@@ -15,42 +12,79 @@ Once you've [deployed](/apps/deploy) an app and invoked it, you can monitor its 
 
 For real-time status monitoring, use `follow` to [stream invocation events](/api-reference/invocations/stream-invocation-events-via-sse). This provides immediate updates as your invocation progresses and is more efficient than polling.
 
-<GetInvocationEvents />
+<CodeGroup>
+```typescript Typescript/Javascript
+import Kernel from '@onkernel/sdk';
+
+const kernel = new Kernel();
+
+const response = await kernel.invocations.follow('id');
+console.log(response);
+```
+
+```python Python
+from kernel import Kernel
+
+kernel = Kernel()
+
+response = kernel.invocations.follow(id="id")
+print(response)
+```
+</CodeGroup>
 
 ### Example
 
 Here's an example showing how to handle streaming status updates:
 
-```javascript
-const result = await client.invocations.retrieve(invocation.id);
+```typescript Typescript/Javascript
+const result = await kernel.invocations.retrieve(invocation.id);
+const follow = await kernel.invocations.follow(result.id);
 
-const follow = await client.invocations.follow(result.id);
 for await (const evt of follow) {
   if (evt.event === 'invocation_state') {
     console.log(`Status: ${evt.invocation.status}`);
 
     if (evt.invocation.status === 'succeeded') {
-      console.log('✅ Invocation completed successfully!');
+      console.log('Invocation completed successfully');
       if (evt.invocation.output) {
         console.log('Result:', JSON.parse(evt.invocation.output));
       }
+      break;
     } else if (evt.invocation.status === 'failed') {
-      console.log('❌ Invocation failed');
+      console.log('Invocation failed');
       if (evt.invocation.status_reason) {
         console.log('Error:', evt.invocation.status_reason);
       }
+      break;
     }
   } else if (evt.event === 'error') {
-    console.error('🚨 Error:', evt.error.message);
+    console.error('Error:', evt.error.message);
+    break;
   }
 }
-
-console.log('✅ Invocation successful!');
-console.log('Invocation result:', JSON.stringify(result, null, 2));
 ```
 
 ## Polling Status Updates
 
 Alternatively, you can poll the status endpoint using `retrieve` to check the invocation status periodically.
 
-<GetInvocationStatus />
+<CodeGroup>
+```typescript Typescript/Javascript
+import Kernel from '@onkernel/sdk';
+
+const kernel = new Kernel();
+
+const invocation = await kernel.invocations.retrieve('rr33xuugxj9h0bkf1rdt2bet');
+console.log(invocation.status);
+```
+
+```python Python
+from kernel import Kernel
+
+kernel = Kernel()
+
+invocation = kernel.invocations.retrieve("rr33xuugxj9h0bkf1rdt2bet")
+print(invocation.status)
+```
+</CodeGroup>
+

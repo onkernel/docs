@@ -6,35 +6,46 @@ With Kernel, you can specify a browser to be persisted and then reuse that exact
 
 Since we return the exact same browser instance upon subsequent connections, all browser state is preserved: web page, cookies, session auth, even the exact zoom settings on the page.
 
-Persistence is especially useful for human-in-the-loop workflows, where automated steps and human actions may be separated by hours or days. The browser can be paused and reconnected without losing state, enabling multi-step processes that combine automation and manual intervention.
+Persistence is especially useful for human-in-the-loop (HITL) workflows, where automated steps and human actions may be separated by hours or days. The browser can be paused and reconnected without losing state, enabling multi-step processes that combine automation and manual intervention.
 
 To specify a browser for persistence, specify its `persistence` settings in the `browsers.create()` method:
 
 <CodeGroup>
 ```typescript Typescript/Javascript
+import Kernel from '@onkernel/sdk';
+
+const kernel = new Kernel();
+
 const kernelBrowser = await kernel.browsers.create({
-	persistence: { id: "unique-browser-id-for-persistence" },
+  persistence: {
+    id: 'unique-browser-id-for-persistence'
+  },
 });
 ```
 
 ```python Python
+from kernel import Kernel
+
+kernel = Kernel()
+
 kernel_browser = await kernel.browsers.create(
-	persistence={"id": "unique-browser-id-for-persistence"}
+    persistence={
+      "id": "unique-browser-id-for-persistence",
+    }
 )
 ```
-
 </CodeGroup>
 
 During runtime, Kernel will search for a browser with the specified `id`:
 
 - If a browser with the specified `persistence id` is found, the existing browser will be returned.
 - If a browser with the specified `persistence id` is _not_ found, a new browser instance will be created and assigned the specified `persistence id` for future reuse.
-- Reusing an existing browser restores its exact state and stealth configurations—stealth configs cannot be changed for an existing browser.
+- Reusing an existing browser restores its exact state and stealth configurations. Stealth configs cannot be changed for an existing browser.
 
 The browser's `persistence id` can be any string. You can set it to an identifier in your system to match it to a user, environment, website, or something else.
 
 Persisted browsers exist indefinitely until you [delete them](/browsers/termination). See [here](/info/pricing) for plan limits on persistence.
 
 <Info>
-Use [Profiles](/browsers/profiles) if your goal is to reuse authentication state (cookies, local storage) — especially across concurrent browsers. Persistence is best for human-in-the-loop workflows where the same browser instance needs to be resumed later.
+Use [Profiles](/browsers/profiles) if your goal is to reuse authentication state (cookies, local storage) across concurrent browsers. Persistence is best for human-in-the-loop (HITL) workflows where the same browser instance needs to be resumed later.
 </Info>

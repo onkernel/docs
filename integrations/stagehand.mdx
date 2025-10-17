@@ -23,11 +23,9 @@ import { Stagehand } from "@browserbasehq/stagehand";
 import Kernel from '@onkernel/sdk';
 import { z } from "zod";
 
-const client = new Kernel({
-  apiKey: process.env.KERNEL_API_KEY
-});
+const kernel = new Kernel();
 
-const kernelBrowser = await client.browsers.create({ stealth: true });
+const kernelBrowser = await kernel.browsers.create({ stealth: true });
 
 console.log("Live view url: ", kernelBrowser.browser_live_view_url);
 ```
@@ -72,7 +70,7 @@ console.log("Newest blog post summary: ", output.summary);
 await stagehand.close();
 
 // Clean up the Kernel Browser Session
-await client.browsers.deleteByID(kernelBrowser.session_id);
+await kernel.browsers.deleteByID(kernelBrowser.session_id);
 ```
 
 ## Quick setup with our Stagehand example app

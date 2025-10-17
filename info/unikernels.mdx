@@ -22,11 +22,11 @@ Unikernels represent a fundamentally different approach to operating system desi
 
 ### Browsers
 
-Browsers are inherently designed to run untrusted code from the internet. To handle this safely, browser architectures incorporate sophisticated isolation mechanisms — sandboxing processes, separating rendering engines from JavaScript execution, and implementing strict security boundaries.
+Browsers are inherently designed to run untrusted code from the internet. To handle this safely, browser architectures incorporate sophisticated isolation mechanisms like sandboxing processes, separating rendering engines from JavaScript execution, and implementing strict security boundaries.
 
 This existing security-focused architecture makes browsers exceptionally well-suited for unikernel deployments. While unikernels typically lack internal security boundaries, browsers compensate with their own robust isolation mechanisms. The browser's multi-process architecture and sandboxing capabilities effectively compensate for this limitation of unikernels.
 
-By combining these technologies, we get the best of both worlds: the minimal attack surface and resource efficiency of unikernels, complemented by the browser's battle-tested security architecture designed specifically for handling untrusted content. This creates an ideal environment for secure, efficient browser infrastructure.
+By combining these technologies, we get the best of both worlds. The minimal attack surface and resource efficiency of unikernels, complemented by the browser's battle-tested security architecture designed specifically for handling untrusted content, creates an ideal environment for secure, efficient browser infrastructure.
 
 ## Capabilities
 
