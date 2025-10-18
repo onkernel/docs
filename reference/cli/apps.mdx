@@ -47,3 +47,5 @@ Print the logs for the specified app.
 | `--follow`, `-f` | Follow logs in real-time (stream continuously). Optional. |
 | `--since <time>`, `-s` | How far back to retrieve logs (e.g., 5m, 1h). Defaults to 5m if not following, 5s if following. Optional. |
 | `--with-timestamps` | Include timestamps in each log line. Optional. |
+
+<Info>Log lines will be truncated to 64KiB. For large payloads write data to external storage and log a reference instead.</Info>
