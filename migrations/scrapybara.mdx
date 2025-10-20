@@ -150,7 +150,7 @@ Both Scrapybara and Kernel provide Computer Controls APIs that allow you to prog
 instance = client.start_browser()
 
 # Click at specific coordinates
-instance.computer(action="click_mouse", button="left")
+instance.computer(action="click_mouse", button="right", coordinates=[300, 400])
 
 # Drag from one position to another
 instance.computer(action="drag_mouse", path=[[100, 200], [300, 400]])
