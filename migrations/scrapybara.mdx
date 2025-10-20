@@ -143,7 +143,7 @@ browser2 = await client.browsers.create(
 
 ### Computer Controls
 
-Both Scrapybara and Kernel provide Computer Controls APIs that allow you to programmatically control the browser environment at the system level - including mouse movements, clicks, keyboard input, and screenshots. Kernel has expanded on this functionality with a comprehensive set of computer control methods.
+Both Scrapybara and Kernel provide Computer Controls APIs that allow you to programmatically control the browser environment at the system level - including mouse movements, clicks, keyboard input, and screenshots.
 
 **Scrapybara**
 ```python
@@ -166,38 +166,36 @@ screenshot = instance.browser.computer.take_screenshot()
 
 **Kernel**
 ```python
-browser = await client.browsers.create()
+kernel_browser = await client.browsers.create()
 
-# Click at specific coordinates with additional options
+# Click at specific coordinates
 client.browsers.computer.click_mouse(
-    id=browser.session_id,
+    id=kernel_browser.session_id,
     x=100,
-    y=200,
-    button="left",
-    click_type="click",
-    num_clicks=1
+    y=200
 )
 
 # Drag from one position to another
 client.browsers.computer.drag_mouse(
-    id=browser.session_id,
-    from_x=100,
-    from_y=100,
-    to_x=200,
-    to_y=200
+    id=kernel_browser.session_id,
+    path=[[100, 200], [150, 220], [200, 260]],
+    button="left",
+    delay=0,
+    steps_per_segment=10,
+    step_delay_ms=50,
+    hold_keys=["Shift"]
 )
 
 # Type text with optional delay
 client.browsers.computer.type_text(
-    id=browser.session_id,
+    id=kernel_browser.session_id,
     text="Hello World",
     delay=100
 )
 
-# Take a screenshot (full screen or specific region)
+# Take a screenshot
 screenshot = client.browsers.computer.capture_screenshot(
-    id=browser.session_id,
-    region={"x": 0, "y": 0, "width": 800, "height": 600}
+    id=kernel_browser.session_id
 )
 ```
 
