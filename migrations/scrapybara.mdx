@@ -225,7 +225,7 @@ For a complete reference of all available Computer Controls methods in Kernel, s
 | **Click Mouse** | `instance.computer(action="click_mouse", button="left")` | `client.browsers.computer.click_mouse(id=session_id, x=100, y=200)` |
 | **Move Mouse** | `instance.computer(action="move_mouse", coordinates=[100, 200])` | `client.browsers.computer.move_mouse(id=session_id, x=100, y=200)` |
 | **Drag Mouse** | `instance.computer(action="drag_mouse", path=[[100, 200], [300, 400]])` | `client.browsers.computer.drag_mouse(id=session_id, path=[[100, 200], [150, 220], [200, 260]])` |
-| **Scroll** | `instance.computer(action="scroll", delta_x=0, delta_y=100)` | `client.browsers.computer.scroll(id=session_id, delta_x=0, delta_y=100)` |
+| **Scroll** | `instance.computer(action="scroll", coordinates=[100, 100], delta_x=0, delta_y=200)` | `client.browsers.computer.scroll(id=session_id, delta_x=0, delta_y=100)` |
 | **Type Text** | `instance.computer(action="type_text", text="Hello")` | `client.browsers.computer.type_text(id=session_id, text="Hello")` |
 | **Press Key** | `instance.computer(action="press_key", keys=["ctrl", "c"])` | `client.browsers.computer.press_key(id=session_id, keys=["Ctrl+t"])` |
 | **Take Screenshot** | `instance.computer(action="take_screenshot").base64_image` | `client.browsers.computer.capture_screenshot(id=session_id)` |
