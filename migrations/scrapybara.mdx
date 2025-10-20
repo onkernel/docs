@@ -15,6 +15,9 @@ title: "Scrapybara"
 | **Stealth Mode** | ❌ Not available | Create browser with `stealth: true` |
 | **Replays** | ❌ Not available | `client.browsers.replays.start()` and `client.browsers.replays.stop()` |
 | **Save Auth** | `instance.browser.save_auth(name="default")` | Create [Profile](/browsers/profiles). Then create browser with `kernel.browsers.create(profile={"name": "profile1", "save_changes": True})` |
+| **Click** | `instance.browser.computer.click_mouse(x=100, y=200)` | `client.browsers.computer.click_mouse(id=session_id, x=100, y=200)` |
+| **Drag** | `instance.browser.computer.drag_mouse(path=[(100,100), (200,200)])` | `client.browsers.computer.drag_mouse(id=session_id, from_x=100, from_y=100, to_x=200, to_y=200)` |
+| **Screenshot** | `instance.screenshot()` or `instance.browser.computer.take_screenshot()` | `client.browsers.computer.capture_screenshot(id=session_id)` |
 
 ## How to migrate
 
@@ -138,6 +141,68 @@ browser2 = await client.browsers.create(
 )
 ```
 
+### Computer Controls
+
+Both Scrapybara and Kernel provide Computer Controls APIs that allow you to programmatically control the browser environment at the system level - including mouse movements, clicks, keyboard input, and screenshots. Kernel has expanded on this functionality with a comprehensive set of computer control methods.
+
+**Scrapybara**
+```python
+instance = client.start_browser()
+
+# Click at specific coordinates
+instance.browser.computer.click_mouse(x=100, y=200)
+
+# Drag from one position to another
+instance.browser.computer.drag_mouse(
+    path=[(100, 100), (200, 200)]
+)
+
+# Type text
+instance.browser.computer.type_text(text="Hello World")
+
+# Take a screenshot
+screenshot = instance.browser.computer.take_screenshot()
+```
+
+**Kernel**
+```python
+browser = await client.browsers.create()
+
+# Click at specific coordinates with additional options
+client.browsers.computer.click_mouse(
+    id=browser.session_id,
+    x=100,
+    y=200,
+    button="left",
+    click_type="click",
+    num_clicks=1
+)
+
+# Drag from one position to another
+client.browsers.computer.drag_mouse(
+    id=browser.session_id,
+    from_x=100,
+    from_y=100,
+    to_x=200,
+    to_y=200
+)
+
+# Type text with optional delay
+client.browsers.computer.type_text(
+    id=browser.session_id,
+    text="Hello World",
+    delay=100
+)
+
+# Take a screenshot (full screen or specific region)
+screenshot = client.browsers.computer.capture_screenshot(
+    id=browser.session_id,
+    region={"x": 0, "y": 0, "width": 800, "height": 600}
+)
+```
+
+For a complete reference of all available Computer Controls methods in Kernel, see the [Computer Controls documentation](/browsers/computer-controls).
+
 
 ## Full API Comparison
 
@@ -161,6 +226,14 @@ browser2 = await client.browsers.create(
 | **File Download** | Via browser, then `instance.file()` | `client.browsers.fs.read_file()` |
 | **Process Control** | `instance.bash()` | `client.browsers.process.*` |
 | **Proxy Support** | ❌ Not available | Create [Proxy](/proxies/overview#1-create-a-proxy). Then create browser with `client.browsers.create(proxy_id=proxy.id)` |
+| **Click Mouse** | `instance.browser.computer.click_mouse(x=100, y=200)` | `client.browsers.computer.click_mouse(id=session_id, x=100, y=200)` |
+| **Move Mouse** | `instance.browser.computer.move_mouse(x=100, y=200)` | `client.browsers.computer.move_mouse(id=session_id, x=100, y=200)` |
+| **Drag Mouse** | `instance.browser.computer.drag_mouse(path=[(100,100), (200,200)])` | `client.browsers.computer.drag_mouse(id=session_id, from_x=100, from_y=100, to_x=200, to_y=200)` |
+| **Scroll** | `instance.browser.computer.scroll(delta_x=0, delta_y=100)` | `client.browsers.computer.scroll(id=session_id, delta_x=0, delta_y=100)` |
+| **Type Text** | `instance.browser.computer.type_text(text="Hello")` | `client.browsers.computer.type_text(id=session_id, text="Hello")` |
+| **Press Key** | `instance.browser.computer.press_key(keys=["Ctrl", "t"])` | `client.browsers.computer.press_key(id=session_id, keys=["Ctrl+t"])` |
+| **Take Screenshot** | `instance.browser.computer.take_screenshot()` | `client.browsers.computer.capture_screenshot(id=session_id)` |
+| **Get Cursor Position** | `instance.browser.computer.get_cursor_position()` | Use `move_mouse` with tracking or CDP |
 
 ---
 
