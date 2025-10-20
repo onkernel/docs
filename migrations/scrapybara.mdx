@@ -193,10 +193,10 @@ client.browsers.computer.type_text(
     delay=100
 )
 
-# Take a screenshot
-screenshot = client.browsers.computer.capture_screenshot(
-    id=kernel_browser.session_id
-)
+# Take a full screenshot
+with open('screenshot.png', 'wb') as f:
+    image_data = client.browsers.computer.capture_screenshot(id=kernel_browser.session_id)
+    f.write(image_data.read())
 ```
 
 For a complete reference of all available Computer Controls methods in Kernel, see the [Computer Controls documentation](/browsers/computer-controls).
