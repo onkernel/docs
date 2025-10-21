@@ -8,7 +8,7 @@ title: "Notte"
 
 If you already have a Notte implementation, you can easily switch to using Kernel's cloud browsers by connecting via CDP.
 
-### 1. Install the required SDKs
+### 1. Install the Kernel SDK
 
 ```bash
 uv pip install kernel
@@ -32,7 +32,7 @@ kernel_browser = kernel_client.browsers.create(headless=False)
 
 ### 3. Connect Notte to Kernel's CDP endpoint
 
-Use Kernel's CDP WebSocket URL to create a Notte session:
+Use Kernel's CDP URL to create a Notte session:
 
 ```python
 # Connect Notte to Kernel's browser via CDP
@@ -48,10 +48,9 @@ with notte_client.Session(cdp_url=kernel_browser.cdp_ws_url) as session:
 
 ### 4. Clean up the browser session
 
-After your automation completes, tear down the Kernel browser:
+After your automation completes, clean up the Kernel browser:
 
 ```python
-# Clean up the browser session
 kernel_client.browsers.delete_by_id(kernel_browser.session_id)
 ```
 
