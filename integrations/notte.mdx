@@ -21,26 +21,12 @@ Import the libraries and create a cloud browser session:
 ```python
 from kernel import Kernel
 from notte_sdk import NotteClient
-import os
-from dotenv import load_dotenv
-
-# Load environment variables from .env file
-load_dotenv()
 
 # Initialize clients
-kernel_api_key = os.getenv("KERNEL_API_KEY")
-notte_api_key = os.getenv("NOTTE_API_KEY")
+kernel_client = Kernel(api_key="your-kernel-api-key")
+notte_client = NotteClient(api_key="your-notte-api-key")
 
-if not kernel_api_key:
-    raise ValueError("KERNEL_API_KEY not found in environment variables")
-if not notte_api_key:
-    raise ValueError("NOTTE_API_KEY not found in environment variables")
-
-kernel_client = Kernel(api_key=kernel_api_key)
-notte_client = NotteClient(api_key=notte_api_key)
-
-# Create a headful browser on Kernel
-print("Creating browser session on Kernel...")
+# Create a browser on Kernel
 kernel_browser = kernel_client.browsers.create(headless=False)
 ```
 
@@ -49,22 +35,15 @@ kernel_browser = kernel_client.browsers.create(headless=False)
 Use Kernel's CDP WebSocket URL to create a Notte session:
 
 ```python
-try:
-    # Connect Notte to Kernel's browser via CDP
-    print("Connecting Notte to Kernel browser...")
-    with notte_client.Session(cdp_url=kernel_browser.cdp_ws_url) as session:
-        # Create an agent with a task
-        agent = notte_client.Agent(session=session, max_steps=10)
+# Connect Notte to Kernel's browser via CDP
+with notte_client.Session(cdp_url=kernel_browser.cdp_ws_url) as session:
+    # Create an agent with a task
+    agent = notte_client.Agent(session=session, max_steps=10)
 
-        # Run your automation task
-        result = agent.run(
-            task="extract pricing plans from https://www.notte.cc"
-        )
-
-        print(f"Task completed: {result.answer}")
-
-except Exception as e:
-    print(f"Error during automation: {e}")
+    # Run your automation task
+    result = agent.run(
+        task="extract pricing plans from https://www.notte.cc"
+    )
 ```
 
 ### 4. Clean up the browser session
@@ -72,10 +51,8 @@ except Exception as e:
 After your automation completes, tear down the Kernel browser:
 
 ```python
-finally:
-    # Always clean up the browser session
-    kernel_client.browsers.delete_by_id(kernel_browser.session_id)
-    print("Browser session cleaned up")
+# Clean up the browser session
+kernel_client.browsers.delete_by_id(kernel_browser.session_id)
 ```
 
 ## Complete example script
