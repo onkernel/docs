@@ -111,6 +111,7 @@
                 ]
               },
               "integrations/magnitude",
+              "integrations/notte",
               "integrations/stagehand",
               "integrations/valtown",
               "integrations/vercel"
