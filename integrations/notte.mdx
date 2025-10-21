@@ -27,7 +27,7 @@ kernel_client = Kernel(api_key="your-kernel-api-key")
 notte_client = NotteClient(api_key="your-notte-api-key")
 
 # Create a browser on Kernel
-kernel_browser = kernel_client.browsers.create(headless=False)
+kernel_browser = kernel_client.browsers.create()
 ```
 
 ### 3. Connect Notte to Kernel's CDP endpoint
@@ -82,7 +82,7 @@ def main():
 
     # Create a headful browser on Kernel
     print("Creating browser session on Kernel...")
-    kernel_browser = kernel_client.browsers.create(headless=False)
+    kernel_browser = kernel_client.browsers.create()
     # print(kernel_browser.browser_live_view_url)
 
     try:
