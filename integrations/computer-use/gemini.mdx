@@ -2,30 +2,34 @@
 title: "Gemini"
 ---
 
-Google's [Gemini 2.5 Computer Use model](https://blog.google/technology/google-deepmind/gemini-computer-use-model/) is a specialized model built on Gemini 2.5 Pro's capabilities to power agents that can interact with user interfaces.
+[Gemini 2.5 Computer Use](https://blog.google/technology/google-deepmind/gemini-computer-use-model/) is Google's groundbreaking capability that enables AI models to interact with computers the way humans do—by looking at screens, moving cursors, clicking buttons, and typing text. This powerful feature allows AI agents to control web browsers, navigate interfaces, and perform complex tasks across applications.
 
 By integrating Gemini 2.5 Computer Use with Kernel, you can run these AI-powered browser automations on cloud-hosted infrastructure, eliminating the need for local browser management and enabling scalable, reliable AI agents.
 
-## Quick setup with our example template
+## Quick setup with Computer Use
 
-Get started quickly with our TypeScript template that demonstrates Gemini 2.5 Computer Use with Kernel.
+Get started with Gemini Computer Use and Kernel using our pre-configured app template:
 
-Check out the [Open-source Gemini Template](https://github.com/onkernel/ts-stagehand-google-cua-agent) repository for a complete working example that shows how to:
-- Set up Gemini 2.5 Computer Use with Kernel
-- Use Stagehand for browser automation
-- Run AI-powered web interactions on cloud infrastructure
+```bash
+npx @onkernel/create-kernel-app my-computer-use-app
+```
 
-## Benefits of using Kernel with Gemini Computer Use
+Choose `TypeScript` as the programming language and then select `gemini-cua` as the template.
+
+Then follow the [Quickstart guide](/quickstart/) to deploy and run your Computer Use automation on Kernel's infrastructure.
+
+## Benefits of using Kernel with Computer Use
 
 - **No local browser management**: Run Computer Use automations without installing or maintaining browsers locally
-- **Scalability**: Launch multiple browser sessions in parallel for concurrent automations
-- **Stealth mode**: Built-in anti-detection features for web interactions
+- **Scalability**: Launch multiple browser sessions in parallel for concurrent AI agents
+- **Stealth mode**: Built-in anti-detection features for reliable web interactions
 - **Session persistence**: Maintain browser state across automation runs
-- **Live view**: Debug your automations with real-time browser viewing
+- **Live view**: Debug your Computer Use agents with real-time browser viewing
+- **Cloud infrastructure**: Run computationally intensive AI agents without local resource constraints
 
 ## Next steps
 
-- Check out [live view](/browsers/live-view) for debugging your automations
+- Check out [live view](/browsers/live-view) for debugging your Computer Use automations
 - Learn about [stealth mode](/browsers/stealth) for avoiding detection
 - Learn how to properly [terminate browser sessions](/browsers/termination)
 - Learn how to [deploy](/apps/deploy) your Computer Use app to Kernel
