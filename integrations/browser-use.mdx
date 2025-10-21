@@ -38,11 +38,15 @@ Replace your existing Browser initialization to use Kernel's CDP URL and display
 browser = Browser(
     cdp_url=kernel_browser.cdp_ws_url,
     headless=False,
-    window_size={'width': 1024, 'height': 786},
-    viewport={'width': 1024, 'height': 786},
+    window_size={'width': 1024, 'height': 768},
+    viewport={'width': 1024, 'height': 768},
     device_scale_factor=1.0
 )
 ```
+
+<Info>
+Browser Use supports a wide range of browser configuration parameters. See the full list in the <a href="https://docs.browser-use.com/customize/browser/all-parameters">Browser Use docs</a>. When running on Kernel, remember that browsers must use one of Kernel’s supported viewport sizes and refresh rates—see <a href="/browsers/viewport">Viewports</a> for the supported configurations.
+</Info>
 
 ### 4. Create and run your agent
 

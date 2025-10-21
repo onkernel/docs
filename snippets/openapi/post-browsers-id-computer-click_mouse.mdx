@@ -6,9 +6,7 @@ const client = new Kernel({
   apiKey: 'My API Key',
 });
 
-await client.browsers.loadExtensions('id', {
-  extensions: [{ name: 'name', zip_file: fs.createReadStream('path/to/file') }],
-});
+await client.browsers.computer.clickMouse('id', { x: 0, y: 0 });
 ```
 
 
@@ -18,12 +16,10 @@ from kernel import Kernel
 client = Kernel(
     api_key="My API Key",
 )
-client.browsers.load_extensions(
+client.browsers.computer.click_mouse(
     id="id",
-    extensions=[{
-        "name": "name",
-        "zip_file": b"raw file contents",
-    }],
+    x=0,
+    y=0,
 )
 ```
 </CodeGroup>

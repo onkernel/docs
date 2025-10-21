@@ -17,6 +17,7 @@
   },
   "contextual": {
     "options": [
+      "copy",
       "chatgpt",
       "claude"
     ]
@@ -56,6 +57,7 @@
             "pages": [
               "browsers/create-a-browser",
               "browsers/headless",
+              "browsers/viewport",
               "browsers/standby",
               "browsers/persistence",
               "browsers/profiles",
@@ -63,6 +65,7 @@
               "browsers/file-io",
               "browsers/live-view",
               "browsers/replays",
+              "browsers/extensions",
               {
                 "group": "Bot Anti-Detection",
                 "pages": [
@@ -78,7 +81,8 @@
                     ]
                   }
                 ]
-              }
+              },
+              "browsers/computer-controls"
             ]
           },
           {
@@ -96,11 +100,13 @@
           {
             "group": "Integrations",
             "pages": [
+              "integrations/overview",
               "integrations/browser-use",
               {
                 "group": "Computer Use",
                 "pages": [
                   "integrations/computer-use/anthropic",
+                  "integrations/computer-use/gemini",
                   "integrations/computer-use/openai"
                 ]
               },

@@ -1,0 +1,211 @@
+---
+title: "Viewports"
+description: "Configure browser viewport size and refresh rate for your automations"
+---
+
+Kernel browsers allow you to configure the viewport size and refresh rate when creating a browser session. The viewport configuration determines the initial browser window dimensions and display refresh rate. The refresh rate can be explicitly specified or automatically determined based on the width and height if they match a supported configuration.
+
+## Setting viewport configuration
+
+You can configure the viewport when creating a browser by specifying the `viewport` parameter with `width` and `height`. The `refresh_rate` is optional and will be automatically determined from the dimensions if they match a supported configuration:
+
+<CodeGroup>
+
+```typescript Typescript/Javascript
+// Explicitly specify refresh rate
+const kernelBrowser = await kernel.browsers.create({
+    viewport: {
+        width: 1920,
+        height: 1080,
+        refresh_rate: 25
+    }
+});
+
+// Auto-determine refresh rate from dimensions (25Hz for 1920x1080)
+const kernelBrowserAuto = await kernel.browsers.create({
+    viewport: {
+        width: 1920,
+        height: 1080
+    }
+});
+```
+
+```python Python
+# Explicitly specify refresh rate
+kernel_browser = client.browsers.create(
+    viewport={
+        "width": 1920,
+        "height": 1080,
+        "refresh_rate": 25
+    }
+)
+
+# Auto-determine refresh rate from dimensions (25Hz for 1920x1080)
+kernel_browser_auto = client.browsers.create(
+    viewport={
+        "width": 1920,
+        "height": 1080
+    }
+)
+```
+
+</CodeGroup>
+
+<Note>
+The `refresh_rate` parameter only applies to live view sessions and is ignored for [headless](/browsers/headless) browsers.
+</Note>
+
+## Supported viewport configurations
+
+Kernel supports specific viewport configurations. The server will reject unsupported combinations. When you provide width and height without specifying refresh_rate, it will be automatically determined if the dimensions match one of the supported resolutions exactly. The following resolutions are supported:
+
+| Resolution | Width | Height | Refresh Rate |
+|------------|-------|--------|--------------|
+| QHD | 2560 | 1440 | 10 Hz |
+| Full HD | 1920 | 1080 | 25 Hz |
+| WUXGA | 1920 | 1200 | 25 Hz |
+| WXGA+ | 1440 | 900 | 25 Hz |
+| XGA | 1024 | 768 | 60 Hz |
+
+<Warning>
+Higher resolutions may affect the responsiveness of [live view](/browsers/live-view) browser sessions.
+</Warning>
+
+## Example configurations
+
+<CodeGroup>
+
+```typescript Typescript/Javascript
+// Full HD (1920x1080) at 25Hz - explicit refresh rate
+const fullHD = await kernel.browsers.create({
+    viewport: {
+        width: 1920,
+        height: 1080,
+        refresh_rate: 25
+    }
+});
+
+// Full HD (1920x1080) - auto-determined 25Hz
+const fullHDAuto = await kernel.browsers.create({
+    viewport: {
+        width: 1920,
+        height: 1080
+    }
+});
+
+// QHD (2560x1440) - auto-determined 10Hz
+// Note: May affect live view responsiveness
+const qhd = await kernel.browsers.create({
+    viewport: {
+        width: 2560,
+        height: 1440
+    }
+});
+
+// XGA (1024x768) - auto-determined 60Hz (Default configuration)
+const xga = await kernel.browsers.create({
+    viewport: {
+        width: 1024,
+        height: 768
+    }
+});
+
+// WUXGA (1920x1200) at 25Hz - explicit refresh rate
+const wuxga = await kernel.browsers.create({
+    viewport: {
+        width: 1920,
+        height: 1200,
+        refresh_rate: 25
+    }
+});
+```
+
+```python Python
+# Full HD (1920x1080) at 25Hz - explicit refresh rate
+full_hd = await client.browsers.create(
+    viewport={
+        "width": 1920,
+        "height": 1080,
+        "refresh_rate": 25
+    }
+)
+
+# Full HD (1920x1080) - auto-determined 25Hz
+full_hd_auto = await client.browsers.create(
+    viewport={
+        "width": 1920,
+        "height": 1080
+    }
+)
+
+# QHD (2560x1440) - auto-determined 10Hz
+# Note: May affect live view responsiveness
+qhd = await client.browsers.create(
+    viewport={
+        "width": 2560,
+        "height": 1440
+    }
+)
+
+# XGA (1024x768) - auto-determined 60Hz (Default configuration)
+xga = await client.browsers.create(
+    viewport={
+        "width": 1024,
+        "height": 768
+    }
+)
+
+# WUXGA (1920x1200) at 25Hz - explicit refresh rate
+wuxga = await client.browsers.create(
+    viewport={
+        "width": 1920,
+        "height": 1200,
+        "refresh_rate": 25
+    }
+)
+```
+
+</CodeGroup>
+
+## Default viewport
+
+If the `viewport` parameter is omitted when creating a browser, the default configuration is typically 1024x768 at 60Hz.
+
+<CodeGroup>
+
+```typescript Typescript/Javascript
+// Uses default viewport (1024x768@60Hz)
+const defaultViewport = await kernel.browsers.create();
+```
+
+```python Python
+# Uses default viewport (1024x768@60Hz)
+default_viewport = await client.browsers.create()
+```
+
+</CodeGroup>
+
+## Viewport constraints
+
+Only the specific viewport configurations listed in the [supported configurations table](#supported-viewport-configurations) above are supported:
+- **2560x1440** (QHD) at 10 Hz
+- **1920x1080** (Full HD) at 25 Hz
+- **1920x1200** (WUXGA) at 25 Hz
+- **1440x900** (WXGA+) at 25 Hz
+- **1024x768** (XGA) at 60 Hz
+
+When specifying a viewport:
+- **Width** and **Height** are required and must match one of the supported configurations exactly
+- **Refresh Rate** is optional - if omitted, it will be automatically determined from the width and height combination
+
+<Warning>
+The server will reject any viewport configuration that doesn't exactly match one of the supported combinations listed above.
+</Warning>
+
+## Considerations
+
+- The viewport configuration is set when the browser is created and applies to the initial browser window
+- Higher resolutions (like 2560x1440) may impact the performance and responsiveness of live view sessions
+- The viewport size affects how websites render, especially those with responsive designs
+- Screenshots taken from the browser will match the configured viewport dimensions
+- In [headless mode](/browsers/headless), the viewport width and height still apply for rendering and screenshots, but the `refresh_rate` parameter is ignored
