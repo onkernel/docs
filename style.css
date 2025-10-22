@@ -5,14 +5,13 @@
 }
 
 /* move nested nav arrows to the right */
-#navigation-items li[data-title] > button.group.flex,
 #navigation-items li[data-title] > button.group,
 #navigation-items li[data-title] > div.group {
+  width: 100% !important;
   flex-direction: row-reverse !important;
   justify-content: space-between !important;
 }
 
-#navigation-items li[data-title] > button.group.flex > svg,
 #navigation-items li[data-title] > button.group > svg,
 #navigation-items li[data-title] > div.group > svg {
   margin-right: 0 !important;
