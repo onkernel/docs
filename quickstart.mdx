@@ -2,6 +2,8 @@
 title: "Quickstart"
 ---
 
+import { YouTubeVideo } from '/snippets/youtube-video.mdx';
+
 <Info>
 If you are already familiar with browser vendors and are looking to quickly switch to Kernel browsers, follow the instructions **[here](/browsers/create-a-browser)**.
 </Info>
@@ -10,8 +12,7 @@ If you are already familiar with browser vendors and are looking to quickly swit
 
 This quickstart guide will help you deploy and invoke your first browser automation on Kernel. You'll create a simple automation using Playwright, Computer Use, or a web agent framework like Browser Use.
 
-<iframe width="672" height="378" src="https://www.youtube.com/embed/trMR8HM0Zgs?si=MBPx3qeT7oI78z45" title="Kernel Quickstart Video" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
-
+<YouTubeVideo videoId="trMR8HM0Zgs" title="Kernel Quickstart Video" />
 
 ## Prerequisites
 
@@ -111,7 +112,7 @@ You can now update your browser automation with your own logic and deploy it aga
 
 These are the sample apps currently available when you run `npx @onkernel/create-kernel-app`:
 
-| Template               | Description                                               | Framework                  | Query Parameters |
+| Template               | Description                                               | Framework                  | Params           |
 |------------------------|-----------------------------------------------------------|----------------------------|------------------|
 | **sample-app**         | Returns the page title of a specified URL                 | Playwright                 | `{ url }`        |
 | **browser-use**        | Completes a specified task                                | Browser Use                | `{ task }`       |

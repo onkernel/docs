@@ -11,39 +11,34 @@ To start recording a browser session, use the replays API on an active browser:
 
 <CodeGroup>
 ```typescript Typescript/Javascript
-import { Kernel } from '@onkernel/sdk';
+import Kernel from '@onkernel/sdk';
 
 const kernel = new Kernel();
 const kernelBrowser = await kernel.browsers.create();
 
-// Start recording
 const replay = await kernel.browsers.replays.start(kernelBrowser.session_id);
 console.log(`Recording started with ID: ${replay.replay_id}`);
 
-// ... perform some automation ...
+// Perform some automation...
 
-// Stop the recording
 await kernel.browsers.replays.stop(replay.replay_id, { id: kernelBrowser.session_id });
-console.log("Recording stopped and processing...");
+console.log('Recording stopped and processing');
 ```
 
 ```python Python
-import kernel
+from kernel import Kernel
 
-client = kernel.Kernel()
-kernel_browser = client.browsers.create()
+kernel = Kernel()
+kernel_browser = kernel.browsers.create()
 
-# Start recording
-replay = client.browsers.replays.start(kernel_browser.session_id)
+replay = kernel.browsers.replays.start(kernel_browser.session_id)
 print(f"Recording started with ID: {replay.replay_id}")
 
-# ...perform some automation...
+# Perform some automation...
 
-# Stop the recording
-client.browsers.replays.stop(replay_id=replay.replay_id, id=kernel_browser.session_id)
-print("Recording stopped and processing...")
+kernel.browsers.replays.stop(replay_id=replay.replay_id, id=kernel_browser.session_id)
+print("Recording stopped and processing")
 ```
-
 </CodeGroup>
 
 ## Multiple recordings per session
@@ -52,27 +47,23 @@ You can create multiple replay recordings for a single browser session. Each rec
 
 <CodeGroup>
 ```typescript Typescript/Javascript
-// First recording
 const replay1 = await kernel.browsers.replays.start(kernelBrowser.session_id);
-// ... perform some automation ...
+// Perform some automation...
 await kernel.browsers.replays.stop(replay1.replay_id, { id: kernelBrowser.session_id });
 
-// Second recording
 const replay2 = await kernel.browsers.replays.start(kernelBrowser.session_id);
-// ... perform different automation ...
+// Perform different automation...
 await kernel.browsers.replays.stop(replay2.replay_id, { id: kernelBrowser.session_id });
 ```
 
 ```python Python
-# First recording
-replay1 = client.browsers.replays.start(kernel_browser.session_id)
-# ... perform some automation ...
-client.browsers.replays.stop(replay_id=replay1.replay_id, id=kernel_browser.session_id)
+replay1 = kernel.browsers.replays.start(kernel_browser.session_id)
+# Perform some automation...
+kernel.browsers.replays.stop(replay_id=replay1.replay_id, id=kernel_browser.session_id)
 
-# Second recording
-replay2 = client.browsers.replays.start(kernel_browser.session_id)
-# ... perform different automation ...
-client.browsers.replays.stop(replay_id=replay2.replay_id, id=kernel_browser.session_id)
+replay2 = kernel.browsers.replays.start(kernel_browser.session_id)
+# Perform different automation...
+kernel.browsers.replays.stop(replay_id=replay2.replay_id, id=kernel_browser.session_id)
 ```
 </CodeGroup>
 
@@ -84,51 +75,46 @@ To access all replays for a browser session, list and access them via url or as 
 ```typescript Typescript/Javascript
 import fs from 'fs';
 import { Buffer } from 'buffer';
-// List all replays for the session
+
 const replays = await kernel.browsers.replays.list(kernelBrowser.session_id);
 
 for (const replay of replays) {
-    console.log(`Replay ID: ${replay.replay_id}`);
-    console.log(`View URL: ${replay.replay_view_url}`);
-    
-    // Download the mp4 file
-    const videoData = await kernel.browsers.replays.download(
-        replay.replay_id,
-        { id: kernelBrowser.session_id }
-    );
+  console.log(`Replay ID: ${replay.replay_id}`);
+  console.log(`View URL: ${replay.replay_view_url}`);
 
-    const content = await videoData.blob();
-    const buffer = Buffer.from(await content.arrayBuffer());
+  const videoData = await kernel.browsers.replays.download(
+    replay.replay_id,
+    { id: kernelBrowser.session_id }
+  );
 
-    // Save to file
-    const filename = `replay-${replay.replay_id}-${kernelBrowser.session_id}.mp4`;
-    fs.writeFileSync(filename, buffer);
+  const content = await videoData.blob();
+  const buffer = Buffer.from(await content.arrayBuffer());
+
+  const filename = `replay-${replay.replay_id}-${kernelBrowser.session_id}.mp4`;
+  fs.writeFileSync(filename, buffer);
 }
 ```
 
 ```python Python
 import aiofiles
-# List all replays for the session
-replays = client.browsers.replays.list(kernel_browser.session_id)
+
+replays = kernel.browsers.replays.list(kernel_browser.session_id)
 
 for replay in replays:
     print(f"Replay ID: {replay.replay_id}")
     print(f"View URL: {replay.replay_view_url}")
-    
-    # Download the mp4 file
-    video_data = client.browsers.replays.download(
+
+    video_data = kernel.browsers.replays.download(
         replay_id=replay.replay_id,
         id=kernel_browser.session_id
     )
-    
-    # Get the content as bytes
+
     content = video_data.read()
-    
-    # Save to file using aiofiles
+
     filename = f"replay-{replay.replay_id}-{kernel_browser.session_id}.mp4"
     async with aiofiles.open(filename, 'wb') as f:
         await f.write(content)
-    
+
     print(f"Saved replay to {filename}")
 ```
 </CodeGroup>

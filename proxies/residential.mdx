@@ -9,9 +9,9 @@ Residential proxies route traffic through real residential IP addresses. They su
 Create a residential proxy with a target country:
 
 <CodeGroup>
-
 ```typescript Typescript/Javascript
-import { Kernel } from '@onkernel/sdk';
+import Kernel from '@onkernel/sdk';
+
 const kernel = new Kernel();
 
 const proxy = await kernel.proxies.create({
@@ -23,15 +23,16 @@ const proxy = await kernel.proxies.create({
 });
 
 const browser = await kernel.browsers.create({
-  proxy_id: proxy.id
+  proxy_id: proxy.id,
 });
 ```
 
-```Python Python
-import kernel
-client = kernel.Kernel()
+```python Python
+from kernel import Kernel
 
-proxy = client.proxies.create(
+kernel = Kernel()
+
+proxy = kernel.proxies.create(
     type='residential',
     name='my-us-residential',
     config={
@@ -39,11 +40,8 @@ proxy = client.proxies.create(
     }
 )
 
-browser = client.browsers.create(
-    proxy_id=proxy.id
-)
+browser = kernel.browsers.create(proxy_id=proxy.id)
 ```
-
 </CodeGroup>
 
 ## Configuration Parameters
@@ -77,7 +75,7 @@ const proxy = await kernel.proxies.create({
 ```
 
 ```Python Python
-proxy = client.proxies.create(
+proxy = kernel.proxies.create(
     type='residential',
     name='la-residential',
     config={
@@ -112,7 +110,7 @@ const proxy = await kernel.proxies.create({
 ```
 
 ```Python Python
-proxy = client.proxies.create(
+proxy = kernel.proxies.create(
     type='residential',
     name='ny-residential',
     config={
@@ -146,7 +144,7 @@ const proxy = await kernel.proxies.create({
 ```
 
 ```Python Python
-proxy = client.proxies.create(
+proxy = kernel.proxies.create(
     type='residential',
     name='comcast-residential',
     config={

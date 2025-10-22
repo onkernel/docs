@@ -8,16 +8,16 @@ title: "Scrapybara"
 
 | Feature | Scrapybara | Kernel |
 |---------|-----------|--------|
-| **Start Browser** | `client.start_browser()` | `client.browsers.create()` |
+| **Start Browser** | `client.start_browser()` | `kernel.browsers.create()` |
 | **Standby Mode** | `instance.pause()` / `instance.resume()` | Automatic standby mode |
 | **CDP URL** | `instance.get_cdp_url().cdp_url` | Returns `cdp_ws_url` in create response |
 | **Live View** | `instance.get_stream_url().stream_url` | Returns `browser_live_view_url` in create response |
 | **Stealth Mode** | ❌ Not available | Create browser with `stealth: true` |
-| **Replays** | ❌ Not available | `client.browsers.replays.start()` and `client.browsers.replays.stop()` |
-| **Save Auth** | `instance.browser.save_auth(name="default")` | Create [Profile](/browsers/profiles). Then create browser with `kernel.browsers.create(profile={"name": "profile1", "save_changes": True})` |
-| **Click** | `instance.computer(action="click_mouse", button="left")` | `client.browsers.computer.click_mouse(id=session_id, x=100, y=200)` |
-| **Drag** | `instance.computer(action="drag_mouse", path=[[100, 200], [300, 400]])` | `client.browsers.computer.drag_mouse(id=session_id, path=[[100, 200], [150, 220], [200, 260]])` |
-| **Screenshot** | `instance.computer(action="take_screenshot").base64_image` | `client.browsers.computer.capture_screenshot(id=session_id)` |
+| **Replays** | ❌ Not available | `kernel.browsers.replays.start()` and `kernel.browsers.replays.stop()` |
+| **Save Auth** | `instance.browser.save_auth(name="default")` | Create [Profile](/browsers/profiles). Then create browser with `kernel.browsers.create(profile={"name": "profile1", "save_changes": true})` |
+| **Click** | `instance.computer(action="click_mouse", button="left")` | `kernel.browsers.computer.click_mouse(id=session_id, x=100, y=200)` |
+| **Drag** | `instance.computer(action="drag_mouse", path=[[100, 200], [300, 400]])` | `kernel.browsers.computer.drag_mouse(id=session_id, path=[[100, 200], [150, 220], [200, 260]])` |
+| **Screenshot** | `instance.computer(action="take_screenshot").base64_image` | `kernel.browsers.computer.capture_screenshot(id=session_id)` |
 
 ## How to migrate
 
@@ -46,8 +46,8 @@ instance.stop()
 from kernel import Kernel
 from playwright.async_api import async_playwright
 
-client = Kernel(api_key="your_api_key")
-kernel_browser = client.browsers.create(timeout_seconds=3600)
+kernel = Kernel()
+kernel_browser = kernel.browsers.create(timeout_seconds=3600)
 cdp_url = kernel_browser.cdp_ws_url
 
 async with async_playwright() as p:
@@ -56,7 +56,7 @@ async with async_playwright() as p:
     await page.goto("https://example.com")
     await browser.close()
 
-await client.browsers.delete_by_id(kernel_browser.session_id)
+await kernel.browsers.delete_by_id(kernel_browser.session_id)
 ```
 
 ### Save & Reuse Authentication
@@ -78,15 +78,15 @@ instance2.browser.authenticate(auth_state_id=auth_state.auth_state_id)
 **Kernel**
 ```python
 # First session - save auth
-profile = await client.profiles.create(name="my-login")
-browser1 = await client.browsers.create(
+profile = await kernel.profiles.create(name="my-login")
+kernel_browser = await kernel.browsers.create(
     profile={"name": "my-login", "save_changes": True}
 )
 # ... login to website via Playwright ...
-await client.browsers.delete_by_id(browser1.session_id)
+await kernel.browsers.delete_by_id(kernel_browser.session_id)
 
 # Second session - load auth
-browser2 = await client.browsers.create(
+kernel_browser2 = await kernel.browsers.create(
     profile={"name": "my-login"}
 )
 # ... browser now has saved cookies ...
@@ -104,11 +104,11 @@ downloaded_file = instance.file(command="read", path="/download/path")
 
 **Kernel**
 ```python
-browser = await client.browsers.create()
+kernel_browser = await kernel.browsers.create()
 # ... trigger download in browser via Playwright ...
 # Then read from filesystem
-file_response = await client.browsers.fs.read_file(
-    browser.session_id,
+file_response = await kernel.browsers.fs.read_file(
+    kernel_browser.session_id,
     path="/tmp/downloads/file.pdf"
 )
 await file_response.write_to_file("local-file.pdf")
@@ -129,14 +129,14 @@ instance.resume()  # Resume work
 **Kernel**
 ```python
 # Automatic standby mode + persistence
-browser = await client.browsers.create(
+kernel_browser = await kernel.browsers.create(
     persistence={"id": "my-long-session"}
 )
 # ... do some work ...
 # Browser enters standby mode between connections
 
 # Later - reuse the exact browser instance with full state
-browser2 = await client.browsers.create(
+kernel_browser2 = await kernel.browsers.create(
     persistence={"id": "my-long-session"}
 )
 ```
@@ -164,17 +164,17 @@ screenshot = instance.computer(action="take_screenshot").base64_image
 
 **Kernel**
 ```python
-kernel_browser = await client.browsers.create()
+kernel_browser = await kernel.browsers.create()
 
 # Click at specific coordinates
-client.browsers.computer.click_mouse(
+kernel.browsers.computer.click_mouse(
     id=kernel_browser.session_id,
     x=100,
     y=200
 )
 
 # Drag from one position to another
-client.browsers.computer.drag_mouse(
+kernel.browsers.computer.drag_mouse(
     id=kernel_browser.session_id,
     path=[[100, 200], [150, 220], [200, 260]],
     button="left",
@@ -185,7 +185,7 @@ client.browsers.computer.drag_mouse(
 )
 
 # Type text with optional delay
-client.browsers.computer.type_text(
+kernel.browsers.computer.type_text(
     id=kernel_browser.session_id,
     text="Hello World",
     delay=100
@@ -193,7 +193,7 @@ client.browsers.computer.type_text(
 
 # Take a full screenshot
 with open('screenshot.png', 'wb') as f:
-    image_data = client.browsers.computer.capture_screenshot(id=kernel_browser.session_id)
+    image_data = kernel.browsers.computer.capture_screenshot(id=kernel_browser.session_id)
     f.write(image_data.read())
 ```
 
@@ -204,11 +204,11 @@ For a complete reference of all available Computer Controls methods in Kernel, s
 
 | Feature | Scrapybara | Kernel |
 |---------|-----------|--------|
-| **Create Browser** | `client.start_browser()` | `client.browsers.create()` |
+| **Create Browser** | `client.start_browser()` | `kernel.browsers.create()` |
 | **Get CDP URL** | `instance.get_cdp_url().cdp_url` | Returns `cdp_ws_url` in create response |
 | **Get Live View** | `instance.get_stream_url().stream_url` | Returns `browser_live_view_url` in create response |
-| **Delete Browser** | `instance.stop()` | `client.browsers.delete_by_id(session_id)` |
-| **List Browsers** | `client.get_instances()` | `client.browsers.list()` |
+| **Delete Browser** | `instance.stop()` | `kernel.browsers.delete_by_id(session_id)` |
+| **List Browsers** | `kernel.get_instances()` | `kernel.browsers.list()` |
 | **Save Auth State** | `instance.browser.save_auth(name="default")` | Create [Profile](/browsers/profiles). Then create browser with `kernel.browsers.create(profile={"name": "profile1", "save_changes": True})` |
 | **Load Auth State** | `instance.browser.authenticate(auth_state_id="xyz")` | `kernel.browsers.create(profile={"name": "profile1"})` |
 | **Pause/Resume** | `instance.pause()` / `instance.resume()` | Automatic standby mode |
@@ -217,18 +217,18 @@ For a complete reference of all available Computer Controls methods in Kernel, s
 | **Stealth Mode** | ❌ Not available | Create browser with `stealth: true` |
 | **Headless Mode** | ❌ Not available | Create browser with `headless: true` |
 | **Session Persistence** | Auth state only | Full browser state via creating browser with `persistence={"id": "persist-id"}` |
-| **Video Replays** | ❌ Not available | `client.browsers.replays.start()` and `client.browsers.replays.stop()` |
-| **File Upload** | `instance.upload()` | `client.browsers.fs.upload()` or Playwright |
-| **File Download** | Via browser, then `instance.file()` | `client.browsers.fs.read_file()` |
-| **Process Control** | `instance.bash()` | `client.browsers.process.*` |
-| **Proxy Support** | ❌ Not available | Create [Proxy](/proxies/overview#1-create-a-proxy). Then create browser with `client.browsers.create(proxy_id=proxy.id)` |
-| **Click Mouse** | `instance.computer(action="click_mouse", button="left")` | `client.browsers.computer.click_mouse(id=session_id, x=100, y=200)` |
-| **Move Mouse** | `instance.computer(action="move_mouse", coordinates=[100, 200])` | `client.browsers.computer.move_mouse(id=session_id, x=100, y=200)` |
-| **Drag Mouse** | `instance.computer(action="drag_mouse", path=[[100, 200], [300, 400]])` | `client.browsers.computer.drag_mouse(id=session_id, path=[[100, 200], [150, 220], [200, 260]])` |
-| **Scroll** | `instance.computer(action="scroll", coordinates=[100, 100], delta_x=0, delta_y=200)` | `client.browsers.computer.scroll(id=session_id, delta_x=0, delta_y=100)` |
-| **Type Text** | `instance.computer(action="type_text", text="Hello")` | `client.browsers.computer.type_text(id=session_id, text="Hello")` |
-| **Press Key** | `instance.computer(action="press_key", keys=["ctrl", "c"])` | `client.browsers.computer.press_key(id=session_id, keys=["Ctrl+t"])` |
-| **Take Screenshot** | `instance.computer(action="take_screenshot").base64_image` | `client.browsers.computer.capture_screenshot(id=session_id)` |
+| **Video Replays** | ❌ Not available | `kernel.browsers.replays.start()` and `kernel.browsers.replays.stop()` |
+| **File Upload** | `instance.upload()` | `kernel.browsers.fs.upload()` or Playwright |
+| **File Download** | Via browser, then `instance.file()` | `kernel.browsers.fs.read_file()` |
+| **Process Control** | `instance.bash()` | `kernel.browsers.process.*` |
+| **Proxy Support** | ❌ Not available | Create [Proxy](/proxies/overview#1-create-a-proxy). Then create browser with `kernel.browsers.create(proxy_id=proxy.id)` |
+| **Click Mouse** | `instance.computer(action="click_mouse", button="left")` | `kernel.browsers.computer.click_mouse(id=session_id, x=100, y=200)` |
+| **Move Mouse** | `instance.computer(action="move_mouse", coordinates=[100, 200])` | `kernel.browsers.computer.move_mouse(id=session_id, x=100, y=200)` |
+| **Drag Mouse** | `instance.computer(action="drag_mouse", path=[[100, 200], [300, 400]])` | `kernel.browsers.computer.drag_mouse(id=session_id, path=[[100, 200], [150, 220], [200, 260]])` |
+| **Scroll** | `instance.computer(action="scroll", coordinates=[100, 100], delta_x=0, delta_y=200)` | `kernel.browsers.computer.scroll(id=session_id, delta_x=0, delta_y=100)` |
+| **Type Text** | `instance.computer(action="type_text", text="Hello")` | `kernel.browsers.computer.type_text(id=session_id, text="Hello")` |
+| **Press Key** | `instance.computer(action="press_key", keys=["ctrl", "c"])` | `kernel.browsers.computer.press_key(id=session_id, keys=["Ctrl+t"])` |
+| **Take Screenshot** | `instance.computer(action="take_screenshot").base64_image` | `kernel.browsers.computer.capture_screenshot(id=session_id)` |
 | **Get Cursor Position** | `instance.computer(action="get_cursor_position").output` | Use `move_mouse` with tracking |
 
 ---

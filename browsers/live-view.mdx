@@ -2,18 +2,40 @@
 title: "Live View"
 ---
 
-import CreateBrowserForLiveView from '/snippets/openapi/post-browsers-live-view.mdx';
-
 Humans-in-the-loop can access the live view of Kernel browsers in real-time to resolve errors or take unscripted actions.
 
 To access the live view, visit the `browser_live_view_url` provided when you create a Kernel browser:
 
-<CreateBrowserForLiveView />
+<CodeGroup>
+```typescript Typescript/Javascript
+import Kernel from '@onkernel/sdk';
+
+const kernel = new Kernel();
+
+const browser = await kernel.browsers.create();
+console.log(browser.browser_live_view_url);
+```
+
+```python Python
+from kernel import Kernel
+
+kernel = Kernel()
+
+browser = kernel.browsers.create()
+print(browser.browser_live_view_url)
+```
+</CodeGroup>
+
 
 ## Query parameters
 
 The `browser_live_view_url` supports additional query parameters to customize the live view:
 - `readOnly` (bool): when set to `true`, the view will be non-interactive.
+
+Example:
+```
+https://api.onkernel.com/browser/live/<TOKEN>?readOnly=true
+```
 
 ## Kiosk mode
 
@@ -22,7 +44,7 @@ Kiosk mode provides a fullscreen live view experience without browser UI element
 <CodeGroup>
 
 ```typescript Typescript/Javascript
-const kernelBrowser = await kernel.browsers.create({
+const browser = await kernel.browsers.create({
     viewport: {
         width: 1920,
         height: 1080
@@ -32,7 +54,7 @@ const kernelBrowser = await kernel.browsers.create({
 ```
 
 ```python Python
-kernel_browser = client.browsers.create(
+kernel_browser = kernel.browsers.create(
     viewport={
         "width": 1920,
         "height": 1080
@@ -45,4 +67,4 @@ kernel_browser = client.browsers.create(
 
 ## Browser persistence
 
- `browser_live_view_url` becomes invalid once the browser is [deleted](/browsers/termination) manually or via timeout.
+`browser_live_view_url` becomes invalid once the browser is [deleted](/browsers/termination) manually or via timeout.

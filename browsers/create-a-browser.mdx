@@ -2,9 +2,6 @@
 title: "Create a Browser"
 ---
 
-import CreateBrowserSnippet from '/snippets/openapi/post-browsers.mdx';
-import DeleteBrowserSnippet from '/snippets/openapi/delete-browsers-id.mdx';
-
 Kernel browsers were designed to be lightweight, fast, and efficient for cloud-based browser automations at scale. They can be used as part of the Kernel [app platform](/apps/develop) or connected to from another service with the Chrome DevTools Protocol.
 
 ## 1. Create a Kernel browser
@@ -17,38 +14,78 @@ First, install the Kernel SDK:
 
 Use our SDK to create a browser:
 
-<CreateBrowserSnippet />
+<CodeGroup>
+```typescript Typescript/Javascript
+import Kernel from '@onkernel/sdk';
+
+const kernel = new Kernel();
+
+const kernelBrowser = await kernel.browsers.create();
+console.log(kernelBrowser.session_id);
+```
+
+```python Python
+from kernel import Kernel
+
+kernel = Kernel()
+
+kernel_browser = kernel.browsers.create()
+print(kernel_browser.session_id)
+```
+</CodeGroup>
+
 
 ## 2. Connect over CDP
 
 Then, you can connect to the browser with any Chrome DevTools Protocol framework, such as Playwright or Puppeteer.
 
 <CodeGroup>
-
 ```typescript Typescript/Javascript
+import { chromium } from 'playwright';
+
 // Playwright
 const browser = await chromium.connectOverCDP(kernelBrowser.cdp_ws_url);
 
-// Puppeteer
+// Or with Puppeteer
+import puppeteer from 'puppeteer';
+
 const browser = await puppeteer.connect({
-  browserWSEndpoint,
+  browserWSEndpoint: kernelBrowser.cdp_ws_url,
   defaultViewport: null, // Optional: inherit viewport from the browser
 });
 ```
 
-```Python Python
-browser = playwright.chromium.connect_over_cdp(kernel_browser.cdp_ws_url)
-```
+```python Python
+from playwright.async_api import async_playwright
 
+async with async_playwright() as playwright:
+    browser = await playwright.chromium.connect_over_cdp(kernel_browser.cdp_ws_url)
+```
 </CodeGroup>
 
 ## 3. Tear it down
 
 When you're finished with the browser, you can delete it:
 
-<DeleteBrowserSnippet />
+<CodeGroup>
+```typescript Typescript/Javascript
+import Kernel from '@onkernel/sdk';
 
-You can also delete the browser by [specifiying a timeout](/browsers/termination#timeouts-for-non-persisted-browsers) when you create the browser.
+const kernel = new Kernel();
+
+await kernel.browsers.deleteByID(kernelBrowser.session_id);
+```
+
+```python Python
+from kernel import Kernel
+
+kernel = Kernel()
+await kernel.browsers.delete_by_id(kernel_browser.session_id)
+```
+</CodeGroup>
+
+Non-persisted browsers automatically delete after a timeout (default 60 seconds) if they don't receive a CDP or live view connection. You can [configure this timeout](/browsers/termination#automatic-deletion-via-timeout) when creating the browser.
+
 ## Full example
 
 Once you've connected to the Kernel browser, you can do anything with it.
@@ -62,43 +99,49 @@ Once you've connected to the Kernel browser, you can do anything with it.
 
 <CodeGroup>
 ```typescript Typescript/Javascript
-import { Kernel } from '@onkernel/sdk';
+import Kernel from '@onkernel/sdk';
+import { chromium } from 'playwright';
+
 const kernel = new Kernel();
 
 const kernelBrowser = await kernel.browsers.create();
 const browser = await chromium.connectOverCDP(kernelBrowser.cdp_ws_url);
+
 try {
-const context = await browser.contexts()[0] || (await browser.newContext());
-const page = await context.pages()[0] || (await context.newPage());
-await page.goto("https://www.google.com");
-const title = await page.title();
+  const context = browser.contexts()[0] || (await browser.newContext());
+  const page = context.pages()[0] || (await context.newPage());
+  await page.goto('https://www.onkernel.com');
+  const title = await page.title();
 } catch (error) {
-console.error(error);
+  console.error(error);
 } finally {
-await browser.close();
-await kernel.browsers.deleteByID(kernelBrowser.session_id);
+  await browser.close();
+  await kernel.browsers.deleteByID(kernelBrowser.session_id);
 }
-
 ```
 
-```Python Python
-import kernel
-client = Kernel()
+```python Python
+from kernel import Kernel
+from playwright.async_api import async_playwright
 
-kernel_browser = client.browsers.create()
-browser = playwright.chromium.connect_over_cdp(kernel_browser.cdp_ws_url)
-try:
-    context = browser.contexts[0] if browser.contexts else await browser.new_context()
-    page = context.pages[0] if context.pages else await context.new_page()
-    await page.goto(url)
-    title = await page.title()
-except Exception as e:
-    print(e)
-finally:
-    await browser.close()
-    await client.browsers.delete_by_id(kernel_browser.session_id)
+kernel = Kernel()
+
+kernel_browser = kernel.browsers.create()
+
+async with async_playwright() as playwright:
+    browser = await playwright.chromium.connect_over_cdp(kernel_browser.cdp_ws_url)
+
+    try:
+        context = browser.contexts[0] if browser.contexts else await browser.new_context()
+        page = context.pages[0] if context.pages else await context.new_page()
+        await page.goto('https://www.onkernel.com')
+        title = await page.title()
+    except Exception as e:
+        print(e)
+    finally:
+        await browser.close()
+        await kernel.browsers.delete_by_id(kernel_browser.session_id)
 ```
-
 </CodeGroup>
 
 
