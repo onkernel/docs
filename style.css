@@ -4,6 +4,17 @@
   font-size: 15px;
 }
 
+/* move nested nav arrows to the right */
+#navigation-items li[data-title] > div.group {
+  flex-direction: row-reverse !important;
+  justify-content: space-between !important;
+}
+
+#navigation-items li[data-title] > div.group > svg {
+  margin-right: 0 !important;
+  margin-left: 0 !important;
+}
+
 /* enhanced table styling - matches code group design */
 .prose table,
 article table,
