@@ -6,7 +6,7 @@ Residential proxies route traffic through real residential IP addresses. They su
 
 ## Configuration
 
-Residential proxies support multiple targeting parameters:
+Create a residential proxy with a target country:
 
 <CodeGroup>
 ```typescript Typescript/Javascript
@@ -16,11 +16,10 @@ const kernel = new Kernel();
 
 const proxy = await kernel.proxies.create({
   type: 'residential',
-  name: 'my-la-residential',
+  name: 'my-us-residential',
   config: {
-    country: 'US',
-    city: 'los_angeles',
-  },
+    country: 'US'
+  }
 });
 
 const browser = await kernel.browsers.create({
@@ -34,11 +33,10 @@ from kernel import Kernel
 kernel = Kernel()
 
 proxy = kernel.proxies.create(
-    type="residential",
-    name="my-la-residential",
+    type='residential',
+    name='my-us-residential',
     config={
-        "country": "US",
-        "city": "los_angeles",
+        'country': 'US'
     }
 )
 
@@ -53,3 +51,111 @@ browser = kernel.browsers.create(proxy_id=proxy.id)
 - **`city`** - City name (lowercase, no spaces, e.g., `sanfrancisco`, `newyork`).
 - **`zip`** - US ZIP code (5 digits). Conflicts with city and state.
 - **`asn`** - Autonomous System Number. Conflicts with city and state.
+
+## Advanced Targeting Examples
+
+Kernel recommends using the least-specific targeting configuration that works for your use case. The more specific a configuration, the less available IPs there are, increasing the chance of a slow connection or no available connection (`no_peer` connection error).
+
+### Target by City
+
+Route traffic through a specific city:
+
+<CodeGroup>
+
+```typescript Typescript/Javascript
+const proxy = await kernel.proxies.create({
+  type: 'residential',
+  name: 'la-residential',
+  config: {
+    country: 'US',
+    state: 'CA',
+    city: 'los_angeles'
+  }
+});
+```
+
+```Python Python
+proxy = kernel.proxies.create(
+    type='residential',
+    name='la-residential',
+    config={
+        'country': 'US',
+        'state': 'CA',
+        'city': 'los_angeles'
+    }
+)
+```
+
+</CodeGroup>
+
+<Note>
+If the city name is not matched, the API will return the best 10 city names from the state to help you find the correct city identifier.
+</Note>
+
+### Target by State
+
+Route traffic through a specific state:
+
+<CodeGroup>
+
+```typescript Typescript/Javascript
+const proxy = await kernel.proxies.create({
+  type: 'residential',
+  name: 'ny-residential',
+  config: {
+    country: 'US',
+    state: 'NY'
+  }
+});
+```
+
+```Python Python
+proxy = kernel.proxies.create(
+    type='residential',
+    name='ny-residential',
+    config={
+        'country': 'US',
+        'state': 'NY'
+    }
+)
+```
+
+</CodeGroup>
+
+<Note>
+If the state name is not matched, the API will return the most-available 10 states.
+</Note>
+
+### Target by ASN
+
+Route traffic through a specific Autonomous System Number (ISP):
+
+<CodeGroup>
+
+```typescript Typescript/Javascript
+const proxy = await kernel.proxies.create({
+  type: 'residential',
+  name: 'comcast-residential',
+  config: {
+    country: 'US',
+    asn: 'AS7922'
+  }
+});
+```
+
+```Python Python
+proxy = kernel.proxies.create(
+    type='residential',
+    name='comcast-residential',
+    config={
+        'country': 'US',
+        'asn': 'AS7922'
+    }
+)
+```
+
+</CodeGroup>
+
+<Note>
+If the ASN is not matched, the API will return the most-available 10 examples.
+</Note>
