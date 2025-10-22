@@ -23,11 +23,11 @@ from kernel import Kernel
 from notte_sdk import NotteClient
 
 # Initialize clients
-kernel_client = Kernel(api_key="your-kernel-api-key")
+kernel = Kernel()
 notte_client = NotteClient(api_key="your-notte-api-key")
 
 # Create a browser on Kernel
-kernel_browser = kernel_client.browsers.create()
+kernel_browser = kernel.browsers.create()
 ```
 
 ### 3. Connect Notte to Kernel's CDP endpoint
@@ -51,7 +51,7 @@ with notte_client.Session(cdp_url=kernel_browser.cdp_ws_url) as session:
 After your automation completes, clean up the Kernel browser:
 
 ```python
-kernel_client.browsers.delete_by_id(kernel_browser.session_id)
+kernel.browsers.delete_by_id(kernel_browser.session_id)
 ```
 
 ## Complete example script
@@ -69,20 +69,17 @@ load_dotenv()
 
 def main():
     # Initialize clients
-    kernel_api_key = os.getenv("KERNEL_API_KEY")
+    kernel = Kernel()
+    
     notte_api_key = os.getenv("NOTTE_API_KEY")
-
-    if not kernel_api_key:
-        raise ValueError("KERNEL_API_KEY not found in environment variables")
     if not notte_api_key:
         raise ValueError("NOTTE_API_KEY not found in environment variables")
-
-    kernel_client = Kernel(api_key=kernel_api_key)
+    
     notte_client = NotteClient(api_key=notte_api_key)
 
     # Create a headful browser on Kernel
     print("Creating browser session on Kernel...")
-    kernel_browser = kernel_client.browsers.create()
+    kernel_browser = kernel.browsers.create()
     # print(kernel_browser.browser_live_view_url)
 
     try:
@@ -104,7 +101,7 @@ def main():
 
     finally:
         # Always clean up the browser session
-        kernel_client.browsers.delete_by_id(kernel_browser.session_id)
+        kernel.browsers.delete_by_id(kernel_browser.session_id)
         print("Browser session cleaned up")
 
 if __name__ == "__main__":

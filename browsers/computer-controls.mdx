@@ -11,7 +11,7 @@ Simulate mouse clicks at specific coordinates. You can select the button, click 
 
 <CodeGroup>
 ```typescript Typescript/Javascript
-import { Kernel } from '@onkernel/sdk';
+import Kernel from '@onkernel/sdk';
 
 const kernel = new Kernel();
 const kernelBrowser = await kernel.browsers.create();
@@ -34,20 +34,20 @@ await kernel.browsers.computer.clickMouse(kernelBrowser.session_id, {
 ```
 
 ```python Python
-import kernel
+from kernel import Kernel
 
-client = kernel.Kernel()
-kernel_browser = client.browsers.create()
+kernel = Kernel()
+kernel_browser = kernel.browsers.create()
 
 # Basic left click at (100, 200)
-client.browsers.computer.click_mouse(
+kernel.browsers.computer.click_mouse(
     id=kernel_browser.session_id,
     x=100,
     y=200,
 )
 
 # Double right-click while holding Shift
-client.browsers.computer.click_mouse(
+kernel.browsers.computer.click_mouse(
     id=kernel_browser.session_id,
     x=100,
     y=200,
@@ -73,7 +73,7 @@ Move the cursor to specific screen coordinates. Optionally hold modifier keys du
 
 <CodeGroup>
 ```typescript Typescript/Javascript
-import { Kernel } from '@onkernel/sdk';
+import Kernel from '@onkernel/sdk';
 
 const kernel = new Kernel();
 const kernelBrowser = await kernel.browsers.create();
@@ -86,12 +86,12 @@ await kernel.browsers.computer.moveMouse(kernelBrowser.session_id, {
 ```
 
 ```python Python
-import kernel
+from kernel import Kernel
 
-client = kernel.Kernel()
-kernel_browser = client.browsers.create()
+kernel = Kernel()
+kernel_browser = kernel.browsers.create()
 
-client.browsers.computer.move_mouse(
+kernel.browsers.computer.move_mouse(
     id=kernel_browser.session_id,
     x=500,
     y=300,
@@ -113,7 +113,7 @@ Capture a full-screen PNG or a specific region.
 ```typescript Typescript/Javascript
 import fs from 'fs';
 import { Buffer } from 'buffer';
-import { Kernel } from '@onkernel/sdk';
+import Kernel from '@onkernel/sdk';
 
 const kernel = new Kernel();
 const kernelBrowser = await kernel.browsers.create();
@@ -138,19 +138,19 @@ const kernelBrowser = await kernel.browsers.create();
 ```
 
 ```python Python
-import kernel
+from kernel import Kernel
 
-client = kernel.Kernel()
-kernel_browser = client.browsers.create()
+kernel = Kernel()
+kernel_browser = kernel.browsers.create()
 
 # Full screenshot
 with open('screenshot.png', 'wb') as f:
-    image_data = client.browsers.computer.capture_screenshot(id=kernel_browser.session_id)
+    image_data = kernel.browsers.computer.capture_screenshot(id=kernel_browser.session_id)
     f.write(image_data.read())
 
 # Region screenshot
 with open('region.png', 'wb') as f:
-    image_data = client.browsers.computer.capture_screenshot(
+    image_data = kernel.browsers.computer.capture_screenshot(
         id=kernel_browser.session_id,
         region={"x": 0, "y": 0, "width": 800, "height": 600},
     )
@@ -172,7 +172,7 @@ Type literal text, optionally with a delay in milliseconds between keystrokes.
 
 <CodeGroup>
 ```typescript Typescript/Javascript
-import { Kernel } from '@onkernel/sdk';
+import Kernel from '@onkernel/sdk';
 
 const kernel = new Kernel();
 const kernelBrowser = await kernel.browsers.create();
@@ -188,17 +188,17 @@ await kernel.browsers.computer.typeText(kernelBrowser.session_id, {
 ```
 
 ```python Python
-import kernel
+from kernel import Kernel
 
-client = kernel.Kernel()
-kernel_browser = client.browsers.create()
+kernel = Kernel()
+kernel_browser = kernel.browsers.create()
 
-client.browsers.computer.type_text(
+kernel.browsers.computer.type_text(
     id=kernel_browser.session_id,
     text="Hello, World!",
 )
 
-client.browsers.computer.type_text(
+kernel.browsers.computer.type_text(
     id=kernel_browser.session_id,
     text="Slow typing...",
     delay=100,
@@ -220,7 +220,7 @@ Press one or more key symbols (including combinations like "Ctrl+t" or "Ctrl+Shi
 
 <CodeGroup>
 ```typescript Typescript/Javascript
-import { Kernel } from '@onkernel/sdk';
+import Kernel from '@onkernel/sdk';
 
 const kernel = new Kernel();
 const kernelBrowser = await kernel.browsers.create();
@@ -239,19 +239,19 @@ await kernel.browsers.computer.pressKey(kernelBrowser.session_id, {
 ```
 
 ```python Python
-import kernel
+from kernel import Kernel
 
-client = kernel.Kernel()
-kernel_browser = client.browsers.create()
+kernel = Kernel()
+kernel_browser = kernel.browsers.create()
 
 # Tap a key combination
-client.browsers.computer.press_key(
+kernel.browsers.computer.press_key(
     id=kernel_browser.session_id,
     keys=["Ctrl+t"],
 )
 
 # Hold keys for 250ms while also holding Alt
-client.browsers.computer.press_key(
+kernel.browsers.computer.press_key(
     id=kernel_browser.session_id,
     keys=["Ctrl+Shift+Tab"],
     duration=250,
@@ -274,7 +274,7 @@ Scroll the mouse wheel at a specific position. Positive `delta_y` scrolls down; 
 
 <CodeGroup>
 ```typescript Typescript/Javascript
-import { Kernel } from '@onkernel/sdk';
+import Kernel from '@onkernel/sdk';
 
 const kernel = new Kernel();
 const kernelBrowser = await kernel.browsers.create();
@@ -288,12 +288,12 @@ await kernel.browsers.computer.scroll(kernelBrowser.session_id, {
 ```
 
 ```python Python
-import kernel
+from kernel import Kernel
 
-client = kernel.Kernel()
-kernel_browser = client.browsers.create()
+kernel = Kernel()
+kernel_browser = kernel.browsers.create()
 
-client.browsers.computer.scroll(
+kernel.browsers.computer.scroll(
     id=kernel_browser.session_id,
     x=300,
     y=400,
@@ -314,7 +314,7 @@ Drag by pressing a button, moving along a path of points, then releasing. You ca
 
 <CodeGroup>
 ```typescript Typescript/Javascript
-import { Kernel } from '@onkernel/sdk';
+import Kernel from '@onkernel/sdk';
 
 const kernel = new Kernel();
 const kernelBrowser = await kernel.browsers.create();
@@ -334,12 +334,12 @@ await kernel.browsers.computer.dragMouse(kernelBrowser.session_id, {
 ```
 
 ```python Python
-import kernel
+from kernel import Kernel
 
-client = kernel.Kernel()
-kernel_browser = client.browsers.create()
+kernel = Kernel()
+kernel_browser = kernel.browsers.create()
 
-client.browsers.computer.drag_mouse(
+kernel.browsers.computer.drag_mouse(
     id=kernel_browser.session_id,
     path=[[100, 200], [150, 220], [200, 260]],
     button="left",

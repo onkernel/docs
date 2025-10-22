@@ -9,41 +9,39 @@ Datacenter proxies use IP addresses assigned from datacenter servers to route yo
 Datacenter proxies require a country to route traffic through:
 
 <CodeGroup>
-
 ```typescript Typescript/Javascript
-import { Kernel } from '@onkernel/sdk';
+import Kernel from '@onkernel/sdk';
+
 const kernel = new Kernel();
 
 const proxy = await kernel.proxies.create({
   type: 'datacenter',
   name: 'my-us-datacenter',
   config: {
-    country: 'US'
-  }
+    country: 'US',
+  },
 });
 
 const browser = await kernel.browsers.create({
-  proxy_id: proxy.id
+  proxy_id: proxy.id,
 });
 ```
 
-```Python Python
-import kernel
-client = kernel.Kernel()
+```python Python
+from kernel import Kernel
 
-proxy = client.proxies.create(
-    type='datacenter',
-    name='my-us-datacenter',
+kernel = Kernel()
+
+proxy = kernel.proxies.create(
+    type="datacenter",
+    name="my-us-datacenter",
     config={
-        'country': 'US'
+        "country": "US",
     }
 )
 
-browser = client.browsers.create(
-    proxy_id=proxy.id
-)
+browser = kernel.browsers.create(proxy_id=proxy.id)
 ```
-
 </CodeGroup>
 
 ## Configuration Parameters

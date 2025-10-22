@@ -15,28 +15,26 @@ Playwright performs downloads via the browser itself, so there are a few steps:
 - Retrieve the file from the browser's filesystem
 
 <CodeGroup>
-
 ```typescript Typescript/Javascript
-import { Kernel } from "@onkernel/sdk";
-import fs from "fs";
-import pTimeout from "p-timeout";
-import { chromium } from "playwright";
+import Kernel from '@onkernel/sdk';
+import { chromium } from 'playwright';
+import fs from 'fs';
+import pTimeout from 'p-timeout';
 
-const DOWNLOAD_DIR = "/tmp/downloads";
+const DOWNLOAD_DIR = '/tmp/downloads';
 const kernel = new Kernel();
 
 async function main() {
   const kernelBrowser = await kernel.browsers.create();
-  console.log("live view:", kernelBrowser.browser_live_view_url);
+  console.log('live view:', kernelBrowser.browser_live_view_url);
 
   const browser = await chromium.connectOverCDP(kernelBrowser.cdp_ws_url);
-  const context = (await browser.contexts()[0]) || (await browser.newContext());
-  const page = (await context.pages()[0]) || (await context.newPage());
+  const context = browser.contexts()[0] || (await browser.newContext());
+  const page = context.pages()[0] || (await context.newPage());
 
-  // Required to prevent Playwright from overriding the location of the downloaded file
   const client = await context.newCDPSession(page);
-  await client.send("Browser.setDownloadBehavior", {
-    behavior: "allow",
+  await client.send('Browser.setDownloadBehavior', {
+    behavior: 'allow',
     downloadPath: DOWNLOAD_DIR,
     eventsEnabled: true,
   });
@@ -47,50 +45,49 @@ async function main() {
   const downloadCompleted = new Promise<void>((resolve) => {
     downloadCompletedResolve = resolve;
   });
-  client.on("Browser.downloadWillBegin", (event) => {
-    downloadFilename = event.suggestedFilename ?? "unknown";
-    console.log("Download started:", downloadFilename);
+
+  client.on('Browser.downloadWillBegin', (event) => {
+    downloadFilename = event.suggestedFilename ?? 'unknown';
+    console.log('Download started:', downloadFilename);
   });
-  client.on("Browser.downloadProgress", (event) => {
-    if (event.state === "completed" || event.state === "canceled") {
+
+  client.on('Browser.downloadProgress', (event) => {
+    if (event.state === 'completed' || event.state === 'canceled') {
       downloadCompletedResolve();
     }
   });
 
-  // Trigger the download in the page
-  console.log("Navigating to download test page");
-  await page.goto("https://browser-tests-alpha.vercel.app/api/download-test");
-  await page.getByRole("link", { name: "Download File" }).click();
+  console.log('Navigating to download test page');
+  await page.goto('https://browser-tests-alpha.vercel.app/api/download-test');
+  await page.getByRole('link', { name: 'Download File' }).click();
+
   try {
     await pTimeout(downloadCompleted, {
       milliseconds: 10_000,
-      message: new Error("Download timed out after 10 seconds"),
+      message: new Error('Download timed out after 10 seconds'),
     });
-    console.log("Download completed");
+    console.log('Download completed');
   } catch (err) {
     console.error(err);
     throw err;
   }
+
   if (!downloadFilename) {
-    throw new Error("Unable to determine download filename");
+    throw new Error('Unable to determine download filename');
   }
 
-  // Download the file directly from the browser instance
   const remotePath = `${DOWNLOAD_DIR}/${downloadFilename}`;
   console.log(`Reading file: ${remotePath}`);
+
   const resp = await kernel.browsers.fs.readFile(kernelBrowser.session_id, {
     path: remotePath,
   });
+
   const bytes = await resp.bytes();
-  fs.mkdirSync("downloads", { recursive: true });
+  fs.mkdirSync('downloads', { recursive: true });
   const localPath = `downloads/${downloadFilename}`;
   fs.writeFileSync(localPath, bytes);
   console.log(`Saved to ${localPath}`);
-  // Alternatively, stream directly to disk:
-  // import { pipeline } from 'node:stream/promises';
-  // import { createWriteStream } from 'node:fs';
-  // import { Readable } from 'node:stream';
-  // await pipeline(Readable.fromWeb(resp.body!), createWriteStream(localPath));
 
   await browser.close();
 }
@@ -101,25 +98,22 @@ main();
 ```python Python
 import asyncio
 import os
-
-from kernel import AsyncKernel
+from kernel import Kernel
 from playwright.async_api import async_playwright
 
 DOWNLOAD_DIR = "/tmp/downloads"
-client = AsyncKernel()
+kernel = Kernel()
 
 
 async def main():
-    # Create a new browser via Kernel
-    kbrowser = await client.browsers.create()
-    print("Kernel browser live view url:", kbrowser.browser_live_view_url)
+    kernel_browser = await kernel.browsers.create()
+    print("Kernel browser live view url:", kernel_browser.browser_live_view_url)
 
     async with async_playwright() as playwright:
-        browser = await playwright.chromium.connect_over_cdp(kbrowser.cdp_ws_url)
+        browser = await playwright.chromium.connect_over_cdp(kernel_browser.cdp_ws_url)
         context = browser.contexts[0]
         page = context.pages[0] if len(context.pages) > 0 else await context.new_page()
 
-        # Required to prevent Playwright from overriding the location of the downloaded file
         cdp_session = await context.new_cdp_session(page)
         await cdp_session.send(
             "Browser.setDownloadBehavior",
@@ -130,7 +124,6 @@ async def main():
             },
         )
 
-        # Set up CDP listeners to capture download filename and completion
         download_completed = asyncio.Event()
         download_filename: str | None = None
 
@@ -146,23 +139,22 @@ async def main():
         cdp_session.on("Browser.downloadWillBegin", _on_download_begin)
         cdp_session.on("Browser.downloadProgress", _on_download_progress)
 
-        # Trigger the download in the page
         print("Navigating to download test page")
         await page.goto("https://browser-tests-alpha.vercel.app/api/download-test")
         await page.get_by_role("link", name="Download File").click()
+
         try:
             await asyncio.wait_for(download_completed.wait(), timeout=10)
             print("Download completed")
         except asyncio.TimeoutError:
             print("Download timed out after 10 seconds")
 
-        # Download the file directly from the browser instance
-        resp = await client.browsers.fs.read_file(
-            kbrowser.session_id, path=f"{DOWNLOAD_DIR}/{download_filename}"
+        resp = await kernel.browsers.fs.read_file(
+            kernel_browser.session_id, path=f"{DOWNLOAD_DIR}/{download_filename}"
         )
         local_path = f"./downloads/{download_filename}"
         os.makedirs("./downloads", exist_ok=True)
-        await resp.write_to_file(local_path)  # streaming; file never in memory
+        await resp.write_to_file(local_path)
         print(f"Saved to {local_path}")
 
         await browser.close()
@@ -171,7 +163,6 @@ async def main():
 if __name__ == "__main__":
     asyncio.run(main())
 ```
-
 </CodeGroup>
 
 For more complex scenarios, you can also use the [list files](/api-reference/browsers/list-files-in-a-directory) API together with [read file](/api-reference/browsers/read-file-contents) to enumerate and save all downloads at the end of a session.
@@ -181,19 +172,19 @@ For more complex scenarios, you can also use the [list files](/api-reference/bro
 You can upload from your local filesystem into the browser directly using Playwright's file input helpers.
 
 <CodeGroup>
-
 ```typescript Typescript/Javascript
-const localPath = "/path/to/a/file.txt";
-console.log(`Uploading ${localPath} ...`);
-await page.locator("#fileUpload").setInputFiles(localPath);
-console.log("Upload completed");
+const localPath = '/path/to/a/file.txt';
+
+console.log(`Uploading ${localPath}...`);
+await page.locator('#fileUpload').setInputFiles(localPath);
+console.log('Upload completed');
 ```
 
 ```python Python
 local_path = "/path/to/a/file.txt"
-print(f"Uploading {local_path} ...")
+
+print(f"Uploading {local_path}...")
 await page.locator("#fileUpload").set_input_files(str(local_path))
 print("Upload completed")
 ```
-
 </CodeGroup>
