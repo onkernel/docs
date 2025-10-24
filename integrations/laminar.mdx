@@ -6,13 +6,11 @@ title: "Laminar"
 
 ## Why use Laminar with Kernel?
 
-Combining Laminar's observability with Kernel's cloud browsers provides:
-
-- **Full tracing**: Track every step of your browser automation, from LLM decisions to browser actions
-- **Session recordings**: View synchronized browser session replays alongside execution traces
-- **Cost tracking**: Monitor LLM costs and token usage across your automations
-- **Performance monitoring**: Measure latency and identify bottlenecks in your workflows
-- **Unified visibility**: See the complete picture of your AI agent's behavior in one place
+- **No local browser management**: Run automations in the cloud while maintaining full observability
+- **Scalability**: Launch multiple browser sessions with independent traces
+- **Debugging**: Use Kernel's [live view](/browsers/live-view) during development and Laminar's session recordings for post-execution analysis
+- **Cost optimization**: Track LLM costs across all your browser automations
+- **Performance tuning**: Identify slow operations and optimize your agent workflows
 
 ## Prerequisites
 
@@ -24,30 +22,21 @@ Before integrating Laminar with Kernel, you'll need:
 
 ## Installation
 
-### JavaScript/TypeScript
-
-```bash
+```bash npm
 npm install @lmnr-ai/lmnr @onkernel/sdk
 ```
 
-### Python
-
-```bash
-pip install --upgrade 'lmnr[all]' kernel
-```
-
-For targeted instrumentation, you can specify only the extras you need:
-
-```bash
-pip install --upgrade 'lmnr[anthropic,openai]' kernel
+```bash python
+uv pip install --upgrade 'lmnr[all]' kernel
 ```
 
 ## Getting your Laminar API key
 
 1. Log in to your [Laminar dashboard](https://www.lmnr.ai/)
 2. Navigate to **Project Settings**
-3. Copy your **Project API Key** (referred to as `LAMINAR_PROJECT_API_KEY`)
-4. Set it as an environment variable:
+3. Generate a new API key in your project
+4. Copy your **Project API Key** (referred to as `LAMINAR_PROJECT_API_KEY`)
+5. Set it as an environment variable:
 
 ```bash
 export LMNR_PROJECT_API_KEY=your_api_key_here
@@ -61,9 +50,7 @@ Choose the framework you're using with Kernel:
 
 Playwright is a popular browser automation framework. Here's how to use it with Laminar and Kernel:
 
-#### JavaScript/TypeScript
-
-```javascript
+```javascript javascript
 import { Laminar } from '@lmnr-ai/lmnr';
 import Kernel from '@onkernel/sdk';
 import { chromium } from 'playwright';
@@ -106,9 +93,7 @@ await kernel.browsers.deleteByID(kernelBrowser.session_id);
 await Laminar.flush();
 ```
 
-#### Python
-
-```python
+```python python
 import os
 from lmnr import Laminar, observe
 from playwright.sync_api import sync_playwright
@@ -150,9 +135,7 @@ run_automation()
 
 [Browser Use](https://github.com/browser-use/browser-use) is an AI browser agent framework. Here's how to integrate it with Laminar and Kernel:
 
-#### Python
-
-```python
+```python python
 import os
 import asyncio
 from lmnr import Laminar
@@ -203,9 +186,7 @@ View your traces in the Laminar UI's traces tab to see synchronized browser sess
 
 [Stagehand](https://github.com/browserbase/stagehand) is an AI browser automation framework. Here's how to use it with Laminar and Kernel:
 
-#### JavaScript/TypeScript
-
-```javascript
+```javascript javascript
 import { Laminar } from '@lmnr-ai/lmnr';
 import { Stagehand } from '@browserbasehq/stagehand';
 import Kernel from '@onkernel/sdk';
@@ -283,17 +264,9 @@ After running your automation:
 
 Timeline highlights indicate which step your agent is currently executing, making it easy to debug and optimize your automations.
 
-## Benefits of Laminar × Kernel
-
-- **No local browser management**: Run automations in the cloud while maintaining full observability
-- **Scalability**: Launch multiple browser sessions with independent traces
-- **Debugging**: Use Kernel's [live view](/browsers/live-view) during development and Laminar's session recordings for post-execution analysis
-- **Cost optimization**: Track LLM costs across all your browser automations
-- **Performance tuning**: Identify slow operations and optimize your agent workflows
-
 ## Next steps
 
 - Check out [Kernel's live view](/browsers/live-view) for real-time debugging
 - Learn about [stealth mode](/browsers/stealth) for avoiding detection
-- Explore [Laminar's evaluation features](https://docs.lmnr.ai/evaluations/overview) for testing agent quality
+- Explore [Laminar's evaluation features](https://docs.lmnr.ai/evaluations/introduction) for testing agent quality
 - Learn how to [deploy your app](/apps/deploy) to Kernel's platform
