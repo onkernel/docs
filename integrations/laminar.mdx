@@ -22,6 +22,7 @@ Before integrating Laminar with Kernel, you'll need:
 
 ## Installation
 
+<CodeGroup>
 ```bash npm
 npm install @lmnr-ai/lmnr @onkernel/sdk
 ```
@@ -29,6 +30,7 @@ npm install @lmnr-ai/lmnr @onkernel/sdk
 ```bash python
 uv pip install --upgrade 'lmnr[all]' kernel
 ```
+</CodeGroup>
 
 ## Getting your Laminar API key
 
@@ -50,7 +52,8 @@ Choose the framework you're using with Kernel:
 
 Playwright is a popular browser automation framework. Here's how to use it with Laminar and Kernel:
 
-```javascript javascript
+<CodeGroup>
+```javascript Typescript/Javascript
 import { Laminar } from '@lmnr-ai/lmnr';
 import Kernel from '@onkernel/sdk';
 import { chromium } from 'playwright';
@@ -93,7 +96,7 @@ await kernel.browsers.deleteByID(kernelBrowser.session_id);
 await Laminar.flush();
 ```
 
-```python python
+```python Python
 import os
 from lmnr import Laminar, observe
 from playwright.sync_api import sync_playwright
@@ -130,6 +133,7 @@ def run_automation():
 # Run the automation
 run_automation()
 ```
+</CodeGroup>
 
 ### Browser Use
 
@@ -186,7 +190,8 @@ View your traces in the Laminar UI's traces tab to see synchronized browser sess
 
 [Stagehand](https://github.com/browserbase/stagehand) is an AI browser automation framework. Here's how to use it with Laminar and Kernel:
 
-```javascript javascript
+<CodeGroup>
+```javascript Typescript/Javascript
 import { Laminar } from '@lmnr-ai/lmnr';
 import { Stagehand } from '@browserbasehq/stagehand';
 import Kernel from '@onkernel/sdk';
@@ -244,6 +249,58 @@ await kernel.browsers.deleteByID(kernelBrowser.session_id);
 // Flush traces to Laminar
 await Laminar.flush();
 ```
+
+```python Python
+import os
+from lmnr import Laminar
+from stagehand import Stagehand
+from kernel import Kernel
+
+# Initialize Laminar
+Laminar.initialize(project_api_key=os.environ["LMNR_PROJECT_API_KEY"])
+
+# Initialize Kernel and create a browser
+client = Kernel()
+kernel_browser = client.browsers.create(stealth=True)
+
+print(f"Live view url: {kernel_browser.browser_live_view_url}")
+
+# Configure Stagehand to use Kernel's browser
+stagehand = Stagehand(
+    env="LOCAL",
+    verbose=1,
+    dom_settle_timeout_ms=30_000,
+    model_name="openai/gpt-4.1",
+    model_client_options={
+        "api_key": os.environ["OPENAI_API_KEY"]
+    },
+    local_browser_launch_options={
+        "cdp_url": kernel_browser.cdp_ws_url
+    }
+)
+
+stagehand.init()
+
+# Your automation code
+page = stagehand.page
+page.goto('https://onkernel.com')
+page.act('Click on Blog in the navbar')
+page.act('Click on the newest blog post')
+
+output = page.extract(
+    instruction='Extract a summary of the blog post',
+    schema={
+        "summary": {"type": "string"}
+    }
+)
+
+print(f"Blog post summary: {output['summary']}")
+
+# Clean up
+stagehand.close()
+client.browsers.delete_by_id(kernel_browser.session_id)
+```
+</CodeGroup>
 
 <Info>
 Always call `Laminar.flush()` (JavaScript) or ensure your traced functions complete (Python) to submit traces to Laminar.
