@@ -1,0 +1,299 @@
+---
+title: "Laminar"
+---
+
+[Laminar](https://www.lmnr.ai/) is an observability and evaluation platform for AI applications. By integrating Laminar with Kernel, you can trace and monitor your browser automations with full visibility into LLM calls, browser actions, session recordings, and performance metrics.
+
+## Why use Laminar with Kernel?
+
+Combining Laminar's observability with Kernel's cloud browsers provides:
+
+- **Full tracing**: Track every step of your browser automation, from LLM decisions to browser actions
+- **Session recordings**: View synchronized browser session replays alongside execution traces
+- **Cost tracking**: Monitor LLM costs and token usage across your automations
+- **Performance monitoring**: Measure latency and identify bottlenecks in your workflows
+- **Unified visibility**: See the complete picture of your AI agent's behavior in one place
+
+## Prerequisites
+
+Before integrating Laminar with Kernel, you'll need:
+
+1. A [Kernel account](https://dashboard.onkernel.com/sign-up) with API access
+2. A [Laminar account](https://www.lmnr.ai/) and project
+3. Your Laminar project API key from the Project Settings page
+
+## Installation
+
+### JavaScript/TypeScript
+
+```bash
+npm install @lmnr-ai/lmnr @onkernel/sdk
+```
+
+### Python
+
+```bash
+pip install --upgrade 'lmnr[all]' kernel
+```
+
+For targeted instrumentation, you can specify only the extras you need:
+
+```bash
+pip install --upgrade 'lmnr[anthropic,openai]' kernel
+```
+
+## Getting your Laminar API key
+
+1. Log in to your [Laminar dashboard](https://www.lmnr.ai/)
+2. Navigate to **Project Settings**
+3. Copy your **Project API Key** (referred to as `LAMINAR_PROJECT_API_KEY`)
+4. Set it as an environment variable:
+
+```bash
+export LMNR_PROJECT_API_KEY=your_api_key_here
+```
+
+## Integration guides by framework
+
+Choose the framework you're using with Kernel:
+
+### Playwright
+
+Playwright is a popular browser automation framework. Here's how to use it with Laminar and Kernel:
+
+#### JavaScript/TypeScript
+
+```javascript
+import { Laminar } from '@lmnr-ai/lmnr';
+import Kernel from '@onkernel/sdk';
+import { chromium } from 'playwright';
+
+// Initialize Laminar with Playwright instrumentation
+Laminar.initialize({
+  projectApiKey: process.env.LMNR_PROJECT_API_KEY,
+  instrumentModules: {
+    playwright: {
+      chromium
+    }
+  }
+});
+
+// Initialize Kernel and create a cloud browser
+const kernel = new Kernel();
+
+const kernelBrowser = await kernel.browsers.create({
+  stealth: true
+});
+
+console.log("Live view url:", kernelBrowser.browser_live_view_url);
+
+// Connect Playwright to Kernel's browser via CDP
+const browser = await chromium.connectOverCDP(kernelBrowser.cdp_ws_url);
+const context = browser.contexts()[0];
+const page = context.pages()[0];
+
+// Your automation code
+await page.goto('https://onkernel.com');
+await page.click('text=Documentation');
+const title = await page.title();
+console.log('Page title:', title);
+
+// Clean up
+await browser.close();
+await kernel.browsers.deleteByID(kernelBrowser.session_id);
+
+// Flush traces to Laminar
+await Laminar.flush();
+```
+
+#### Python
+
+```python
+import os
+from lmnr import Laminar, observe
+from playwright.sync_api import sync_playwright
+from kernel import Kernel
+
+# Initialize Laminar
+Laminar.initialize(project_api_key=os.environ["LMNR_PROJECT_API_KEY"])
+
+# Use @observe decorator to create a trace
+@observe()
+def run_automation():
+    # Initialize Kernel
+    client = Kernel()
+    kernel_browser = client.browsers.create(stealth=True)
+
+    print(f"Live view url: {kernel_browser.browser_live_view_url}")
+
+    # Connect Playwright to Kernel's browser
+    with sync_playwright() as p:
+        browser = p.chromium.connect_over_cdp(kernel_browser.cdp_ws_url)
+        context = browser.contexts[0]
+        page = context.pages[0]
+
+        # Your automation code
+        page.goto('https://onkernel.com')
+        page.click('text=Documentation')
+        title = page.title()
+        print(f'Page title: {title}')
+
+        # Clean up
+        browser.close()
+        client.browsers.delete_by_id(kernel_browser.session_id)
+
+# Run the automation
+run_automation()
+```
+
+### Browser Use
+
+[Browser Use](https://github.com/browser-use/browser-use) is an AI browser agent framework. Here's how to integrate it with Laminar and Kernel:
+
+#### Python
+
+```python
+import os
+import asyncio
+from lmnr import Laminar
+from browser_use import Agent, Browser
+from langchain_anthropic import ChatAnthropic
+from kernel import Kernel
+
+# Initialize Laminar
+Laminar.initialize(project_api_key=os.environ["LMNR_PROJECT_API_KEY"])
+
+async def main():
+    # Initialize Kernel and create a browser
+    client = Kernel()
+    kernel_browser = client.browsers.create(stealth=True)
+
+    print(f"Live view url: {kernel_browser.browser_live_view_url}")
+
+    # Configure Browser Use with Kernel's CDP URL
+    browser = Browser(
+        cdp_url=kernel_browser.cdp_ws_url,
+        headless=False,
+        window_size={'width': 1024, 'height': 768},
+        viewport={'width': 1024, 'height': 768},
+        device_scale_factor=1.0
+    )
+
+    # Create and run the agent
+    agent = Agent(
+        task="Go to onkernel.com and describe what the product does",
+        llm=ChatAnthropic(model="claude-3-7-sonnet-20250219"),
+        browser_session=browser
+    )
+
+    result = await agent.run()
+    print(f"Result: {result.final_result()}")
+
+    # Clean up
+    client.browsers.delete_by_id(kernel_browser.session_id)
+
+asyncio.run(main())
+```
+
+<Info>
+View your traces in the Laminar UI's traces tab to see synchronized browser session recordings and agent execution steps.
+</Info>
+
+### Stagehand
+
+[Stagehand](https://github.com/browserbase/stagehand) is an AI browser automation framework. Here's how to use it with Laminar and Kernel:
+
+#### JavaScript/TypeScript
+
+```javascript
+import { Laminar } from '@lmnr-ai/lmnr';
+import { Stagehand } from '@browserbasehq/stagehand';
+import Kernel from '@onkernel/sdk';
+import { z } from 'zod';
+
+// Initialize Laminar with Stagehand instrumentation
+Laminar.initialize({
+  projectApiKey: process.env.LMNR_PROJECT_API_KEY,
+  instrumentModules: {
+    stagehand: Stagehand,
+  },
+});
+
+// Initialize Kernel and create a browser
+const kernel = new Kernel();
+const kernelBrowser = await kernel.browsers.create({ stealth: true });
+
+console.log("Live view url:", kernelBrowser.browser_live_view_url);
+
+// Configure Stagehand to use Kernel's browser
+const stagehand = new Stagehand({
+  env: 'LOCAL',
+  verbose: 1,
+  domSettleTimeoutMs: 30_000,
+  modelName: 'openai/gpt-4.1',
+  modelClientOptions: {
+    apiKey: process.env.OPENAI_API_KEY
+  },
+  localBrowserLaunchOptions: {
+    cdpUrl: kernelBrowser.cdp_ws_url
+  }
+});
+
+await stagehand.init();
+
+// Your automation code
+const page = stagehand.page;
+await page.goto('https://onkernel.com');
+await page.act('Click on Blog in the navbar');
+await page.act('Click on the newest blog post');
+
+const output = await page.extract({
+  instruction: 'Extract a summary of the blog post',
+  schema: z.object({
+    summary: z.string()
+  })
+});
+
+console.log('Blog post summary:', output.summary);
+
+// Clean up
+await stagehand.close();
+await kernel.browsers.deleteByID(kernelBrowser.session_id);
+
+// Flush traces to Laminar
+await Laminar.flush();
+```
+
+<Info>
+Always call `Laminar.flush()` (JavaScript) or ensure your traced functions complete (Python) to submit traces to Laminar.
+</Info>
+
+## Viewing traces in Laminar
+
+After running your automation:
+
+1. Log in to your [Laminar dashboard](https://www.lmnr.ai/)
+2. Navigate to the **Traces** tab
+3. Find your recent trace to view:
+   - Full execution timeline
+   - LLM calls and responses
+   - Browser session recordings
+   - Token usage and costs
+   - Latency metrics
+
+Timeline highlights indicate which step your agent is currently executing, making it easy to debug and optimize your automations.
+
+## Benefits of Laminar × Kernel
+
+- **No local browser management**: Run automations in the cloud while maintaining full observability
+- **Scalability**: Launch multiple browser sessions with independent traces
+- **Debugging**: Use Kernel's [live view](/browsers/live-view) during development and Laminar's session recordings for post-execution analysis
+- **Cost optimization**: Track LLM costs across all your browser automations
+- **Performance tuning**: Identify slow operations and optimize your agent workflows
+
+## Next steps
+
+- Check out [Kernel's live view](/browsers/live-view) for real-time debugging
+- Learn about [stealth mode](/browsers/stealth) for avoiding detection
+- Explore [Laminar's evaluation features](https://docs.lmnr.ai/evaluations/overview) for testing agent quality
+- Learn how to [deploy your app](/apps/deploy) to Kernel's platform
