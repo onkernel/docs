@@ -167,35 +167,6 @@ for event in stream:
 - `batch_state`: Sent when the batch job status changes (initial state and terminal states).
 - `batch_progress`: Sent when invocation counts change (succeeded or failed count updates).
 
-## Cancelling a batch job
-
-Cancel a running batch job to stop all pending invocations:
-
-<CodeGroup>
-```typescript Typescript/Javascript
-const batchJob = await kernel.batchJobs.update('batch_job_id', {
-  status: 'failed',
-  output: 'Cancelled by user',
-});
-
-console.log(`Cancelled: ${batchJob.status}`);
-```
-
-```python Python
-batch_job = kernel.batch_jobs.update(
-    "batch_job_id",
-    status="failed",
-    output="Cancelled by user",
-)
-
-print(f"Cancelled: {batch_job.status}")
-```
-</CodeGroup>
-
-<Warning>
-Cancelling a batch job stops all running and pending invocations. Completed invocations are not affected.
-</Warning>
-
 ## Batch job statuses
 
 Batch jobs progress through the following statuses:
@@ -203,7 +174,7 @@ Batch jobs progress through the following statuses:
 - `queued`: Batch job created, waiting to start.
 - `running`: Invocations are being executed.
 - `succeeded`: All invocations completed successfully.
-- `failed`: Batch job was cancelled or encountered a critical error.
+- `failed`: Batch job encountered a critical error.
 - `partially_failed`: Some invocations succeeded, others failed.
 
 ## Best practices
