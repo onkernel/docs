@@ -111,6 +111,7 @@
                   "integrations/computer-use/openai"
                 ]
               },
+              "integrations/laminar",
               "integrations/magnitude",
               "integrations/notte",
               "integrations/stagehand",
