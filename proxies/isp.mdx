@@ -6,7 +6,7 @@ ISP (Internet Service Provider) proxies combine the speed of datacenter proxies 
 
 ## Configuration
 
-Create an ISP proxy with optional targeting:
+Create an ISP proxy:
 
 <CodeGroup>
 ```typescript Typescript/Javascript
@@ -37,7 +37,3 @@ proxy = kernel.proxies.create(
 browser = kernel.browsers.create(proxy_id=proxy.id)
 ```
 </CodeGroup>
-
-## Configuration Parameters
-
-- **`country`** (required) - ISO 3166 country code. Not many countries are supported for ISP proxies, try to create a proxy in a country to check if it's available.
