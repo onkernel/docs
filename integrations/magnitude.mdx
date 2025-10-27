@@ -26,10 +26,7 @@ import z from 'zod';
 const kernel = new Kernel();
 
 const kernelBrowser = await kernel.browsers.create({
-    viewport: {
-        width: 1920,
-        height: 1080
-    }
+  stealth: true,
 });
 
 console.log(`Live view url: ${kernelBrowser.browser_live_view_url}`);
@@ -45,12 +42,6 @@ const agent = await startBrowserAgent({
     narrate: true,
     browser: {
         cdp: kernelBrowser.cdp_ws_url,
-        contextOptions: {
-            viewport: {
-                width: 1920,
-                height: 1080
-            }
-        }
     },
     llm: {
         provider: 'anthropic',

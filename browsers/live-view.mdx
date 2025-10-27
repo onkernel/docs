@@ -45,20 +45,12 @@ Kiosk mode provides a fullscreen live view experience without browser UI element
 
 ```typescript Typescript/Javascript
 const browser = await kernel.browsers.create({
-    viewport: {
-        width: 1920,
-        height: 1080
-    },
     kiosk_mode: true
 });
 ```
 
 ```python Python
 kernel_browser = kernel.browsers.create(
-    viewport={
-        "width": 1920,
-        "height": 1080
-    },
     kiosk_mode=True
 )
 ```
