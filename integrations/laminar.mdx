@@ -2,7 +2,7 @@
 title: "Laminar"
 ---
 
-[Laminar](https://www.lmnr.ai/) is an observability and evaluation platform for AI applications. By integrating Laminar with Kernel, you can trace and monitor your browser automations with full visibility into LLM calls, browser actions, session recordings, and performance metrics.
+[Laminar](https://www.lmnr.ai/) is an open-source observability and evaluation platform for autonomous AI agents. You can create a cloud account or self-host Laminar for your infrastructure. By integrating Laminar with Kernel, you can trace and monitor your browser automations with full visibility into LLM calls, browser actions, session recordings, and performance metrics.
 
 ## Why use Laminar with Kernel?
 
@@ -37,7 +37,7 @@ uv pip install --upgrade 'lmnr[all]' kernel
 1. Log in to your [Laminar dashboard](https://www.lmnr.ai/)
 2. Navigate to **Project Settings**
 3. Generate a new API key in your project
-4. Copy your **Project API Key** (referred to as `LAMINAR_PROJECT_API_KEY`)
+4. Copy your **Project API Key**
 5. Set it as an environment variable:
 
 ```bash
@@ -56,9 +56,17 @@ Select your browser automation framework to enable Laminar tracing with Kernel:
 - [Browser Use](#browser-use)
 - [Stagehand](#stagehand)
 
+<Info>
+Always call `Laminar.flush()` or ensure your traced functions complete to submit traces to Laminar.
+</Info>
+
 ### Playwright
 
 Playwright is a popular low-level browser automation framework. Here's how to use it with Laminar and Kernel:
+
+<Info>
+The Playwright examples include `waitForTimeout()` calls to help ensure Laminar traces populate properly for these short, fast code snippets.
+</Info>
 
 <CodeGroup>
 ```javascript Typescript/Javascript
@@ -90,8 +98,14 @@ const browser = await chromium.connectOverCDP(kernelBrowser.cdp_ws_url);
 const context = browser.contexts()[0] || (await browser.newContext());
 const page = context.pages()[0] || (await context.newPage());
 
+// Wait for 3 second
+await page.waitForTimeout(3000);
+
 // Your automation code
 await page.goto('https://www.onkernel.com/docs');
+
+// Wait for 2 second
+await page.waitForTimeout(2000);
 
 // Navigate to careers page
 await page.goto('https://www.onkernel.com/docs/careers/intro', { waitUntil: 'networkidle' });
@@ -112,12 +126,15 @@ const jobLinks = await page.locator('#open-roles + ul a').evaluateAll((links) =>
 console.log('Job URLs found:', jobLinks);
 console.log(`Total jobs: ${jobLinks.length}`);
 
-// Clean up
-await browser.close();
-await kernel.browsers.deleteByID(kernelBrowser.session_id);
+// Wait for 3 seconds
+await page.waitForTimeout(3000);
 
-// Flush traces to Laminar
+// Clean up the browserand flush traces to Laminar
+await browser.close();
 await Laminar.flush();
+
+// Delete the browser for those who left open the live view url
+await kernel.browsers.deleteByID(kernelBrowser.session_id);
 ```
 
 ```python Python
@@ -144,12 +161,18 @@ def run_automation():
         context = browser.contexts[0] if browser.contexts else browser.new_context()
         page = context.pages[0] if context.pages else context.new_page()
 
+        # Wait for 3 seconds
+        page.wait_for_timeout(3000)
+
         # Your automation code
         page.goto('https://www.onkernel.com/docs')
 
+        # Wait for 2 seconds
+        page.wait_for_timeout(3000)
+
         # Navigate to careers page
         page.goto('https://www.onkernel.com/docs/careers/intro')
-        page.wait_for_timeout(2000)  # Wait 2 seconds
+        page.wait_for_timeout(3000)  # Wait 2 seconds
 
         # Extract all job URLs from the ul next to #open-roles
         job_links = page.locator('#open-roles + ul a').evaluate_all("""
@@ -169,11 +192,17 @@ def run_automation():
         print(f'Job URLs found: {job_links}')
         print(f'Total jobs: {len(job_links)}')
 
-        # Clean up
-        client.browsers.delete_by_id(kernel_browser.session_id)
+        # Wait for 3 seconds
+        page.wait_for_timeout(3000)
 
-# Flush traces to Laminar 
-Laminar.flush()
+        # Clean up the browser
+        browser.close()
+
+    # Flush traces to Laminar
+    Laminar.flush()
+
+    # Delete the browser for those who left open the Kernel live view url
+    client.browsers.delete_by_id(kernel_browser.session_id)
 
 # Run the automation
 run_automation()
@@ -227,15 +256,14 @@ async def main():
     result = await agent.run()
     print(f"Job URLs found:\n{result.final_result()}")
 
-    # Clean up
+    # Flush traces to Laminar
+    Laminar.flush()
+
+    # Delete the browser for those who left open the live view url
     client.browsers.delete_by_id(kernel_browser.session_id)
 
 asyncio.run(main())
 ```
-
-<Info>
-View your traces in the Laminar UI's traces tab to see synchronized browser session recordings and agent execution steps.
-</Info>
 
 ### Stagehand
 
@@ -286,7 +314,7 @@ await page.goto('https://www.onkernel.com/docs/careers/intro');
 
 // Extract all job URLs
 const output = await page.extract({
-  instruction: 'Extract all job posting URLs from the page. Look for the section with job listings and get all the links.',
+  instruction: 'Extract all job posting URLs from the Open Roles section.',
   schema: z.object({
     jobUrls: z.array(z.string()).describe('Array of job posting URLs')
   })
@@ -295,19 +323,17 @@ const output = await page.extract({
 console.log('Job URLs found:', output.jobUrls);
 console.log(`Total jobs: ${output.jobUrls.length}`);
 
-// Clean up
+// Clean up and flush traces to Laminar
 await stagehand.close();
-await kernel.browsers.deleteByID(kernelBrowser.session_id);
-
-// Flush traces to Laminar
 await Laminar.flush();
+
+// Delete the browser for those who left open the live view url
+await kernel.browsers.deleteByID(kernelBrowser.session_id);
 ```
 
-<Info>
-Always call `Laminar.flush()` (JavaScript) or ensure your traced functions complete (Python) to submit traces to Laminar.
-</Info>
-
 ## Viewing traces in Laminar
+
+View your traces in the Laminar UI's traces tab to see synchronized browser session recordings and agent execution steps.
 
 After running your automation:
 
@@ -324,7 +350,7 @@ Timeline highlights indicate which step your agent is currently executing, makin
 
 ## Next steps
 
-- Check out [Kernel's live view](/browsers/live-view) for real-time debugging
+- Explore [Laminar's tracing structure](https://docs.lmnr.ai/tracing/structure/overview) to understand how traces are organized
+- Learn about [Laminar's evaluations](https://docs.lmnr.ai/evaluations/introduction) for validating and testing your AI application outputs
 - Learn about [stealth mode](/browsers/stealth) for avoiding detection
-- Explore [Laminar's evaluation features](https://docs.lmnr.ai/evaluations/introduction) for testing agent quality
 - Learn how to [deploy your app](/apps/deploy) to Kernel's platform
