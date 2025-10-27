@@ -20,9 +20,9 @@ const batchJob = await kernel.invocations.batch.create({
   action_name: 'analyze',
   version: '1.0.0',
   payloads: [
-    '{"url": "https://example.com/page1"}',
-    '{"url": "https://example.com/page2"}',
-    '{"url": "https://example.com/page3"}',
+    JSON.stringify({ url: "https://example.com/page1" }),
+    JSON.stringify({ url: "https://example.com/page2" }),
+    JSON.stringify({ url: "https://example.com/page3" }),
   ],
   max_concurrency: 5, // Optional: limit concurrent executions
 });
@@ -33,6 +33,7 @@ console.log(batchJob.total_count);
 
 ```python Python
 from kernel import Kernel
+import json
 
 kernel = Kernel()
 
@@ -41,9 +42,9 @@ batch_job = kernel.invocations.batch.create(
     action_name="analyze",
     version="1.0.0",
     payloads=[
-        '{"url": "https://example.com/page1"}',
-        '{"url": "https://example.com/page2"}',
-        '{"url": "https://example.com/page3"}',
+        json.dumps({"url": "https://example.com/page1"}),
+        json.dumps({"url": "https://example.com/page2"}),
+        json.dumps({"url": "https://example.com/page3"}),
     ],
     max_concurrency=5,  # Optional: limit concurrent executions
 )
@@ -59,7 +60,7 @@ print(batch_job.total_count)
 - `action_name` (required): The action to invoke.
 - `version` (optional): The app version to use. Defaults to `"latest"`.
 - `payloads` (required): Array of JSON strings, each representing a payload for one invocation.
-- `max_concurrency` (optional): Maximum number of concurrent invocations. If not specified, all invocations run in parallel.
+- `max_concurrency` (optional): Maximum number of concurrent invocations. If not specified, defaults to your organization's max_concurrent_invocations limit (5 for Developer, 50 for Start-Up, 1000 for Enterprise).
 
 <Info>
 Each payload must be a valid JSON string and follows the same 64 KB size limit as regular invocations.
@@ -192,7 +193,7 @@ print(f"Cancelled: {batch_job.status}")
 </CodeGroup>
 
 <Warning>
-Cancelling a batch job only prevents new invocations from starting. Already running invocations will continue to completion.
+Cancelling a batch job stops all running and pending invocations. Completed invocations are not affected.
 </Warning>
 
 ## Batch job statuses
