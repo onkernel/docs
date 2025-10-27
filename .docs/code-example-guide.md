@@ -184,10 +184,6 @@ import Kernel from '@onkernel/sdk';
 const kernel = new Kernel();
 
 const kernelBrowser = await kernel.browsers.create({
-  viewport: {
-    width: 1920,
-    height: 1080
-  },
   stealth: true
 });
 ```
@@ -198,10 +194,6 @@ from kernel import Kernel
 kernel = Kernel()
 
 kernel_browser = kernel.browsers.create(
-    viewport={
-        "width": 1920,
-        "height": 1080
-    },
     stealth=True
 )
 ```
