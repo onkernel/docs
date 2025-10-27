@@ -16,7 +16,7 @@ title: "Laminar"
 
 Before integrating Laminar with Kernel, you'll need:
 
-1. A [Kernel account](https://dashboard.onkernel.com/sign-up) with API access
+1. A [Kernel account](https://dashboard.onkernel.com/sign-up) with a Kernel API Key
 2. A [Laminar account](https://www.lmnr.ai/) and project
 3. Your Laminar project API key from the Project Settings page
 
@@ -43,6 +43,10 @@ uv pip install --upgrade 'lmnr[all]' kernel
 ```bash
 export LMNR_PROJECT_API_KEY=your_api_key_here
 ```
+
+<Info>
+You will also need to generate a `KERNEL_API_KEY` from your [Kernel dashboard](https://dashboard.onkernel.com/api-keys) to authenticate with Kernel's browser infrastructure.
+</Info>
 
 ## Browser Agent Framework Examples
 
@@ -83,14 +87,30 @@ console.log("Live view url:", kernelBrowser.browser_live_view_url);
 
 // Connect Playwright to Kernel's browser via CDP
 const browser = await chromium.connectOverCDP(kernelBrowser.cdp_ws_url);
-const context = browser.contexts()[0];
-const page = context.pages()[0];
+const context = browser.contexts()[0] || (await browser.newContext());
+const page = context.pages()[0] || (await context.newPage());
 
 // Your automation code
-await page.goto('https://onkernel.com');
-await page.click('text=Documentation');
-const title = await page.title();
-console.log('Page title:', title);
+await page.goto('https://www.onkernel.com/docs');
+
+// Navigate to careers page
+await page.goto('https://www.onkernel.com/docs/careers/intro', { waitUntil: 'networkidle' });
+
+// Extract all job URLs from the ul next to #open-roles
+const jobLinks = await page.locator('#open-roles + ul a').evaluateAll((links) => {
+  const baseUrl = 'https://www.onkernel.com';
+  return links
+    .map(link => {
+      const href = link.getAttribute('href');
+      if (!href) return null;
+      // Convert relative URLs to absolute URLs
+      return href.startsWith('http') ? href : baseUrl + href;
+    })
+    .filter(href => href !== null);
+});
+
+console.log('Job URLs found:', jobLinks);
+console.log(`Total jobs: ${jobLinks.length}`);
 
 // Clean up
 await browser.close();
@@ -121,18 +141,39 @@ def run_automation():
     # Connect Playwright to Kernel's browser
     with sync_playwright() as p:
         browser = p.chromium.connect_over_cdp(kernel_browser.cdp_ws_url)
-        context = browser.contexts[0]
-        page = context.pages[0]
+        context = browser.contexts[0] if browser.contexts else browser.new_context()
+        page = context.pages[0] if context.pages else context.new_page()
 
         # Your automation code
-        page.goto('https://onkernel.com')
-        page.click('text=Documentation')
-        title = page.title()
-        print(f'Page title: {title}')
+        page.goto('https://www.onkernel.com/docs')
+
+        # Navigate to careers page
+        page.goto('https://www.onkernel.com/docs/careers/intro')
+        page.wait_for_timeout(2000)  # Wait 2 seconds
+
+        # Extract all job URLs from the ul next to #open-roles
+        job_links = page.locator('#open-roles + ul a').evaluate_all("""
+            (links) => {
+                const baseUrl = 'https://www.onkernel.com';
+                return links
+                    .map(link => {
+                        const href = link.getAttribute('href');
+                        if (!href) return null;
+                        // Convert relative URLs to absolute URLs
+                        return href.startsWith('http') ? href : baseUrl + href;
+                    })
+                    .filter(href => href !== null);
+            }
+        """)
+
+        print(f'Job URLs found: {job_links}')
+        print(f'Total jobs: {len(job_links)}')
 
         # Clean up
-        browser.close()
         client.browsers.delete_by_id(kernel_browser.session_id)
+
+# Flush traces to Laminar 
+Laminar.flush()
 
 # Run the automation
 run_automation()
@@ -147,8 +188,7 @@ run_automation()
 import os
 import asyncio
 from lmnr import Laminar
-from browser_use import Agent, Browser
-from langchain_anthropic import ChatAnthropic
+from browser_use import Agent, Browser, ChatOpenAI
 from kernel import Kernel
 
 # Initialize Laminar
@@ -157,7 +197,7 @@ Laminar.initialize(project_api_key=os.environ["LMNR_PROJECT_API_KEY"])
 async def main():
     # Initialize Kernel and create a browser
     client = Kernel()
-    kernel_browser = client.browsers.create(stealth=True)
+    kernel_browser = client.browsers.create(stealth=True, viewport={'width': 1920, 'height': 1080})
 
     print(f"Live view url: {kernel_browser.browser_live_view_url}")
 
@@ -165,20 +205,27 @@ async def main():
     browser = Browser(
         cdp_url=kernel_browser.cdp_ws_url,
         headless=False,
-        window_size={'width': 1024, 'height': 768},
-        viewport={'width': 1024, 'height': 768},
+        window_size={'width': 1920, 'height': 1080},
+        viewport={'width': 1920, 'height': 1080},
         device_scale_factor=1.0
     )
 
-    # Create and run the agent
+    # Initialize the model
+    llm = ChatOpenAI(
+        model="gpt-4.1",
+    )
+
+    # Create and run the agent with job extraction task
     agent = Agent(
-        task="Go to onkernel.com and describe what the product does",
-        llm=ChatAnthropic(model="claude-3-7-sonnet-20250219"),
+        task="""1. Go to https://www.onkernel.com/docs
+        2. Navigate to the main Jobs page
+        3. Extract all the job posting URLs. List each URL you find.""",
+        llm=llm,
         browser_session=browser
     )
 
     result = await agent.run()
-    print(f"Result: {result.final_result()}")
+    print(f"Job URLs found:\n{result.final_result()}")
 
     # Clean up
     client.browsers.delete_by_id(kernel_browser.session_id)
@@ -194,7 +241,6 @@ View your traces in the Laminar UI's traces tab to see synchronized browser sess
 
 [Stagehand](https://github.com/browserbase/stagehand) is an AI browser automation framework. Here's how to use it with Laminar and Kernel:
 
-<CodeGroup>
 ```javascript Typescript/Javascript
 import { Laminar } from '@lmnr-ai/lmnr';
 import { Stagehand } from '@browserbasehq/stagehand';
@@ -233,18 +279,21 @@ await stagehand.init();
 
 // Your automation code
 const page = stagehand.page;
-await page.goto('https://onkernel.com');
-await page.act('Click on Blog in the navbar');
-await page.act('Click on the newest blog post');
+await page.goto('https://www.onkernel.com/docs');
 
+// Navigate to careers page
+await page.goto('https://www.onkernel.com/docs/careers/intro');
+
+// Extract all job URLs
 const output = await page.extract({
-  instruction: 'Extract a summary of the blog post',
+  instruction: 'Extract all job posting URLs from the page. Look for the section with job listings and get all the links.',
   schema: z.object({
-    summary: z.string()
+    jobUrls: z.array(z.string()).describe('Array of job posting URLs')
   })
 });
 
-console.log('Blog post summary:', output.summary);
+console.log('Job URLs found:', output.jobUrls);
+console.log(`Total jobs: ${output.jobUrls.length}`);
 
 // Clean up
 await stagehand.close();
@@ -253,58 +302,6 @@ await kernel.browsers.deleteByID(kernelBrowser.session_id);
 // Flush traces to Laminar
 await Laminar.flush();
 ```
-
-```python Python
-import os
-from lmnr import Laminar
-from stagehand import Stagehand
-from kernel import Kernel
-
-# Initialize Laminar
-Laminar.initialize(project_api_key=os.environ["LMNR_PROJECT_API_KEY"])
-
-# Initialize Kernel and create a browser
-client = Kernel()
-kernel_browser = client.browsers.create(stealth=True)
-
-print(f"Live view url: {kernel_browser.browser_live_view_url}")
-
-# Configure Stagehand to use Kernel's browser
-stagehand = Stagehand(
-    env="LOCAL",
-    verbose=1,
-    dom_settle_timeout_ms=30_000,
-    model_name="openai/gpt-4.1",
-    model_client_options={
-        "api_key": os.environ["OPENAI_API_KEY"]
-    },
-    local_browser_launch_options={
-        "cdp_url": kernel_browser.cdp_ws_url
-    }
-)
-
-stagehand.init()
-
-# Your automation code
-page = stagehand.page
-page.goto('https://onkernel.com')
-page.act('Click on Blog in the navbar')
-page.act('Click on the newest blog post')
-
-output = page.extract(
-    instruction='Extract a summary of the blog post',
-    schema={
-        "summary": {"type": "string"}
-    }
-)
-
-print(f"Blog post summary: {output['summary']}")
-
-# Clean up
-stagehand.close()
-client.browsers.delete_by_id(kernel_browser.session_id)
-```
-</CodeGroup>
 
 <Info>
 Always call `Laminar.flush()` (JavaScript) or ensure your traced functions complete (Python) to submit traces to Laminar.
