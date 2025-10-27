@@ -91,6 +91,7 @@
               "apps/develop",
               "apps/deploy",
               "apps/invoke",
+              "apps/batching",
               "apps/stop",
               "apps/secrets",
               "apps/status",
