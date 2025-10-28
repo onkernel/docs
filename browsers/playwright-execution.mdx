@@ -18,6 +18,10 @@ When you execute Playwright code through this API:
 ## Quick example
 
 <CodeGroup>
+```bash CLI
+kernel browsers playwright execute <session_id> 'await page.goto("https://www.onkernel.com"); return page.title();'
+```
+
 ```typescript Typescript/Javascript
 import Kernel from '@onkernel/sdk';
 
