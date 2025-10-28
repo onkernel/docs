@@ -1,0 +1,237 @@
+---
+title: "Playwright execution"
+description: "Execute Playwright code directly against your browser"
+---
+
+Execute arbitrary Playwright/TypeScript code in a fresh execution context against your browser. The code runs in the same VM as the browser, minimizing latency and maximizing throughput.
+
+## How it works
+
+When you execute Playwright code through this API:
+- Your code runs directly in the browser's VM (no CDP overhead)
+- You have access to `page`, `context`, and `browser` variables
+- You can `return` a value, which is returned in the response
+- Execution is isolated in a fresh context each time
+
+## Quick example
+
+<CodeGroup>
+```typescript Typescript/Javascript
+import Kernel from '@onkernel/sdk';
+
+const kernel = new Kernel();
+
+// Create a browser
+const kernelBrowser = await kernel.browsers.create();
+
+// Execute Playwright code
+const response = await kernel.browsers.playwright.execute(
+  kernelBrowser.session_id,
+  {
+    code: `
+      await page.goto('https://example.com');
+      return await page.title();
+    `
+  }
+);
+
+console.log(response.result); // "Example Domain"
+```
+
+```python Python
+from kernel import Kernel
+
+kernel = Kernel()
+
+# Create a browser
+kernel_browser = kernel.browsers.create()
+
+# Execute Playwright code
+response = kernel.browsers.playwright.execute(
+    id=kernel_browser.session_id,
+    code="""
+        await page.goto('https://example.com')
+        return await page.title()
+    """
+)
+
+print(response.result)  # "Example Domain"
+```
+</CodeGroup>
+
+## Available variables
+
+Your code has access to these Playwright objects:
+
+- `page` - The current page instance
+- `context` - The browser context
+- `browser` - The browser instance
+
+## Returning values
+
+Use a `return` statement to send data back from your code:
+
+<CodeGroup>
+```typescript Typescript/Javascript
+const response = await kernel.browsers.playwright.execute(
+  sessionId,
+  {
+    code: `
+      await page.goto('https://example.com');
+      const title = await page.title();
+      const url = page.url();
+      return { title, url };
+    `
+  }
+);
+
+console.log(response.result); // { title: "Example Domain", url: "https://example.com" }
+```
+
+```python Python
+response = kernel.browsers.playwright.execute(
+    id=session_id,
+    code="""
+        await page.goto('https://example.com')
+        title = await page.title()
+        url = page.url()
+        return {'title': title, 'url': url}
+    """
+)
+
+print(response.result)  # {'title': 'Example Domain', 'url': 'https://example.com'}
+```
+</CodeGroup>
+
+## Timeout configuration
+
+Set a custom timeout (default is 60 seconds, max is 300 seconds):
+
+<CodeGroup>
+```typescript Typescript/Javascript
+const response = await kernel.browsers.playwright.execute(
+  sessionId,
+  {
+    code: `
+      await page.goto('https://example.com');
+      return await page.title();
+    `,
+    timeout_sec: 120
+  }
+);
+```
+
+```python Python
+response = kernel.browsers.playwright.execute(
+    id=session_id,
+    code="""
+        await page.goto('https://example.com')
+        return await page.title()
+    """,
+    timeout_sec=120
+)
+```
+</CodeGroup>
+
+## Error handling
+
+The response includes error information if execution fails:
+
+<CodeGroup>
+```typescript Typescript/Javascript
+const response = await kernel.browsers.playwright.execute(
+  sessionId,
+  {
+    code: `
+      await page.goto('https://invalid-url');
+      return await page.title();
+    `
+  }
+);
+
+if (!response.success) {
+  console.error('Error:', response.error);
+  console.error('Stderr:', response.stderr);
+}
+```
+
+```python Python
+response = kernel.browsers.playwright.execute(
+    id=session_id,
+    code="""
+        await page.goto('https://invalid-url')
+        return await page.title()
+    """
+)
+
+if not response.success:
+    print('Error:', response.error)
+    print('Stderr:', response.stderr)
+```
+</CodeGroup>
+
+## Use cases
+
+### Web scraping
+Extract data from multiple pages without CDP overhead:
+
+```typescript
+const response = await kernel.browsers.playwright.execute(
+  sessionId,
+  {
+    code: `
+      await page.goto('https://news.ycombinator.com');
+      const titles = await page.$$eval('.titleline > a', 
+        links => links.map(link => link.textContent)
+      );
+      return titles.slice(0, 10);
+    `
+  }
+);
+```
+
+### Form automation
+Fill and submit forms quickly:
+
+```typescript
+const response = await kernel.browsers.playwright.execute(
+  sessionId,
+  {
+    code: `
+      await page.goto('https://example.com/form');
+      await page.fill('#email', 'user@example.com');
+      await page.fill('#password', 'password123');
+      await page.click('button[type="submit"]');
+      await page.waitForNavigation();
+      return page.url();
+    `
+  }
+);
+```
+
+### Testing and validation
+Run quick checks against your browser state:
+
+```typescript
+const response = await kernel.browsers.playwright.execute(
+  sessionId,
+  {
+    code: `
+      const cookies = await context.cookies();
+      const localStorage = await page.evaluate(() => 
+        JSON.stringify(window.localStorage)
+      );
+      return { cookies, localStorage };
+    `
+  }
+);
+```
+
+## Performance benefits
+
+Compared to connecting over CDP:
+- **Lower latency** - Code runs in the same VM as the browser
+- **Higher throughput** - No websocket overhead for commands
+- **Simpler code** - No need to manage CDP connections
+
+This makes it ideal for one-off operations where you need maximum speed.
