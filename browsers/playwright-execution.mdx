@@ -18,10 +18,6 @@ When you execute Playwright code through this API:
 ## Quick example
 
 <CodeGroup>
-```bash CLI
-kernel browsers playwright execute <session_id> 'await page.goto("https://www.onkernel.com"); return page.title();'
-```
-
 ```typescript Typescript/Javascript
 import Kernel from '@onkernel/sdk';
 
@@ -41,7 +37,7 @@ const response = await kernel.browsers.playwright.execute(
   }
 );
 
-console.log(response.result); // "Example Domain"
+console.log(response.result); // "Example Page Title"
 ```
 
 ```python Python
@@ -61,7 +57,11 @@ response = kernel.browsers.playwright.execute(
     """
 )
 
-print(response.result)  # "Example Domain"
+print(response.result)  # "Example Page Title"
+```
+
+```bash CLI
+kernel browsers playwright execute <session_id> 'await page.goto("https://www.onkernel.com"); return page.title();'
 ```
 </CodeGroup>
 
