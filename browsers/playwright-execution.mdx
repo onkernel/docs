@@ -233,6 +233,33 @@ const response = await kernel.browsers.playwright.execute(
 );
 ```
 
+### Screenshots
+Capture screenshots using Playwright's native screenshot API:
+
+```typescript
+const response = await kernel.browsers.playwright.execute(
+  sessionId,
+  {
+    code: `
+      await page.goto('https://example.com');
+      const screenshot = await page.screenshot({ 
+        type: 'png',
+        fullPage: true 
+      });
+      return screenshot.toString('base64');
+    `
+  }
+);
+
+// Decode and save the screenshot
+const buffer = Buffer.from(response.result, 'base64');
+fs.writeFileSync('screenshot.png', buffer);
+```
+
+<Note>
+For OS-level screenshots using coordinates and regions, see [Computer Controls](/browsers/computer-controls#take-screenshots).
+</Note>
+
 ## Performance benefits
 
 Compared to connecting over CDP:
