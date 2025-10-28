@@ -56,7 +56,6 @@
             "group": "Browsers",
             "pages": [
               "browsers/create-a-browser",
-              "browsers/playwright-execution",
               "browsers/headless",
               "browsers/viewport",
               "browsers/standby",
@@ -83,7 +82,8 @@
                   }
                 ]
               },
-              "browsers/computer-controls"
+              "browsers/computer-controls",
+              "browsers/playwright-execution"
             ]
           },
           {
