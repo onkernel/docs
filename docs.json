@@ -82,7 +82,8 @@
                   }
                 ]
               },
-              "browsers/computer-controls"
+              "browsers/computer-controls",
+              "browsers/playwright-execution"
             ]
           },
           {
