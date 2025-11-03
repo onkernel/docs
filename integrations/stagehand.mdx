@@ -4,6 +4,10 @@ title: "Stagehand"
 
 [Stagehand](https://github.com/browserbase/stagehand) is an open source AI browser automation framework. It lets developers choose what to write in code vs. natural language. By integrating with Kernel, you can run Stagehand automations with cloud-hosted browsers.
 
+<Note>
+This guide is compatible with Stagehand SDK v3. If you're using an earlier version, please refer to the [Stagehand migration guide](https://docs.stagehand.dev/migration) or upgrade to v3.
+</Note>
+
 ## Adding Kernel to existing Stagehand implementations
 
 If you already have a Stagehand implementation, you can easily switch to using Kernel's cloud browsers by updating your browser configuration.
@@ -39,7 +43,7 @@ const stagehand = new Stagehand({
   env: 'LOCAL',
   verbose: 1,
   domSettleTimeoutMs: 30_000,
-  modelName: 'openai/gpt-4.1',
+  modelName: 'openai/gpt-4o',
   modelClientOptions: {
     apiKey: process.env.OPENAI_API_KEY
   },
