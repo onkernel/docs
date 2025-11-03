@@ -5,6 +5,24 @@ description: "Configure browser viewport size and refresh rate for your automati
 
 Kernel browsers allow you to configure the viewport size and refresh rate when creating a browser session. The viewport configuration determines the initial browser window dimensions and display refresh rate. The refresh rate can be explicitly specified or automatically determined based on the width and height if they match a supported configuration.
 
+## Default viewport
+
+If the `viewport` parameter is omitted when creating a browser, the default configuration is 1920x1080 at 25Hz.
+
+<CodeGroup>
+
+```typescript Typescript/Javascript
+// Uses default viewport (1920x1080@25Hz)
+const defaultViewport = await kernel.browsers.create();
+```
+
+```python Python
+# Uses default viewport (1920x1080@25Hz)
+default_viewport = kernel.browsers.create()
+```
+
+</CodeGroup>
+
 ## Setting viewport configuration
 
 You can configure the viewport when creating a browser by specifying the `viewport` parameter with `width` and `height`. The `refresh_rate` is optional and will be automatically determined from the dimensions if they match a supported configuration:
@@ -94,7 +112,7 @@ const fullHD = await kernel.browsers.create({
   }
 });
 
-// Full HD (1920x1080) - auto-determined 25Hz
+// Full HD (1920x1080) - auto-determined 25Hz (Default configuration)
 const fullHDAuto = await kernel.browsers.create({
   viewport: {
     width: 1920,
@@ -111,7 +129,7 @@ const qhd = await kernel.browsers.create({
   }
 });
 
-// XGA (1024x768) - auto-determined 60Hz (Default configuration)
+// XGA (1024x768) - auto-determined 60Hz
 const xga = await kernel.browsers.create({
   viewport: {
     width: 1024,
@@ -139,7 +157,7 @@ full_hd = kernel.browsers.create(
     }
 )
 
-# Full HD (1920x1080) - auto-determined 25Hz
+# Full HD (1920x1080) - auto-determined 25Hz (Default configuration)
 full_hd_auto = kernel.browsers.create(
     viewport={
         "width": 1920,
@@ -156,7 +174,7 @@ qhd = kernel.browsers.create(
     }
 )
 
-# XGA (1024x768) - auto-determined 60Hz (Default configuration)
+# XGA (1024x768) - auto-determined 60Hz
 xga = kernel.browsers.create(
     viewport={
         "width": 1024,
@@ -172,24 +190,6 @@ wuxga = kernel.browsers.create(
         "refresh_rate": 25
     }
 )
-```
-
-</CodeGroup>
-
-## Default viewport
-
-If the `viewport` parameter is omitted when creating a browser, the default configuration is typically 1024x768 at 60Hz.
-
-<CodeGroup>
-
-```typescript Typescript/Javascript
-// Uses default viewport (1024x768@60Hz)
-const defaultViewport = await kernel.browsers.create();
-```
-
-```python Python
-# Uses default viewport (1024x768@60Hz)
-default_viewport = kernel.browsers.create()
 ```
 
 </CodeGroup>
