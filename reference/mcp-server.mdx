@@ -16,6 +16,30 @@ Use the streamable HTTP endpoint where supported for increased reliability. If y
 
 Kernel's server is a centrally hosted, authenticated remote MCP using OAuth 2.1 with dynamic client registration.
 
+## Authentication
+
+### OAuth (Recommended)
+
+The MCP server uses OAuth 2.1 for user authentication. When you connect through supported clients, you'll be prompted to authorize access via your browser.
+
+### API Key Authentication
+
+For programmatic access or service-to-service authentication, you can use your Kernel API key instead of OAuth:
+
+1. Include your API key in the `Authorization` header as a Bearer token:
+   ```
+   Authorization: Bearer YOUR_KERNEL_API_KEY
+   ```
+
+2. The server automatically detects non-JWT tokens and treats them as API keys.
+
+3. API key authentication is useful for:
+   - Automated workflows and CI/CD pipelines
+   - Server-to-server integrations
+   - Environments where OAuth flows are not practical
+
+<Note>API keys bypass the OAuth flow but still require valid Kernel credentials. Ensure your API key is kept secure and not exposed in client-side code.</Note>
+
 ## Connect in your client
 
 ### Claude
