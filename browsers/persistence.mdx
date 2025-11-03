@@ -42,9 +42,6 @@ During runtime, Kernel will search for a browser with the specified `id`:
 - If a browser with the specified `persistence id` is _not_ found, a new browser instance will be created and assigned the specified `persistence id` for future reuse.
 - Reusing an existing browser restores its exact state and stealth configurations. Stealth configs cannot be changed for an existing browser.
 
-<Warning>
-New browser features and API endpoints are only available on newly created browser instances. If you have a persistent browser that was created before a feature was released, you must [delete the browser](/browsers/termination) and create a new one to access the new functionality.
-</Warning>
 
 The browser's `persistence id` can be any string. You can set it to an identifier in your system to match it to a user, environment, website, or something else.
 
