@@ -4,9 +4,13 @@ title: "Stagehand"
 
 [Stagehand](https://github.com/browserbase/stagehand) is an open source AI browser automation framework. It lets developers choose what to write in code vs. natural language. By integrating with Kernel, you can run Stagehand automations with cloud-hosted browsers.
 
+<Note>
+This guide is compatible with Stagehand SDK v3. If you're using an earlier version, please refer to the [Stagehand migration guide](https://docs.stagehand.dev/v3/migrations/v2) or upgrade to v3.
+</Note>
+
 ## Adding Kernel to existing Stagehand implementations
 
-If you already have a Stagehand implementation, you can easily switch to using Kernel's cloud browsers by updating your browser configuration.
+If you already have a Stagehand (v3) implementation, you can easily switch to using Kernel's cloud browsers by updating your browser configuration.
 
 ### 1. Install the Kernel SDK
 
@@ -36,16 +40,14 @@ Replace your existing browser setup to use Kernel's CDP URL:
 
 ```typescript
 const stagehand = new Stagehand({
-  env: 'LOCAL',
-  verbose: 1,
-  domSettleTimeoutMs: 30_000,
-  modelName: 'openai/gpt-4.1',
-  modelClientOptions: {
-    apiKey: process.env.OPENAI_API_KEY
-  },
+  env: "LOCAL",
   localBrowserLaunchOptions: {
-    cdpUrl: kernelBrowser.cdp_ws_url
-  }
+    cdpUrl: kernelBrowser.cdp_ws_url,
+  },
+  model: "openai/gpt-4.1",
+  apiKey: process.env.OPENAI_API_KEY,
+  verbose: 1,
+  domSettleTimeout: 30_000
 });
 
 await stagehand.init();
@@ -56,20 +58,19 @@ await stagehand.init();
 Use Stagehand's page methods with the Kernel-powered browser:
 
 ```typescript
-const page = stagehand.page;
+const page = stagehand.context.pages()[0];
 await page.goto("https://onkernel.com");
-await page.act("Click on Blog in the navbar");
-await page.act("Click on the newest blog post");
-const output = await page.extract({
-  instruction: "Extract a summary of the blog post",
-  schema: z.object({ summary: z.string() })
-});
+await stagehand.act("Click on Blog in the navbar");
+await stagehand.act("Click on the newest blog post");
+const output = await stagehand.extract(
+  "Extract a summary of the blog post",
+  z.object({ summary: z.string() })
+);
 
 console.log("Newest blog post summary: ", output.summary);
 
+// Clean up
 await stagehand.close();
-
-// Clean up the Kernel Browser Session
 await kernel.browsers.deleteByID(kernelBrowser.session_id);
 ```
 
