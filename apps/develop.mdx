@@ -31,7 +31,7 @@ npm install @onkernel/sdk
 ```
 
 ```bash Python
-pip install kernel
+uv pip install kernel
 ```
 </CodeGroup>
 
@@ -46,8 +46,7 @@ const app = kernel.app('my-app-name');
 ```
 
 ```python Python
-import kernel
-from kernel import Kernel
+from kernel import Kernel, KernelContext
 
 kernel = Kernel()
 app = kernel.App("my-app-name")
@@ -77,7 +76,7 @@ app.action('my-action-name', async (ctx: KernelContext, payload) => {
 
 ```python Python
 @app.action("my-action-name")
-async def my_action_method(ctx: kernel.KernelContext, payload):
+async def my_action_method(ctx: KernelContext, payload):
     tshirt_size = payload["tshirt_size"]
     color = payload["color"]
     shipping_address = payload["shipping_address"]
@@ -102,7 +101,7 @@ app.action('my-action-name', myActionMethod);
 ```
 
 ```python Python
-async def my_action_method(ctx: kernel.KernelContext, payload):
+async def my_action_method(ctx: KernelContext, payload):
     tshirt_size = payload["tshirt_size"]
     color = payload["color"]
     shipping_address = payload["shipping_address"]
@@ -202,15 +201,14 @@ app.action('get-page-title', async (ctx: KernelContext, payload) => {
 ```
 
 ```python Python
-import kernel
-from kernel import Kernel
+from kernel import Kernel, KernelContext
 from playwright.async_api import async_playwright
 
 kernel = Kernel()
 app = kernel.App("browser-automation")
 
 @app.action("get-page-title")
-async def get_page_title(ctx: kernel.KernelContext, payload):
+async def get_page_title(ctx: KernelContext, payload):
     kernel_browser = kernel.browsers.create(invocation_id=ctx.invocation_id)
 
     async with async_playwright() as playwright:

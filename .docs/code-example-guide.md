@@ -230,15 +230,14 @@ app.action('action-name', async (ctx: KernelContext, payload) => {
 ```
 
 ```python Python
-import kernel
-from kernel import Kernel
+from kernel import Kernel, KernelContext
 from playwright.async_api import async_playwright
 
 kernel = Kernel()
 app = kernel.App("my-app-name")
 
 @app.action("action-name")
-async def action_method(ctx: kernel.KernelContext, payload):
+async def action_method(ctx: KernelContext, payload):
     kernel_browser = kernel.browsers.create(invocation_id=ctx.invocation_id)
 
     async with async_playwright() as playwright:
