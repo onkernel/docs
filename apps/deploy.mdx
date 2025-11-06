@@ -23,7 +23,7 @@ kernel deploy <entrypoint_file_name>
 
 ### From GitHub
 
-You can deploy an app directly from a public or private GitHub repository using the Kernel CLI. No need to clone or manually push code.
+You can deploy a Kernel app directly from a public or private GitHub repository using the Kernel CLI. No need to clone or manually push code.
 
 ```bash
 kernel deploy github \
@@ -68,6 +68,7 @@ kernel deploy my_app.py --env-file .env
 ## Deployment notes
 
 - **The dependency manifest (`package.json` for JS/TS, `pyproject.toml` for Python) must be present in the root directory of your project.**
+- **For JS/TS apps, set `"type": "module"` in your `package.json`.**
 - View deployment logs using: `kernel deploy logs <deployment_id> --follow`
 - If you encounter a 500 error during deployment, verify that your entrypoint file name and extension are correct (e.g., `app.py` not `app` or `app.js`).
 - Kernel assumes the root directory contains at least this file structure:
