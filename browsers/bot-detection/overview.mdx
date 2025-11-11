@@ -7,7 +7,7 @@ Automating the web as a browser agent is hard.
 Modern websites deploy increasingly sophisticated bot detection systems to prevent fraud, abuse, and denial-of-service attacks. Even if you have explicit permission to automate — for example, QA'ing your own site or performing actions on behalf of users with their consent — these systems often assume any automated browser is hostile.
 
 Kernel provides tools to help with these challenges.
-Under the hood, our browsers are optimized for realistic environments. Everything we do is open source and inspectable — you can view our build configurations and runtime layers [here](github.com/onkernel/kernel-images).
+Under the hood, our browsers are optimized for realistic environments. **Everything we do is open source and inspectable — you can view our build configurations and runtime layers [here](https://github.com/onkernel/kernel-images).**
 
 This guide explains how bot detection works at a high level, common pitfalls to avoid, and how Kernel's features can help your automations run reliably.
 
@@ -53,7 +53,7 @@ Emulates native keyboard and mouse input directly at the OS level.
 | **Typing & Scrolling** | Add natural variation to interaction timing. |
 | **Rate Limits** | Many sites monitor request frequency; rapid / concurrent actions can trigger blocking. |
 | **Network Identity** | Use stable IP addresses, especially if logging in. |
-| **Extensions** | Use the [Extensions API](/docs/browsers/extensions) carefully — each adds its own fingerprint, which can be detected. |
+| **Extensions** | Use the [Extensions API](/browsers/extensions) carefully — each adds its own fingerprint, which can be detected. |
 
 ## Getting Started
 
