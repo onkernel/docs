@@ -63,25 +63,26 @@
               "browsers/persistence",
               "browsers/profiles",
               "browsers/termination",
-              "browsers/file-io",
-              "browsers/replays",
-              "browsers/extensions",
               {
                 "group": "Bot Anti-Detection",
                 "pages": [
-                  "browsers/stealth",
+                  "browsers/bot-detection/overview",
+                  "browsers/bot-detection/stealth",
                   {
                     "group": "Proxies",
                     "pages": [
-                      "proxies/overview",
-                      "proxies/custom",
-                      "proxies/residential",
-                      "proxies/isp",
-                      "proxies/datacenter"
+                      "browsers/bot-detection/proxies/overview",
+                      "browsers/bot-detection/proxies/custom",
+                      "browsers/bot-detection/proxies/residential",
+                      "browsers/bot-detection/proxies/isp",
+                      "browsers/bot-detection/proxies/datacenter"
                     ]
                   }
                 ]
               },
+              "browsers/file-io",
+              "browsers/replays",
+              "browsers/extensions",
               "browsers/computer-controls",
               "browsers/playwright-execution"
             ]
