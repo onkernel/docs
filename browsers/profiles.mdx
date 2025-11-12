@@ -67,6 +67,10 @@ kernel_browser = await kernel.browsers.create(
 
 After using a browser with `save_changes: true`, closing the browser will save cookies and local storage into the profile.
 
+<Warning>
+Calling `browser.close()` does **not** save the profile state. You **must** explicitly delete the Kernel browser (or let the browser [timeout](/browsers/termination#automatic-deletion-via-timeout)) to persist the Profile.
+</Warning>
+
 <CodeGroup>
 ```typescript Typescript/Javascript
 console.log('Live view:', kernelBrowser.browser_live_view_url);
