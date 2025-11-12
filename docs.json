@@ -71,11 +71,11 @@
                   {
                     "group": "Proxies",
                     "pages": [
-                      "browsers/bot-detection/proxies/overview",
-                      "browsers/bot-detection/proxies/custom",
-                      "browsers/bot-detection/proxies/residential",
-                      "browsers/bot-detection/proxies/isp",
-                      "browsers/bot-detection/proxies/datacenter"
+                      "proxies/overview",
+                      "proxies/custom",
+                      "proxies/residential",
+                      "proxies/isp",
+                      "proxies/datacenter"
                     ]
                   }
                 ]

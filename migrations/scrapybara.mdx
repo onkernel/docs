@@ -221,7 +221,7 @@ For a complete reference of all available Computer Controls methods in Kernel, s
 | **File Upload** | `instance.upload()` | `kernel.browsers.fs.upload()` or Playwright |
 | **File Download** | Via browser, then `instance.file()` | `kernel.browsers.fs.read_file()` |
 | **Process Control** | `instance.bash()` | `kernel.browsers.process.*` |
-| **Proxy Support** | ❌ Not available | Create [Proxy](/browsers/bot-detection/proxies/overview#1-create-a-proxy). Then create browser with `kernel.browsers.create(proxy_id=proxy.id)` |
+| **Proxy Support** | ❌ Not available | Create [Proxy](/proxies/overview#1-create-a-proxy). Then create browser with `kernel.browsers.create(proxy_id=proxy.id)` |
 | **Click Mouse** | `instance.computer(action="click_mouse", button="left")` | `kernel.browsers.computer.click_mouse(id=session_id, x=100, y=200)` |
 | **Move Mouse** | `instance.computer(action="move_mouse", coordinates=[100, 200])` | `kernel.browsers.computer.move_mouse(id=session_id, x=100, y=200)` |
 | **Drag Mouse** | `instance.computer(action="drag_mouse", path=[[100, 200], [300, 400]])` | `kernel.browsers.computer.drag_mouse(id=session_id, path=[[100, 200], [150, 220], [200, 260]])` |
