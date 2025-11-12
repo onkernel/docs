@@ -41,20 +41,6 @@ Kernel automatically applies Patchright to remove automation fingerprints, inclu
 Controls the browser without using the Chrome DevTools Protocol (CDP), which can reduce bot detection signals.
 Emulates native keyboard and mouse input directly at the OS level.
 
-## Recommended Practices
-
-| Category | Recommendation |
-|-----------|----------------|
-| **Viewport & Display** | Use Kernel's default viewport — we've tuned it to mirror realistic device profiles. |
-| **Headless Mode** | Avoid headless mode. Kernel runs full, rendered browsers by default. |
-| **User Agent Headers** | Don't override headers manually. Let Kernel manage them for minimize mismatches. |
-| **Execution Method** | Prefer our **Playwright Execution API** or **Computer Controls API** over self-hosted Playwright/Puppeteer. |
-| **Session Persistence** | Use **Profiles** to retain cookies and local storage between sessions. |
-| **Typing & Scrolling** | Add natural variation to interaction timing. |
-| **Rate Limits** | Many sites monitor request frequency; rapid / concurrent actions can trigger blocking. |
-| **Network Identity** | Use stable IP addresses, especially if logging in. |
-| **Extensions** | Use the [Extensions API](/browsers/extensions) carefully — each adds its own fingerprint, which can be detected. |
-
 ## Getting Started
 
 Before you start automating your workflow, we recommend that you manually test your website to understand how it behaves with Kernel's browsers. Here's how to do that:
@@ -68,6 +54,20 @@ Before you start automating your workflow, we recommend that you manually test y
 4. **Adjust environment settings** — such as proxy configurations — until the manual session works smoothly.
 
 Once you have a stable baseline, replicate those conditions in your automations.
+
+## Recommended Practices
+
+| Category | Recommendation |
+|-----------|----------------|
+| **Viewport & Display** | Use Kernel's default viewport — we've tuned it to mirror realistic device profiles. |
+| **Headless Mode** | Avoid headless mode. Kernel runs full, rendered browsers by default. |
+| **User Agent Headers** | Don't override headers manually. Let Kernel manage them for minimize mismatches. |
+| **Execution Method** | Prefer our **Playwright Execution API** or **Computer Controls API** over self-hosted Playwright/Puppeteer. |
+| **Session Persistence** | Use **Profiles** to retain cookies and local storage between sessions. |
+| **Typing & Scrolling** | Add natural variation to interaction timing. |
+| **Rate Limits** | Many sites monitor request frequency; rapid / concurrent actions can trigger blocking. |
+| **Network Identity** | Use stable IP addresses, especially if logging in. |
+| **Extensions** | Use the [Extensions API](/browsers/extensions) carefully — each adds its own fingerprint, which can be detected. |
 
 ## Conclusion
 
