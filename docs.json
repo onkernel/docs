@@ -84,7 +84,8 @@
               "browsers/replays",
               "browsers/extensions",
               "browsers/computer-controls",
-              "browsers/playwright-execution"
+              "browsers/playwright-execution",
+              "browsers/faq"
             ]
           },
           {
