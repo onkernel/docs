@@ -63,13 +63,11 @@
               "browsers/persistence",
               "browsers/profiles",
               "browsers/termination",
-              "browsers/file-io",
-              "browsers/replays",
-              "browsers/extensions",
               {
                 "group": "Bot Anti-Detection",
                 "pages": [
-                  "browsers/stealth",
+                  "browsers/bot-detection/overview",
+                  "browsers/bot-detection/stealth",
                   {
                     "group": "Proxies",
                     "pages": [
@@ -82,6 +80,9 @@
                   }
                 ]
               },
+              "browsers/file-io",
+              "browsers/replays",
+              "browsers/extensions",
               "browsers/computer-controls",
               "browsers/playwright-execution"
             ]

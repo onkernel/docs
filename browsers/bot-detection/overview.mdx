@@ -1,0 +1,74 @@
+---
+title: "Overview"
+---
+
+Automating the web as a browser agent is hard.
+
+Modern websites deploy increasingly sophisticated bot detection systems to prevent fraud, abuse, and denial-of-service attacks. Even if you have explicit permission to automate — for example, QA'ing your own site or performing actions on behalf of users with their consent — these systems often assume any automated browser is hostile.
+
+Kernel provides tools to help with these challenges.
+Under the hood, our browsers are optimized for realistic environments. **Everything we do is open source and inspectable — you can view our build configurations and runtime layers [here](https://github.com/onkernel/kernel-images).**
+
+This guide explains how bot detection works at a high level, common pitfalls to avoid, and how Kernel's features can help your automations run reliably.
+
+## How Bot Detection Works
+Most detection systems look for inconsistencies between how a real user's browser behaves and how an automated one does. Common giveaways include:
+
+- **IP addresses**: IPs from data centers (AWS, GCP, Azure)
+- **Browser environment**: unusual viewport sizes, incorrect timezones, or missing APIs
+- **Automation frameworks**: traces of Playwright, Puppeteer, or Chrome DevTools Protocol (CDP) connections
+- **Headless browsers** — browsers started without a visible window expose subtle differences (rendering, GPU, fonts)
+- **Typing/clicking signals** — identical cursor paths, uniform typing speeds, or rapid mouse movements
+- **Metadata** — mismatched cookies, inconsistent user-agent strings
+
+These systems are heuristic and probabilistic — small mismatches can still trigger blocks. The goal isn't to “beat” detection but rather emulate the real-world conditions of a normal browser session.
+
+## Kernel Features That Help
+### [Stealth Mode](/browsers/bot-detection/stealth)
+A basic configuration that launches Kernel's browser through a residential proxy and integrates a Google [reCAPTCHA solver](https://www.google.com/recaptcha/api2/demo).
+
+### [Configurable Proxies](/proxies/overview)
+Bring your own proxy network or use Kernel's managed pool (selectable down to ZIP-code level). If needed, use the same IP to reduce detection and allow for regional testing or QA.
+
+### [Profiles](/browsers/profiles)
+Profiles persist cookies, local storage, and session data between runs. Combined with a fixed proxy, this mimics a returning user. We recommend using them to persist authenticated states and reduce CAPTCHAs.
+
+### [Playwright Execution API](/browsers/playwright-execution)
+Executes Playwright scripts in the same VM as the browser, ensuring headers, user-agent strings, and environment match.
+Kernel automatically applies Patchright to remove automation fingerprints, including headless indicators.
+
+### [Computer Controls API](/browsers/computer-controls)
+Controls the browser without using the Chrome DevTools Protocol (CDP), which can reduce bot detection signals.
+Emulates native keyboard and mouse input directly at the OS level.
+
+## Getting Started
+
+Before you start automating your workflow, we recommend that you manually test your website to understand how it behaves with Kernel's browsers. Here's how to do that:
+
+1. **Launch a browser from the [Kernel dashboard](https://www.dashboard.onkernel.com/browsers).** This opens a Kernel browser instance in a clean virtual machine.
+2. **Navigate to the target website** and perform the same actions you plan to automate — logging in, filling forms, loading dashboards, etc.
+3. **Observe potential friction points:**
+   - Are you immediately prompted for CAPTCHA or MFA?  
+   - Does the site behave differently across geographies?  
+   - Are there rate limits, redirects, or blocked resources?
+4. **Adjust environment settings** — such as proxy configurations — until the manual session works smoothly.
+
+Once you have a stable baseline, replicate those conditions in your automations.
+
+## Recommended Practices
+
+| Category | Recommendation |
+|-----------|----------------|
+| **Viewport & Display** | Use Kernel's default viewport — we've tuned it to mirror realistic device profiles. |
+| **Headless Mode** | Avoid headless mode. Kernel runs full, rendered browsers by default. |
+| **User Agent Headers** | Don't override headers manually. Let Kernel manage them for minimize mismatches. |
+| **Execution Method** | Prefer our **Playwright Execution API** or **Computer Controls API** over self-hosted Playwright/Puppeteer. |
+| **Session Persistence** | Use **Profiles** to retain cookies and local storage between sessions. |
+| **Typing & Scrolling** | Add natural variation to interaction timing. |
+| **Rate Limits** | Many sites monitor request frequency; rapid / concurrent actions can trigger blocking. |
+| **Network Identity** | Use stable IP addresses, especially if logging in. |
+| **Extensions** | Use the [Extensions API](/browsers/extensions) carefully — each adds its own fingerprint, which can be detected. |
+
+## Conclusion
+
+Bot detection is nuanced and constantly evolving. **Kernel provides the building blocks — browsers, proxies, profiles, and APIs — to help agents operate safely and reliably.**  Our mission is to help developers automate the web on behalf of users and with their consent, while respecting the systems that keep the internet secure.
