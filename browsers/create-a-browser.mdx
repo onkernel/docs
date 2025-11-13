@@ -149,3 +149,15 @@ async with async_playwright() as playwright:
 - **CDP connections** are meant to be long-lived but may eventually close. Websocket connections typically can remain active for up to 1 hour, after which they may close automatically. Browser sessions themselves are unaffected—reconnect to the same `cdp_ws_url` to continue using the browser.
 - Browsers persist independently of CDP. Depending on your browser [persistence](/browsers/persistence) or [timeout](/browsers/termination#timeouts-for-non-persisted-browsers) configuration, it will continue running even if the CDP connection closes. You can reconnect to the same `cdp_ws_url` if you're unexpectedly disconnected.
 - We recommend implementing reconnect logic, as network interruptions or lifecycle events can cause CDP sessions to close. Detect disconnects and automatically re-establish a CDP connection when this occurs.
+
+## Troubleshooting
+
+### Browser spin-up time
+
+Non-standard configuration can affect browser spin-up time. Settings like non-default [viewport sizing](/browsers/viewport), [extensions](/browsers/extensions), or [Profiles](/browsers/profiles) may increase the time it takes for a browser to become ready.
+
+**Standard configuration** includes:
+- Headful and headless browsers
+- Stealth mode both enabled and disabled
+
+If you're experiencing slower-than-expected browser creation times, review your configuration to identify any non-standard settings that may be contributing to the delay.
