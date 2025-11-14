@@ -2,278 +2,363 @@
 title: "Browsers"
 ---
 
-## Core
+## Browser sessions
 
 ### `kernel browsers list`
-List running or persistent browsers.
+List running and persistent browser sessions.
 
 ### `kernel browsers create`
 Create a new browser session.
 
 | Flag | Description |
 |------|-------------|
-| `--persistence-id <id>` | Unique identifier for browser session persistence. Optional. |
-| `--stealth` | Launch browser in stealth mode to avoid detection. Optional. |
-| `--headless` | Launch browser without GUI access. Optional. |
+| `--persistence-id <id>` | Reuse state across launches with a persistence ID. |
+| `--stealth` | Enable stealth mode to reduce automation fingerprints. |
+| `--headless` | Launch without GUI/VNC access. |
+| `--kiosk` | Launch in Chrome kiosk mode. |
 
-### `kernel browsers delete`
-Delete a browser. Must specify either `--by-persistent-id` or `--by-id`.
-
-| Flag | Description |
-|------|-------------|
-| `--by-persistent-id <id>` | Delete browser by persistent ID |
-| `--by-id <id>` | Delete browser by session ID |
-| `--yes`, `-y` | Skip confirmation prompt |
-
-### `kernel browsers view`
-Get the live view URL for a browser. Must specify either `--by-persistent-id` or `--by-id`.
+### `kernel browsers delete <id or persistent id>`
+Delete a browser session. Use `-y` to skip confirmation.
 
 | Flag | Description |
 |------|-------------|
-| `--by-persistent-id <id>` | View browser by persistent ID |
-| `--by-id <id>` | View browser by session ID |
+| `--yes`, `-y` | Bypass the confirmation prompt. |
 
-## Logs
+### `kernel browsers view <id or persistent id>`
+Return a live view URL for remote monitoring and control.
 
-### `kernel browsers logs stream`
-Stream browser logs.
+## Browser logs
+
+### `kernel browsers logs stream <id or persistent id>`
+Stream browser logs from the supervisor or a file path.
 
 | Flag | Description |
 |------|-------------|
-| `--source <source>` | Log source: `path` or `supervisor`. Required. |
-| `--follow` | Follow the log stream (default: true). Optional. |
-| `--path <path>` | File path when `--source=path`. Optional. |
-| `--supervisor-process <name>` | Supervisor process name when `--source=supervisor` (e.g., `chromium`). Optional. |
-| `--by-persistent-id <id>` | Target browser by persistent ID. Optional. |
-| `--by-id <id>` | Target browser by session ID. Optional. |
+| `--source <source>` | `path` or `supervisor` (required). |
+| `--follow` | Continue streaming (default: true). |
+| `--path <path>` | File path when `--source=path`. |
+| `--supervisor-process <name>` | Supervisor process when `--source=supervisor` (e.g. `chromium`). |
 
-<Info>Log lines will be truncated to 64KiB. For large payloads write data to external storage and log a reference instead.</Info>
+<Info>Log lines longer than 64 KiB are truncated.</Info>
 
 ## Replays
 
-### `kernel browsers replays list`
-List replays for a browser.
+### `kernel browsers replays list <id or persistent id>`
+List replay recordings for a browser session.
+
+### `kernel browsers replays start <id or persistent id>`
+Start recording a replay.
 
 | Flag | Description |
 |------|-------------|
-| `--by-persistent-id <id>` | Target browser by persistent ID. Optional. |
-| `--by-id <id>` | Target browser by session ID. Optional. |
+| `--framerate <fps>` | Recording framerate in frames per second. |
+| `--max-duration <seconds>` | Maximum recording duration. |
 
-### `kernel browsers replays start`
-Start a replay recording.
+### `kernel browsers replays stop <id or persistent id> <replay-id>`
+Stop an active replay recording.
 
-| Flag | Description |
-|------|-------------|
-| `--framerate <fps>` | Recording framerate (fps). Optional. |
-| `--max-duration <seconds>` | Maximum duration in seconds. Optional. |
-| `--by-persistent-id <id>` | Target browser by persistent ID. Optional. |
-| `--by-id <id>` | Target browser by session ID. Optional. |
-
-### `kernel browsers replays stop`
-Stop a replay recording.
-
-| Flag | Description |
-|------|-------------|
-| `--replay-id <id>` | Replay ID to stop. Required. |
-| `--by-persistent-id <id>` | Target browser by persistent ID. Optional. |
-| `--by-id <id>` | Target browser by session ID. Optional. |
-
-### `kernel browsers replays download`
+### `kernel browsers replays download <id or persistent id> <replay-id>`
 Download a replay video.
 
 | Flag | Description |
 |------|-------------|
-| `--replay-id <id>` | Replay ID to download. Required. |
-| `-o, --output <path>` | Output file path. Optional. |
-| `--by-persistent-id <id>` | Target browser by persistent ID. Optional. |
-| `--by-id <id>` | Target browser by session ID. Optional. |
+| `-o, --output <path>` | Output path for the downloaded replay. |
 
-## Process Control
+## Process control
 
-### `kernel browsers process exec`
-Execute a command synchronously in the browser VM.
+### `kernel browsers process exec <id or persistent id> [--] [command...]`
+Execute a command synchronously inside the browser VM.
 
 | Flag | Description |
 |------|-------------|
-| `--command <cmd>` | Command to execute. Optional; if omitted, trailing args are executed via `/bin/bash -c`. |
-| `--args <args>` | Command arguments. Optional. |
-| `--cwd <path>` | Working directory. Optional. |
-| `--timeout <seconds>` | Timeout in seconds. Optional. |
-| `--as-user <user>` | Run as user. Optional. |
-| `--as-root` | Run as root. Optional. |
-| `--by-persistent-id <id>` | Target browser by persistent ID. Optional. |
-| `--by-id <id>` | Target browser by session ID. Optional. |
+| `--command <cmd>` | Command to run; defaults to trailing args. |
+| `--args <args>` | Arguments for the command. |
+| `--cwd <path>` | Working directory. |
+| `--timeout <seconds>` | Execution timeout. |
+| `--as-user <user>` | Run as a specific user. |
+| `--as-root` | Run as root. |
 
-### `kernel browsers process spawn`
+### `kernel browsers process spawn <id or persistent id> [--] [command...]`
 Execute a command asynchronously in the browser VM.
 
 | Flag | Description |
 |------|-------------|
-| `--command <cmd>` | Command to execute. Optional; if omitted, trailing args are executed via `/bin/bash -c`. |
-| `--args <args>` | Command arguments. Optional. |
-| `--cwd <path>` | Working directory. Optional. |
-| `--timeout <seconds>` | Timeout in seconds. Optional. |
-| `--as-user <user>` | Run as user. Optional. |
-| `--as-root` | Run as root. Optional. |
-| `--by-persistent-id <id>` | Target browser by persistent ID. Optional. |
-| `--by-id <id>` | Target browser by session ID. Optional. |
+| `--command <cmd>` | Command to run; defaults to trailing args. |
+| `--args <args>` | Arguments for the command. |
+| `--cwd <path>` | Working directory. |
+| `--timeout <seconds>` | Execution timeout. |
+| `--as-user <user>` | Run as a specific user. |
+| `--as-root` | Run as root. |
 
-### `kernel browsers process kill`
-Send a signal to a process.
+### `kernel browsers process kill <id or persistent id> <process-id>`
+Send a signal to a process running in the browser VM.
 
 | Flag | Description |
 |------|-------------|
-| `--process-id <id>` | Target process ID. Required. |
-| `--signal <signal>` | Signal to send: `TERM`, `KILL`, `INT`, `HUP` (default: `TERM`). Optional. |
-| `--by-persistent-id <id>` | Target browser by persistent ID. Optional. |
-| `--by-id <id>` | Target browser by session ID. Optional. |
+| `--signal <signal>` | Signal to send (`TERM`, `KILL`, `INT`, `HUP`; default: `TERM`). |
 
-### `kernel browsers process status`
-Get process status.
+### `kernel browsers process status <id or persistent id> <process-id>`
+Check process status information.
 
-| Flag | Description |
-|------|-------------|
-| `--process-id <id>` | Target process ID. Required. |
-| `--by-persistent-id <id>` | Target browser by persistent ID. Optional. |
-| `--by-id <id>` | Target browser by session ID. Optional. |
-
-### `kernel browsers process stdin`
-Write to process stdin (base64 data).
+### `kernel browsers process stdin <id or persistent id> <process-id>`
+Write base64-encoded data to a process stdin.
 
 | Flag | Description |
 |------|-------------|
-| `--process-id <id>` | Target process ID. Required. |
-| `--data-b64 <data>` | Base64-encoded data to write to stdin. Required. |
-| `--by-persistent-id <id>` | Target browser by persistent ID. Optional. |
-| `--by-id <id>` | Target browser by session ID. Optional. |
+| `--data-b64 <data>` | Base64 payload to write (required). |
 
-### `kernel browsers process stdout-stream`
-Stream process stdout/stderr.
-
-| Flag | Description |
-|------|-------------|
-| `--process-id <id>` | Target process ID. Required. |
-| `--by-persistent-id <id>` | Target browser by persistent ID. Optional. |
-| `--by-id <id>` | Target browser by session ID. Optional. |
+### `kernel browsers process stdout-stream <id or persistent id> <process-id>`
+Stream stdout and stderr from a process.
 
 ## Filesystem
 
-### `kernel browsers fs new-directory`
-Create a new directory.
+### `kernel browsers fs new-directory <id or persistent id>`
+Create a directory in the browser VM.
 
 | Flag | Description |
 |------|-------------|
-| `--path <path>` | Absolute directory path to create. Required. |
-| `--mode <mode>` | Directory mode (octal string). Optional. |
-| `--by-persistent-id <id>` | Target browser by persistent ID. Optional. |
-| `--by-id <id>` | Target browser by session ID. Optional. |
+| `--path <path>` | Absolute directory path to create (required). |
+| `--mode <mode>` | Directory mode in octal. |
 
-### `kernel browsers fs delete-directory`
+### `kernel browsers fs delete-directory <id or persistent id>`
 Delete a directory.
 
 | Flag | Description |
 |------|-------------|
-| `--path <path>` | Absolute directory path to delete. Required. |
-| `--by-persistent-id <id>` | Target browser by persistent ID. Optional. |
-| `--by-id <id>` | Target browser by session ID. Optional. |
+| `--path <path>` | Absolute directory path to delete (required). |
 
-### `kernel browsers fs delete-file`
+### `kernel browsers fs delete-file <id or persistent id>`
 Delete a file.
 
 | Flag | Description |
 |------|-------------|
-| `--path <path>` | Absolute file path to delete. Required. |
-| `--by-persistent-id <id>` | Target browser by persistent ID. Optional. |
-| `--by-id <id>` | Target browser by session ID. Optional. |
+| `--path <path>` | Absolute file path to delete (required). |
 
-### `kernel browsers fs download-dir-zip`
-Download a directory as a zip file.
+### `kernel browsers fs download-dir-zip <id or persistent id>`
+Download a directory as a zip archive.
 
 | Flag | Description |
 |------|-------------|
-| `--path <path>` | Absolute directory path to download. Required. |
-| `-o, --output <path>` | Output zip file path. Optional. |
-| `--by-persistent-id <id>` | Target browser by persistent ID. Optional. |
-| `--by-id <id>` | Target browser by session ID. Optional. |
+| `--path <path>` | Absolute directory path to download (required). |
+| `-o, --output <path>` | Output zip file path. |
 
-### `kernel browsers fs file-info`
-Get file or directory info.
+### `kernel browsers fs file-info <id or persistent id>`
+Retrieve metadata for a file or directory.
 
 | Flag | Description |
 |------|-------------|
-| `--path <path>` | Absolute file or directory path. Required. |
-| `--by-persistent-id <id>` | Target browser by persistent ID. Optional. |
-| `--by-id <id>` | Target browser by session ID. Optional. |
+| `--path <path>` | Absolute file or directory path (required). |
 
-### `kernel browsers fs list-files`
-List files in a directory.
+### `kernel browsers fs list-files <id or persistent id>`
+List directory contents.
 
 | Flag | Description |
 |------|-------------|
-| `--path <path>` | Absolute directory path. Required. |
-| `--by-persistent-id <id>` | Target browser by persistent ID. Optional. |
-| `--by-id <id>` | Target browser by session ID. Optional. |
+| `--path <path>` | Absolute directory path (required). |
 
-### `kernel browsers fs move`
+### `kernel browsers fs move <id or persistent id>`
 Move or rename a file or directory.
 
 | Flag | Description |
 |------|-------------|
-| `--src <path>` | Absolute source path. Required. |
-| `--dest <path>` | Absolute destination path. Required. |
-| `--by-persistent-id <id>` | Target browser by persistent ID. Optional. |
-| `--by-id <id>` | Target browser by session ID. Optional. |
+| `--src <path>` | Absolute source path (required). |
+| `--dest <path>` | Absolute destination path (required). |
 
-### `kernel browsers fs read-file`
-Read a file.
+### `kernel browsers fs read-file <id or persistent id>`
+Read a file from the browser VM.
 
 | Flag | Description |
 |------|-------------|
-| `--path <path>` | Absolute file path. Required. |
-| `-o, --output <path>` | Output file path. Optional. |
-| `--by-persistent-id <id>` | Target browser by persistent ID. Optional. |
-| `--by-id <id>` | Target browser by session ID. Optional. |
+| `--path <path>` | Absolute file path (required). |
+| `-o, --output <path>` | Output path for the downloaded file. |
 
-### `kernel browsers fs set-permissions`
-Set file permissions or ownership.
+### `kernel browsers fs set-permissions <id or persistent id>`
+Update file permissions or ownership.
 
 | Flag | Description |
 |------|-------------|
-| `--path <path>` | Absolute path. Required. |
-| `--mode <mode>` | File mode bits (octal string). Required. |
-| `--owner <user>` | New owner username or UID. Optional. |
-| `--group <group>` | New group name or GID. Optional. |
-| `--by-persistent-id <id>` | Target browser by persistent ID. Optional. |
-| `--by-id <id>` | Target browser by session ID. Optional. |
+| `--path <path>` | Absolute path (required). |
+| `--mode <mode>` | File mode bits (octal string). |
+| `--owner <user>` | New owner username or UID. |
+| `--group <group>` | New group name or GID. |
 
-### `kernel browsers fs upload`
+### `kernel browsers fs upload <id or persistent id>`
 Upload one or more files.
 
 | Flag | Description |
 |------|-------------|
-| `--file <local:remote>` | Mapping local:remote (repeatable). Optional. |
-| `--dest-dir <path>` | Destination directory for uploads. Optional. |
-| `--paths <paths>` | Local file paths to upload. Optional. |
-| `--by-persistent-id <id>` | Target browser by persistent ID. Optional. |
-| `--by-id <id>` | Target browser by session ID. Optional. |
+| `--file <local:remote>` | Local-to-remote file mapping (repeatable). |
+| `--dest-dir <path>` | Destination directory for uploads. |
+| `--paths <paths>` | Local file paths to upload. |
 
-### `kernel browsers fs upload-zip`
-Upload a zip and extract it.
+### `kernel browsers fs upload-zip <id or persistent id>`
+Upload a zip file and extract it.
 
 | Flag | Description |
 |------|-------------|
-| `--zip <path>` | Local zip file path. Required. |
-| `--dest-dir <path>` | Destination directory to extract to. Required. |
-| `--by-persistent-id <id>` | Target browser by persistent ID. Optional. |
-| `--by-id <id>` | Target browser by session ID. Optional. |
+| `--zip <path>` | Local zip file path (required). |
+| `--dest-dir <path>` | Directory to extract into (required). |
 
-### `kernel browsers fs write-file`
-Write a file from local data.
+### `kernel browsers fs write-file <id or persistent id>`
+Write a local file to the browser VM.
 
 | Flag | Description |
 |------|-------------|
-| `--path <path>` | Destination absolute file path. Required. |
-| `--mode <mode>` | File mode (octal string). Optional. |
-| `--source <path>` | Local source file path. Required. |
-| `--by-persistent-id <id>` | Target browser by persistent ID. Optional. |
-| `--by-id <id>` | Target browser by session ID. Optional. |
+| `--path <path>` | Destination absolute file path (required). |
+| `--mode <mode>` | File mode in octal. |
+| `--source <path>` | Local source file path (required). |
+
+## Browser extensions
+
+### `kernel browsers extensions upload <id or persistent id> <extension-path>...`
+Upload one or more unpacked Chrome extensions to a running browser.
+
+## Computer controls
+
+### `kernel browsers computer click-mouse <id or persistent id>`
+Click the mouse at specific coordinates.
+
+| Flag | Description |
+|------|-------------|
+| `--x <coordinate>` | X coordinate (required). |
+| `--y <coordinate>` | Y coordinate (required). |
+| `--num-clicks <n>` | Number of clicks (default: 1). |
+| `--button <button>` | Mouse button (`left`, `right`, `middle`, `back`, `forward`). |
+| `--click-type <type>` | `down`, `up`, or `click` (default: `click`). |
+| `--hold-key <key>` | Modifier keys to hold (repeatable). |
+
+### `kernel browsers computer move-mouse <id or persistent id>`
+Move the mouse pointer.
+
+| Flag | Description |
+|------|-------------|
+| `--x <coordinate>` | X coordinate (required). |
+| `--y <coordinate>` | Y coordinate (required). |
+| `--hold-key <key>` | Modifier keys to hold (repeatable). |
+
+### `kernel browsers computer screenshot <id or persistent id>`
+Capture a screenshot.
+
+| Flag | Description |
+|------|-------------|
+| `--to <path>` | Output PNG path (required). |
+| `--x <coordinate>` | Region capture top-left X coordinate. |
+| `--y <coordinate>` | Region capture top-left Y coordinate. |
+| `--width <pixels>` | Region width. |
+| `--height <pixels>` | Region height. |
+
+### `kernel browsers computer type <id or persistent id>`
+Type text into the browser VM.
+
+| Flag | Description |
+|------|-------------|
+| `--text <text>` | Text to type (required). |
+| `--delay <ms>` | Delay between keystrokes in milliseconds. |
+
+### `kernel browsers computer press-key <id or persistent id>`
+Press one or more keys.
+
+| Flag | Description |
+|------|-------------|
+| `--key <key>` | Key to press (repeatable). |
+| `--duration <ms>` | Duration to hold keys. |
+| `--hold-key <key>` | Modifier keys to hold (repeatable). |
+
+### `kernel browsers computer scroll <id or persistent id>`
+Scroll the mouse wheel.
+
+| Flag | Description |
+|------|-------------|
+| `--x <coordinate>` | X coordinate (required). |
+| `--y <coordinate>` | Y coordinate (required). |
+| `--delta-x <pixels>` | Horizontal scroll amount (+right, -left). |
+| `--delta-y <pixels>` | Vertical scroll amount (+down, -up). |
+| `--hold-key <key>` | Modifier keys to hold (repeatable). |
+
+### `kernel browsers computer drag-mouse <id or persistent id>`
+Drag the mouse along a path.
+
+| Flag | Description |
+|------|-------------|
+| `--point <x,y>` | Points to drag through (repeatable). |
+| `--delay <ms>` | Delay before dragging starts. |
+| `--button <button>` | Mouse button (`left`, `middle`, `right`; default: `left`). |
+| `--hold-key <key>` | Modifier keys to hold (repeatable). |
+
+## Playwright
+
+### `kernel browsers playwright execute <id or persistent id> [code]`
+Execute Playwright/TypeScript code against a running browser session.
+
+| Flag | Description |
+|------|-------------|
+| `--timeout <seconds>` | Maximum execution time for the snippet. |
+
+## Extension management
+
+### `kernel extensions list`
+List all uploaded extensions.
+
+### `kernel extensions upload <directory>`
+Upload an unpacked extension directory.
+
+| Flag | Description |
+|------|-------------|
+| `--name <name>` | Optional unique extension name. |
+
+### `kernel extensions download <id-or-name>`
+Download an extension archive.
+
+| Flag | Description |
+|------|-------------|
+| `--to <directory>` | Output directory (required). |
+
+### `kernel extensions download-web-store <url>`
+Download an extension from the Chrome Web Store.
+
+| Flag | Description |
+|------|-------------|
+| `--to <directory>` | Output directory (required). |
+| `--os <os>` | Target OS (`mac`, `win`, `linux`; default: `linux`). |
+
+### `kernel extensions delete <id-or-name>`
+Delete an uploaded extension.
+
+| Flag | Description |
+|------|-------------|
+| `--yes`, `-y` | Skip confirmation. |
+
+## Proxy management
+
+### `kernel proxies list`
+List available proxy configurations.
+
+### `kernel proxies get <id>`
+Show details for a proxy configuration.
+
+### `kernel proxies create`
+Create a new proxy configuration.
+
+| Flag | Description |
+|------|-------------|
+| `--name <name>` | Proxy configuration name. |
+| `--type <type>` | `datacenter`, `isp`, `residential`, `mobile`, or `custom` (required). |
+| `--protocol <protocol>` | Protocol to use (`http` or `https`; default: `https`). |
+| `--country <code>` | ISO 3166 country code or `EU`. |
+| `--city <name>` | City (residential, mobile; requires `--country`). |
+| `--state <code>` | State/region code (residential, mobile). |
+| `--zip <zip>` | ZIP/postal code (residential, mobile). |
+| `--asn <asn>` | Autonomous system number (residential, mobile). |
+| `--os <os>` | Operating system (`windows`, `macos`, `android`; residential). |
+| `--carrier <carrier>` | Mobile carrier (mobile). |
+| `--host <host>` | Proxy host (custom; required). |
+| `--port <port>` | Proxy port (custom; required). |
+| `--username <username>` | Proxy username (custom). |
+| `--password <password>` | Proxy password (custom). |
+
+### `kernel proxies delete <id>`
+Delete a proxy configuration.
+
+| Flag | Description |
+|------|-------------|
+| `--yes`, `-y` | Skip confirmation. |

@@ -2,50 +2,70 @@
 title: "Apps"
 ---
 
-## `kernel deploy <entrypoint_file_name>`
-Deploy an app to Kernel from the current directory.
+## `kernel deploy <file>`
+Deploy an app to Kernel from the current directory. The entrypoint file and dependency manifest must live in the project root.
 
 | Flag | Description |
 |------|-------------|
-| `--version <version>` | Specify a version for the app (default: latest). Optional. |
-| `--force` | Allow overwrite of an existing version with the same name. Optional. |
-| `--env <ENV_VAR=VAL>`, `-e` | Adds environment variables to the app. May be specified multiple times. Optional. |
-| `--env-file <file>` | Read environment variables from a .env file. May be specified multiple times. Optional. |
+| `--version <version>` | Use a specific version label (default: latest). |
+| `--force` | Overwrite an existing version with the same label. |
+| `--env <KEY=VALUE>`, `-e` | Set environment variables (repeatable). |
+| `--env-file <file>` | Load environment variables from a file (repeatable). |
 
-<Info>
-The entrypoint file and dependency manifest (`package.json` for JS/TS, `pyproject.toml` for Python) must both be in the root directory of your project.
-</Info>
+<Info>`package.json` (JS/TS) or `pyproject.toml` (Python) must be present next to the entrypoint.</Info>
 
-## `kernel invoke <app_name> <action_name>`
-Invoke a specific app action by its name. Generates an Invocation.
+## `kernel deploy logs <deployment_id>`
+Stream build and runtime logs for a deployment.
 
 | Flag | Description |
 |------|-------------|
-| `--version <version>`, `-v` | Specify a version of the app to invoke (default: latest). Optional. |
-| `--payload <payload_data>`, `-p` | Stringified JSON object (max 64 KB). Optional. |
-| `--sync`, `-s` | Invoke synchronously (default false). Optional. |
+| `--follow`, `-f` | Continue streaming logs in real time. |
+| `--since <duration>`, `-s` | Fetch logs starting from a relative duration (e.g. `5m`, `1h`, `1h30m`) or timestamp (`2006-01-02T15:04`). |
+| `--with-timestamps`, `-t` | Prefix each line with an RFC3339 timestamp. |
 
-<Info>Synchronous invocations open a long-lived HTTP POST that times out after 60 seconds. Asynchronous invocations time out after 15 minutes. Press `ctrl-c` to terminate a running invocation; associated browsers are destroyed.</Info>
+<Info>Log lines longer than 64 KiB are truncated. Emit bulky payloads to external storage and log references.</Info>
+
+## `kernel deploy history [app_name]`
+Show deployment history for all apps or a specific app.
+
+| Flag | Description |
+|------|-------------|
+| `--limit <n>` | Maximum number of deployments to return (default: 100, `0` = all). |
+
+## `kernel invoke <app> <action>`
+Invoke an app action. By default the CLI returns immediately after the invocation is queued.
+
+| Flag | Description |
+|------|-------------|
+| `--version <version>`, `-v` | Target a specific app version (default: latest). |
+| `--payload <json>`, `-p` | Provide a JSON payload (stringified, max 64 KB). |
+| `--sync`, `-s` | Wait for completion (timeout after 60 s). |
+
+<Info>Press `Ctrl+C` to cancel an in-flight invocation. The associated browser sessions are cleaned up automatically.</Info>
 
 ## `kernel app list`
-List deployed application versions.
+List deployed app versions.
 
 | Flag | Description |
 |------|-------------|
-| `--name <app_name>` | Filter by application name. Optional. |
-| `--version <version>` | Filter by version label. Optional. |
+| `--name <app_name>` | Filter by app name. |
+| `--version <version>` | Filter by version label. |
 
 ## `kernel app history <app_name>`
-Show deployment history for an application.
-
-## `kernel logs <app_name>`
-Print the logs for the specified app.
+Show deployment history for a specific app.
 
 | Flag | Description |
 |------|-------------|
-| `--version <version>` | Specify a version of the app (default: latest). Optional. |
-| `--follow`, `-f` | Follow logs in real-time (stream continuously). Optional. |
-| `--since <time>`, `-s` | How far back to retrieve logs (e.g., 5m, 1h). Defaults to 5m if not following, 5s if following. Optional. |
-| `--with-timestamps` | Include timestamps in each log line. Optional. |
+| `--limit <n>` | Maximum number of deployments to return (default: 100, `0` = all). |
 
-<Info>Log lines will be truncated to 64KiB. For large payloads write data to external storage and log a reference instead.</Info>
+## `kernel logs <app_name>`
+Tail app logs.
+
+| Flag | Description |
+|------|-------------|
+| `--version <version>` | Select an app version (default: latest). |
+| `--follow`, `-f` | Stream logs continuously. |
+| `--since <duration>`, `-s` | Fetch logs from a duration or timestamp (same formats as `kernel deploy logs`). |
+| `--with-timestamps` | Include timestamps in each line. |
+
+<Info>Log lines longer than 64 KiB are truncated.</Info>
