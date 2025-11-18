@@ -331,7 +331,7 @@ await Laminar.flush();
 await kernel.browsers.deleteByID(kernelBrowser.session_id);
 ```
 
-## Deploying Kernel apps and using Kernel's Computer and Process APIs
+## Tracing Kernel Apps & Computer Controls
 
 When you use Kernel's [App platform](/apps/develop) or [Computer controls](/browsers/computer-controls), Laminar will automatically trace the computer and process interactions.
 
@@ -408,6 +408,8 @@ app.action('my-action', async (ctx: KernelContext, payload) => {
 
   await browser.close();
   await kernel.browsers.deleteByID(kernelBrowser.session_id);
+
+  return { success: true, result: "Action completed successfully" };
 });
 ```
 
