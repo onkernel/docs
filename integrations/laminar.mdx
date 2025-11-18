@@ -110,7 +110,7 @@ const main = async () => observe({ name: 'main' }, async () => {
   await page.waitForTimeout(2000);
 
   // Navigate to careers page
-  await page.goto('https://www.onkernel.com/docs/careers/intro', { waitUntil: 'networkidle' });
+  await page.goto('https://www.onkernel.com/docs/careers/intro');
 
   // Extract all job URLs from the ul next to #open-roles
   const jobLinks = await page.locator('#open-roles + ul a').evaluateAll((links) => {
