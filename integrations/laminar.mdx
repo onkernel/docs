@@ -70,7 +70,7 @@ The Playwright examples include `waitForTimeout()` calls to help ensure Laminar 
 
 <CodeGroup>
 ```javascript Typescript/Javascript
-import { Laminar } from '@lmnr-ai/lmnr';
+import { Laminar, observe } from '@lmnr-ai/lmnr';
 import Kernel from '@onkernel/sdk';
 import { chromium } from 'playwright';
 
@@ -80,61 +80,65 @@ Laminar.initialize({
   instrumentModules: {
     playwright: {
       chromium
-    }
+    },
+    kernel: Kernel,
   }
 });
 
 // Initialize Kernel and create a cloud browser
 const kernel = new Kernel();
 
-const kernelBrowser = await kernel.browsers.create({
-  stealth: true
+const main = async () => observe({ name: 'main' }, async () => {
+  const kernelBrowser = await kernel.browsers.create({
+    stealth: true
+  });
+
+  console.log("Live view url:", kernelBrowser.browser_live_view_url);
+
+  // Connect Playwright to Kernel's browser via CDP
+  const browser = await chromium.connectOverCDP(kernelBrowser.cdp_ws_url);
+  const context = browser.contexts()[0] || (await browser.newContext());
+  const page = context.pages()[0] || (await context.newPage());
+
+  // Wait for 3 second
+  await page.waitForTimeout(3000);
+
+  // Your automation code
+  await page.goto('https://www.onkernel.com/docs');
+
+  // Wait for 2 second
+  await page.waitForTimeout(2000);
+
+  // Navigate to careers page
+  await page.goto('https://www.onkernel.com/docs/careers/intro');
+
+  // Extract all job URLs from the ul next to #open-roles
+  const jobLinks = await page.locator('#open-roles + ul a').evaluateAll((links) => {
+    const baseUrl = 'https://www.onkernel.com';
+    return links
+      .map(link => {
+        const href = link.getAttribute('href');
+        if (!href) return null;
+        // Convert relative URLs to absolute URLs
+        return href.startsWith('http') ? href : baseUrl + href;
+      })
+      .filter(href => href !== null);
+  });
+
+  console.log('Job URLs found:', jobLinks);
+  console.log(`Total jobs: ${jobLinks.length}`);
+
+  // Wait for 3 seconds
+  await page.waitForTimeout(3000);
+
+  // Clean up the browser
+  await browser.close();
+  // Delete the browser for those who left open the live view url
+  await kernel.browsers.deleteByID(kernelBrowser.session_id);
 });
 
-console.log("Live view url:", kernelBrowser.browser_live_view_url);
-
-// Connect Playwright to Kernel's browser via CDP
-const browser = await chromium.connectOverCDP(kernelBrowser.cdp_ws_url);
-const context = browser.contexts()[0] || (await browser.newContext());
-const page = context.pages()[0] || (await context.newPage());
-
-// Wait for 3 second
-await page.waitForTimeout(3000);
-
-// Your automation code
-await page.goto('https://www.onkernel.com/docs');
-
-// Wait for 2 second
-await page.waitForTimeout(2000);
-
-// Navigate to careers page
-await page.goto('https://www.onkernel.com/docs/careers/intro', { waitUntil: 'networkidle' });
-
-// Extract all job URLs from the ul next to #open-roles
-const jobLinks = await page.locator('#open-roles + ul a').evaluateAll((links) => {
-  const baseUrl = 'https://www.onkernel.com';
-  return links
-    .map(link => {
-      const href = link.getAttribute('href');
-      if (!href) return null;
-      // Convert relative URLs to absolute URLs
-      return href.startsWith('http') ? href : baseUrl + href;
-    })
-    .filter(href => href !== null);
-});
-
-console.log('Job URLs found:', jobLinks);
-console.log(`Total jobs: ${jobLinks.length}`);
-
-// Wait for 3 seconds
-await page.waitForTimeout(3000);
-
-// Clean up the browserand flush traces to Laminar
-await browser.close();
+await main();
 await Laminar.flush();
-
-// Delete the browser for those who left open the live view url
-await kernel.browsers.deleteByID(kernelBrowser.session_id);
 ```
 
 ```python Python
@@ -216,13 +220,14 @@ run_automation()
 ```python python
 import os
 import asyncio
-from lmnr import Laminar
+from lmnr import Laminar, observe
 from browser_use import Agent, Browser, ChatOpenAI
 from kernel import Kernel
 
 # Initialize Laminar
 Laminar.initialize(project_api_key=os.environ["LMNR_PROJECT_API_KEY"])
 
+@observe()
 async def main():
     # Initialize Kernel and create a browser
     client = Kernel()
@@ -269,8 +274,12 @@ asyncio.run(main())
 
 [Stagehand](https://github.com/browserbase/stagehand) is an AI browser automation framework. Here's how to use it with Laminar and Kernel:
 
+<Info>
+This example shows Stagehand v2 instrumentation setup.
+</Info>
+
 ```javascript Typescript/Javascript
-import { Laminar } from '@lmnr-ai/lmnr';
+import { Laminar, observe } from '@lmnr-ai/lmnr';
 import { Stagehand } from '@browserbasehq/stagehand';
 import Kernel from '@onkernel/sdk';
 import { z } from 'zod';
@@ -280,56 +289,212 @@ Laminar.initialize({
   projectApiKey: process.env.LMNR_PROJECT_API_KEY,
   instrumentModules: {
     stagehand: Stagehand,
+    kernel: Kernel,
   },
 });
 
 // Initialize Kernel and create a browser
 const kernel = new Kernel();
-const kernelBrowser = await kernel.browsers.create({ stealth: true });
 
-console.log("Live view url:", kernelBrowser.browser_live_view_url);
+const main = async () => observe({ name: 'main' }, async () => {
+  const kernelBrowser = await kernel.browsers.create({ stealth: true });
+  
+  console.log("Live view url:", kernelBrowser.browser_live_view_url);
+  
+  // Configure Stagehand to use Kernel's browser
+  const stagehand = new Stagehand({
+    env: 'LOCAL',
+    verbose: 1,
+    domSettleTimeoutMs: 30_000,
+    modelName: 'openai/gpt-4.1',
+    modelClientOptions: {
+      apiKey: process.env.OPENAI_API_KEY
+    },
+    localBrowserLaunchOptions: {
+      cdpUrl: kernelBrowser.cdp_ws_url
+    }
+  });
+  await stagehand.init();
 
-// Configure Stagehand to use Kernel's browser
-const stagehand = new Stagehand({
-  env: 'LOCAL',
-  verbose: 1,
-  domSettleTimeoutMs: 30_000,
-  modelName: 'openai/gpt-4.1',
-  modelClientOptions: {
-    apiKey: process.env.OPENAI_API_KEY
-  },
-  localBrowserLaunchOptions: {
-    cdpUrl: kernelBrowser.cdp_ws_url
+  // Your automation code
+  const page = stagehand.page;
+  await page.goto('https://www.onkernel.com/docs');
+
+  // Navigate to careers page
+  await page.goto('https://www.onkernel.com/docs/careers/intro');
+
+  // Extract all job URLs
+  const output = await page.extract({
+    instruction: 'Extract all job posting URLs from the Open Roles section.',
+    schema: z.object({
+      jobUrls: z.array(z.string()).describe('Array of job posting URLs')
+    })
+  });
+
+  console.log('Job URLs found:', output.jobUrls);
+  console.log(`Total jobs: ${output.jobUrls.length}`);
+
+  // Clean up and flush traces to Laminar
+  await stagehand.close();
+
+  // Delete the browser for those who left open the live view url
+  await kernel.browsers.deleteByID(kernelBrowser.session_id);
+});
+
+await main();
+await Laminar.flush();
+```
+
+## Tracing Kernel Apps & Computer Controls
+
+When you use Kernel's [App platform](/apps/develop) or [Computer controls](/browsers/computer-controls), Laminar will automatically trace the computer and process interactions.
+
+In addition, you don't have to manually `observe` your kernel `app.actions` or worry about manual trace flushing inside your Kernel apps.
+
+<Tip>
+Laminar will take care of trace lifecycle automatically for Kernel apps.
+</Tip>
+
+### Example Kernel app with Laminar tracing
+
+To deploy this example on Kernel, follow the steps in [Kernel's app deployment guide](/apps/deploy).
+
+<CodeGroup>
+```javascript Typescript/Javascript
+import { Laminar } from '@lmnr-ai/lmnr';
+import { chromium } from 'playwright';
+import { config } from 'dotenv';
+import Kernel, { type KernelContext } from "@onkernel/sdk";
+
+config();
+
+Laminar.initialize({
+  instrumentModules: {
+    playwright: {
+      chromium,
+    },
+    kernel: Kernel,
   }
 });
 
-await stagehand.init();
+const kernel = new Kernel();
+const app = kernel.app('my-app-name');
 
-// Your automation code
-const page = stagehand.page;
-await page.goto('https://www.onkernel.com/docs');
+app.action('my-action', async (ctx: KernelContext, payload) => {
+  const kernelBrowser = await kernel.browsers.create({
+    invocation_id: ctx.invocation_id,
+  });
 
-// Navigate to careers page
-await page.goto('https://www.onkernel.com/docs/careers/intro');
+  const browser = await chromium.connectOverCDP(kernelBrowser.cdp_ws_url);
+  const context = browser.contexts[0] || (await browser.newContext());
+  const page = context.pages[0] || (await context.newPage());
 
-// Extract all job URLs
-const output = await page.extract({
-  instruction: 'Extract all job posting URLs from the Open Roles section.',
-  schema: z.object({
-    jobUrls: z.array(z.string()).describe('Array of job posting URLs')
-  })
+  // Your automation code
+  await page.goto('https://www.duckduckgo.com/')
+  await page.waitForTimeout(2000)
+  await page.goto('https://www.github.com/trending');
+
+  // Wait for 2 seconds
+  await page.waitForTimeout(2000);
+
+  // Extract all trending repos
+  const trendingRepos = await page.locator("h2 a.Link").evaluateAll((repos) =>
+    repos.map((repo) => repo.textContent.trim().replace(/[\n\s]/g, ''))
+  );
+
+  console.log('Trending repos:', trendingRepos);
+
+  await page.waitForTimeout(2000);
+
+  // Computer tool call
+  await kernel.browsers.computer.captureScreenshot(
+    kernelBrowser.session_id,
+  );
+
+  // Process tool call
+  await kernel.browsers.process.exec(
+    kernelBrowser.session_id,
+    {
+      command: 'ls',
+      args: ['-la'],
+    }
+  )
+
+  await browser.close();
+  await kernel.browsers.deleteByID(kernelBrowser.session_id);
+
+  return { success: true, result: "Action completed successfully" };
 });
-
-console.log('Job URLs found:', output.jobUrls);
-console.log(`Total jobs: ${output.jobUrls.length}`);
-
-// Clean up and flush traces to Laminar
-await stagehand.close();
-await Laminar.flush();
-
-// Delete the browser for those who left open the live view url
-await kernel.browsers.deleteByID(kernelBrowser.session_id);
 ```
+
+```python Python
+from lmnr import Laminar
+from playwright.async_api import async_playwright
+from kernel import App, Kernel, KernelContext
+
+# Initialize Laminar
+Laminar.initialize()
+
+kernel_client = Kernel()
+app = App("my-app-name")
+
+@app.action(name="my-action")
+async def run_automation(ctx: KernelContext):
+    # Connect Playwright to Kernel's browser
+    async with async_playwright() as p:
+        kernel_browser = kernel_client.browsers.create(
+            invocation_id=ctx.invocation_id
+        )
+        browser = await p.chromium.connect_over_cdp(kernel_browser.cdp_ws_url)
+        context = (
+            browser.contexts[0]
+            if browser.contexts
+            else await browser.new_context()
+        )
+        page = context.pages[0] if context.pages else await context.new_page()
+
+        # Your automation code
+        await page.goto('https://www.duckduckgo.com/')
+        await page.wait_for_timeout(2000)
+        await page.goto('https://www.github.com/trending')
+        await page.wait_for_timeout(2000)
+
+        # Extract all trending repos
+        trending_repos = await page.locator("h2 a.Link").evaluate_all(r"""
+            (repos) => 
+                repos.map((repo) => 
+                    repo.textContent.trim().replace(/[\n\s]/g, '')
+                )
+            """)
+
+        print('Trending repos:', trending_repos)
+
+        # Process tool call
+        kernel_client.browsers.process.exec(
+            id=kernel_browser.session_id,
+            command="ls",
+            args=["-la"],
+        )
+
+        # Computer tool call
+        kernel_client.browsers.computer.move_mouse(
+            id=kernel_browser.session_id,
+            x=100,
+            y=100,
+        )
+
+        # Wait for 3 seconds
+        await page.wait_for_timeout(3000)
+
+        # Clean up the browser
+        await browser.close()
+
+    # Delete the browser for those who left open the Kernel live view url
+    kernel_client.browsers.delete_by_id(kernel_browser.session_id)
+
+    print("Done")
+```
+</CodeGroup>
 
 ## Viewing traces in Laminar
 
@@ -343,6 +508,7 @@ After running your automation:
    - Full execution timeline
    - LLM calls and responses
    - Browser session recordings
+   - Computer and process interactions (for Kernel apps)
    - Token usage and costs
    - Latency metrics
 
