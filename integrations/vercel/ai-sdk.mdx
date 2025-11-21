@@ -57,9 +57,7 @@ const client = new Kernel({
   apiKey: process.env.KERNEL_API_KEY,
 });
 
-const browser = await client.browsers.create({
-  browser: 'chromium'
-});
+const browser = await client.browsers.create({});
 
 const sessionId = browser.session_id;
 console.log('Browser session started:', sessionId);
@@ -96,9 +94,7 @@ const client = new Kernel({
 });
 
 const browser = await client.browsers.create({
-  browser: 'chromium',
   stealth: true, // Enable bot detection evasion
-  live_view: true, // Enable live browser viewing
 });
 
 const playwrightTool = playwrightExecuteTool({
@@ -153,9 +149,7 @@ const kernel = new Kernel({
   apiKey: process.env.KERNEL_API_KEY
 });
 
-const browser = await kernel.browsers.create({
-  browser: 'chromium'
-});
+const browser = await kernel.browsers.create({});
 
 // Initialize the AI agent with GPT-5.1
 const agent = new Agent({
@@ -371,41 +365,24 @@ try {
 }
 ```
 
-### 3. Timeout Configuration
-
-Set appropriate timeouts based on your use case:
-
-```typescript
-// For quick tasks
-const browser = await client.browsers.create({
-  timeout: 30, // 30 seconds
-});
-
-// For long-running tasks
-export const maxDuration = 300; // Next.js API route timeout
-```
-
-### 4. Enable Stealth Mode
+### 3. Enable Stealth Mode
 
 For websites with bot detection, enable stealth mode:
 
 ```typescript
 const browser = await client.browsers.create({
-  browser: 'chromium',
   stealth: true, // Evade bot detection
 });
 ```
 
-### 5. Use Live View for Debugging
+### 4. Live View for Debugging
 
-Enable live view to watch the browser in real-time:
+Live view is enabled by default for non-headless browsers. Access the live view URL from the browser object:
 
 ```typescript
-const browser = await client.browsers.create({
-  live_view: true,
-});
+const browser = await client.browsers.create({});
 
-console.log('Watch your browser:', browser.live_url);
+console.log('Watch your browser:', browser.live_view_url);
 ```
 
 ## Troubleshooting
@@ -426,26 +403,7 @@ const result = await generateText({
 
 ### Timeout Errors
 
-Increase the timeout for complex tasks:
-
-```typescript
-const playwrightTool = playwrightExecuteTool({
-  client,
-  sessionId,
-  timeout_sec: 120, // 2 minutes
-});
-```
-
-### Session Not Found
-
-Ensure the browser session is still active before executing tasks:
-
-```typescript
-const browser = await client.browsers.retrieve(sessionId);
-if (browser.status === 'running') {
-  // Proceed with tool usage
-}
-```
+If you're experiencing timeout errors, the LLM can request longer timeouts by including the `timeout_sec` parameter in the generated Playwright code execution request.
 
 ## Additional Resources
 
