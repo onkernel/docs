@@ -118,7 +118,14 @@
               "integrations/notte",
               "integrations/stagehand",
               "integrations/valtown",
-              "integrations/vercel"
+              {
+                "group": "Vercel",
+                "pages": [
+                  "integrations/vercel/overview",
+                  "integrations/vercel/marketplace",
+                  "integrations/vercel/ai-sdk"
+                ]
+              }
             ]
           },
           {
