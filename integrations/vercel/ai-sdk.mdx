@@ -1,0 +1,488 @@
+---
+title: "Vercel AI SDK Tool"
+description: "Build AI agents with browser automation using the @onkernel/ai-sdk package"
+---
+
+## Overview
+
+The `@onkernel/ai-sdk` package provides Vercel AI SDK-compatible tools for browser automation powered by Kernel. This package exposes a Playwright execution tool that allows Large Language Models (LLMs) to browse the web, interact with websites, and perform automation tasks through natural language instructions.
+
+With this tool, AI agents can execute Playwright code on Kernel's remote browsers, enabling powerful browser automation capabilities in your AI-powered applications.
+
+## Installation
+
+Install the package along with its peer dependencies:
+
+```bash
+npm install @onkernel/ai-sdk zod
+npm install ai @onkernel/sdk
+```
+
+<Note>
+  The `@onkernel/sdk` and `ai` packages are peer dependencies that must be installed separately.
+</Note>
+
+## Prerequisites
+
+Before using the AI SDK tool, you'll need:
+
+1. **Kernel API Key** - Obtain from the [Kernel Dashboard](https://dashboard.onkernel.com) or through the [Vercel Marketplace integration](/integrations/vercel/marketplace)
+2. **AI Model Provider** - An API key for your chosen LLM provider (OpenAI, Anthropic, etc.)
+3. **Kernel Browser Session** - A running browser session created via the Kernel SDK
+
+## How It Works
+
+The `playwrightExecuteTool` creates a Vercel AI SDK tool that:
+
+1. Accepts natural language instructions from an LLM
+2. Converts those instructions into Playwright code
+3. Executes the code on a Kernel remote browser
+4. Returns the results back to the LLM
+
+This enables AI agents to autonomously browse websites, extract data, and perform complex automation tasks.
+
+## Usage with `generateText()`
+
+The simplest way to use the AI SDK tool is with Vercel's `generateText()` function:
+
+<CodeGroup>
+```typescript Basic Example
+import { openai } from '@ai-sdk/openai';
+import { playwrightExecuteTool } from '@onkernel/ai-sdk';
+import { Kernel } from '@onkernel/sdk';
+import { generateText } from 'ai';
+
+// 1) Create Kernel client and start a browser session
+const client = new Kernel({
+  apiKey: process.env.KERNEL_API_KEY,
+});
+
+const browser = await client.browsers.create({
+  browser: 'chromium'
+});
+
+const sessionId = browser.session_id;
+console.log('Browser session started:', sessionId);
+
+// 2) Create the Playwright execution tool
+const playwrightTool = playwrightExecuteTool({
+  client,
+  sessionId
+});
+
+// 3) Use with Vercel AI SDK
+const result = await generateText({
+  model: openai('gpt-5.1'),
+  prompt: 'Open example.com and click the first link',
+  tools: {
+    playwright_execute: playwrightTool,
+  },
+});
+
+console.log('Result:', result.text);
+
+// 4) Clean up
+await client.browsers.deleteByID(sessionId);
+```
+
+```typescript Advanced Example
+import { openai } from '@ai-sdk/openai';
+import { playwrightExecuteTool } from '@onkernel/ai-sdk';
+import { Kernel } from '@onkernel/sdk';
+import { generateText } from 'ai';
+
+const client = new Kernel({
+  apiKey: process.env.KERNEL_API_KEY
+});
+
+const browser = await client.browsers.create({
+  browser: 'chromium',
+  stealth: true, // Enable bot detection evasion
+  live_view: true, // Enable live browser viewing
+});
+
+const playwrightTool = playwrightExecuteTool({
+  client,
+  sessionId: browser.session_id,
+});
+
+try {
+  const result = await generateText({
+    model: openai('gpt-5.1'),
+    prompt: 'Navigate to example.com, read the H1 text, and summarize the page content',
+    tools: {
+      playwright_execute: playwrightTool,
+    },
+  });
+
+  console.log('Summary:', result.text);
+
+  // Capture a screenshot of the final state
+  const screenshot = await client.browsers.computer.captureScreenshot(
+    browser.session_id
+  );
+
+  // Save screenshot
+  await fs.writeFile(
+    'screenshot.png',
+    Buffer.from(await screenshot.arrayBuffer())
+  );
+
+  // Log tool results
+  if (result.toolResults.length > 0) {
+    console.log('Executed actions:', result.toolResults);
+  }
+} finally {
+  await client.browsers.deleteByID(browser.session_id);
+}
+```
+</CodeGroup>
+
+## Usage with `Agent()` Class
+
+For more complex, multi-step automation tasks, use the Vercel AI SDK's `Agent()` class. Agents can autonomously plan and execute a series of actions to accomplish a goal:
+
+<CodeGroup>
+```typescript Agent Example
+import { openai } from '@ai-sdk/openai';
+import { playwrightExecuteTool } from '@onkernel/ai-sdk';
+import { Kernel } from '@onkernel/sdk';
+import { Experimental_Agent as Agent, stepCountIs } from 'ai';
+
+const kernel = new Kernel({
+  apiKey: process.env.KERNEL_API_KEY
+});
+
+const browser = await kernel.browsers.create({
+  browser: 'chromium'
+});
+
+// Initialize the AI agent with GPT-5.1
+const agent = new Agent({
+  model: openai('gpt-5.1'),
+  tools: {
+    playwright_execute: playwrightExecuteTool({
+      client: kernel,
+      sessionId: browser.session_id,
+    }),
+  },
+  stopWhen: stepCountIs(20), // Maximum 20 steps
+  system: `You are a browser automation expert. You help users execute tasks in their browser using Playwright.`,
+});
+
+// Execute the agent with the user's task
+const { text, steps, usage } = await agent.generate({
+  prompt: 'Go to news.ycombinator.com, find the top 3 posts, and summarize them',
+});
+
+console.log('Agent response:', text);
+console.log('Steps taken:', steps.length);
+console.log('Token usage:', usage);
+
+await kernel.browsers.deleteByID(browser.session_id);
+```
+
+```typescript Next.js API Route
+import { openai } from '@ai-sdk/openai';
+import { playwrightExecuteTool } from '@onkernel/ai-sdk';
+import { Kernel } from '@onkernel/sdk';
+import { Experimental_Agent as Agent, stepCountIs } from 'ai';
+
+export const maxDuration = 300; // 5 minutes for long-running tasks
+
+export async function POST(req: Request) {
+  try {
+    const { sessionId, task } = await req.json();
+
+    if (!sessionId || !task) {
+      return Response.json(
+        { error: 'Missing sessionId or task' },
+        { status: 400 }
+      );
+    }
+
+    const kernel = new Kernel({
+      apiKey: process.env.KERNEL_API_KEY
+    });
+
+    // Initialize the AI agent
+    const agent = new Agent({
+      model: openai('gpt-5.1'),
+      tools: {
+        playwright_execute: playwrightExecuteTool({
+          client: kernel,
+          sessionId: sessionId,
+        }),
+      },
+      stopWhen: stepCountIs(20),
+      system: `You are a browser automation expert. You help users execute tasks in their browser using Playwright.`,
+    });
+
+    // Execute the agent with the user's task
+    const { text, steps, usage } = await agent.generate({
+      prompt: task,
+    });
+
+    // Collect all executed code from the steps
+    const executedCodes = steps
+      .filter((step) => step.toolResults && step.toolResults.length > 0)
+      .flatMap((step) =>
+        step.toolResults!.map((toolResult) => {
+          const result = toolResult as any;
+          return {
+            code: result.executedCode || '',
+            success: result.success,
+            result: result.result,
+            error: result.error,
+          };
+        })
+      )
+      .filter((item) => item.code);
+
+    return Response.json({
+      success: true,
+      response: text,
+      executedCodes,
+      stepCount: steps.length,
+      usage,
+    });
+  } catch (error: any) {
+    console.error('Agent execution error:', error);
+    return Response.json(
+      {
+        success: false,
+        error: error.message || 'Failed to execute agent',
+      },
+      { status: 500 }
+    );
+  }
+}
+```
+</CodeGroup>
+
+## Tool Parameters
+
+The `playwrightExecuteTool` function accepts the following parameters:
+
+```typescript
+function playwrightExecuteTool(options: {
+  client: Kernel;     // Kernel SDK client instance
+  sessionId: string;  // Existing browser session ID
+}): Tool;
+```
+
+### Tool Input Schema
+
+The generated tool accepts the following input from the LLM:
+
+```typescript
+{
+  code: string;          // Required: JavaScript/TypeScript code to execute
+  timeout_sec?: number;  // Optional: Execution timeout in seconds (default: 60)
+}
+```
+
+Under the hood, the tool calls `client.browsers.playwright.execute(sessionId, { code, timeout_sec })`.
+
+## Examples
+
+### Web Scraping
+
+```typescript
+const result = await generateText({
+  model: openai('gpt-5.1'),
+  prompt: 'Go to producthunt.com and extract the top 5 product names and descriptions',
+  tools: {
+    playwright_execute: playwrightTool,
+  },
+});
+```
+
+### Form Automation
+
+```typescript
+const agent = new Agent({
+  model: openai('gpt-5.1'),
+  tools: {
+    playwright_execute: playwrightTool,
+  },
+  stopWhen: stepCountIs(10),
+  system: 'You are a form filling assistant.',
+});
+
+const result = await agent.generate({
+  prompt: 'Navigate to example.com/contact, fill out the contact form with name "John Doe" and email "john@example.com", and submit it',
+});
+```
+
+### Data Extraction
+
+```typescript
+const result = await generateText({
+  model: openai('gpt-5.1'),
+  prompt: 'Visit github.com/onkernel/kernel-nextjs-template, extract the README content, and count how many code examples are shown',
+  tools: {
+    playwright_execute: playwrightTool,
+  },
+});
+```
+
+## Best Practices
+
+### 1. Session Management
+
+Always clean up browser sessions after use to avoid unnecessary costs:
+
+```typescript
+try {
+  const result = await generateText({
+    // ... configuration
+  });
+  // Process results
+} finally {
+  await client.browsers.deleteByID(sessionId);
+}
+```
+
+### 2. Error Handling
+
+Implement robust error handling for production applications:
+
+```typescript
+try {
+  const agent = new Agent({
+    model: openai('gpt-5.1'),
+    tools: {
+      playwright_execute: playwrightTool,
+    },
+    stopWhen: stepCountIs(20),
+  });
+
+  const result = await agent.generate({
+    prompt: userTask,
+  });
+
+  return { success: true, data: result.text };
+} catch (error) {
+  console.error('Agent execution failed:', error);
+  return { success: false, error: error.message };
+} finally {
+  await client.browsers.deleteByID(sessionId);
+}
+```
+
+### 3. Timeout Configuration
+
+Set appropriate timeouts based on your use case:
+
+```typescript
+// For quick tasks
+const browser = await client.browsers.create({
+  timeout: 30, // 30 seconds
+});
+
+// For long-running tasks
+export const maxDuration = 300; // Next.js API route timeout
+```
+
+### 4. Enable Stealth Mode
+
+For websites with bot detection, enable stealth mode:
+
+```typescript
+const browser = await client.browsers.create({
+  browser: 'chromium',
+  stealth: true, // Evade bot detection
+});
+```
+
+### 5. Use Live View for Debugging
+
+Enable live view to watch the browser in real-time:
+
+```typescript
+const browser = await client.browsers.create({
+  live_view: true,
+});
+
+console.log('Watch your browser:', browser.live_url);
+```
+
+## Troubleshooting
+
+### Tool Not Being Called
+
+If the LLM isn't using the tool, make your prompt more explicit:
+
+```typescript
+const result = await generateText({
+  model: openai('gpt-5.1'),
+  prompt: 'Use the Playwright tool to navigate to example.com and extract the page title',
+  tools: {
+    playwright_execute: playwrightTool,
+  },
+});
+```
+
+### Timeout Errors
+
+Increase the timeout for complex tasks:
+
+```typescript
+const playwrightTool = playwrightExecuteTool({
+  client,
+  sessionId,
+  timeout_sec: 120, // 2 minutes
+});
+```
+
+### Session Not Found
+
+Ensure the browser session is still active before executing tasks:
+
+```typescript
+const browser = await client.browsers.retrieve(sessionId);
+if (browser.status === 'running') {
+  // Proceed with tool usage
+}
+```
+
+## Additional Resources
+
+<CardGroup cols={2}>
+  <Card
+    title="Vercel AI SDK Docs"
+    icon="book"
+    href="https://sdk.vercel.ai/docs"
+  >
+    Official Vercel AI SDK documentation
+  </Card>
+  <Card
+    title="Kernel SDK Reference"
+    icon="code"
+    href="/reference"
+  >
+    Complete Kernel SDK API reference
+  </Card>
+  <Card
+    title="Playwright Execution API"
+    icon="browser"
+    href="/browsers/playwright-execution"
+  >
+    Learn more about Kernel's Playwright execution
+  </Card>
+  <Card
+    title="GitHub Repository"
+    icon="github"
+    href="https://github.com/onkernel/ai-sdk"
+  >
+    View source code and examples
+  </Card>
+</CardGroup>
+
+## Related
+
+- [Vercel Marketplace Integration](/integrations/vercel/marketplace)
+- [Browser Creation](/browsers/create-a-browser)
+- [Stealth Mode](/browsers/bot-detection/stealth)
+- [Live View](/browsers/live-view)

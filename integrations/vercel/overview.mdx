@@ -1,0 +1,94 @@
+---
+title: "Vercel Integration Overview"
+description: "Integrate Kernel with Vercel for seamless browser automation in your web applications"
+---
+
+## Vercel + Kernel
+
+Kernel partners with Vercel to provide seamless browser automation capabilities for your Vercel applications. Our integration offers two powerful ways to add browser automation to your projects:
+
+### Vercel Marketplace Integration
+
+The [Vercel Marketplace integration](/integrations/vercel/marketplace) allows you to install and configure Kernel directly from the Vercel dashboard. This integration:
+
+- Automatically provisions a Kernel Organization and API key
+- Syncs your `KERNEL_API_KEY` to your Vercel project's environment variables
+- Manages billing directly through Vercel
+- Syncs team members and roles between Vercel and Kernel
+
+[Learn more about the Marketplace integration →](/integrations/vercel/marketplace)
+
+### AI SDK Tool for Browser Automation
+
+The `@onkernel/ai-sdk` package provides a Vercel AI SDK-compatible tool that enables AI agents to execute Playwright code on Kernel remote browsers. This tool integrates seamlessly with:
+
+- **Vercel AI SDK's `generateText()`** - For direct LLM-powered browser automation
+- **Vercel AI SDK's `Agent()` class** - For building autonomous browser automation agents
+
+With this tool, you can build AI-powered applications that browse the web, extract data, interact with websites, and perform complex automation tasks—all through natural language instructions.
+
+[Learn more about the AI SDK tool →](/integrations/vercel/ai-sdk)
+
+## Getting Started
+
+1. **Install the Kernel integration** from the [Vercel Marketplace](https://vercel.com/marketplace/kernel)
+2. **Connect Kernel to your Vercel project** to sync your API key
+3. **Install the AI SDK tool** in your application:
+   ```bash
+   npm install @onkernel/ai-sdk ai @onkernel/sdk
+   ```
+4. **Start building** browser automation agents
+
+## Use Cases
+
+- **Web Scraping & Data Extraction** - Extract data from websites using natural language
+- **Automated Testing** - Build AI-powered test automation
+- **Web Monitoring** - Monitor websites for changes or specific content
+- **Form Automation** - Automate form submissions and data entry
+- **Content Generation** - Generate screenshots, PDFs, or capture web content
+
+## Example
+
+Here's a quick example using the AI SDK tool with Vercel's `generateText()`:
+
+```typescript
+import { openai } from '@ai-sdk/openai';
+import { playwrightExecuteTool } from '@onkernel/ai-sdk';
+import { Kernel } from '@onkernel/sdk';
+import { generateText } from 'ai';
+
+const kernel = new Kernel({ apiKey: process.env.KERNEL_API_KEY });
+const browser = await kernel.browsers.create();
+
+const result = await generateText({
+  model: openai('gpt-5.1'),
+  prompt: 'Open example.com and summarize the main content',
+  tools: {
+    playwright_execute: playwrightExecuteTool({
+      client: kernel,
+      sessionId: browser.session_id,
+    }),
+  },
+});
+
+console.log(result.text);
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card
+    title="Marketplace Integration"
+    icon="store"
+    href="/integrations/vercel/marketplace"
+  >
+    Install Kernel from the Vercel Marketplace
+  </Card>
+  <Card
+    title="AI SDK Tool"
+    icon="robot"
+    href="/integrations/vercel/ai-sdk"
+  >
+    Build AI agents with browser automation capabilities
+  </Card>
+</CardGroup>
