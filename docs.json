@@ -122,8 +122,8 @@
                 "group": "Vercel",
                 "pages": [
                   "integrations/vercel/overview",
-                  "integrations/vercel/marketplace",
-                  "integrations/vercel/ai-sdk"
+                  "integrations/vercel/ai-sdk",
+                  "integrations/vercel/marketplace"
                 ]
               }
             ]
