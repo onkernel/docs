@@ -1,6 +1,6 @@
 ---
 title: "AI SDK Tool"
-description: "Build AI agents with browser automation using the @onkernel/ai-sdk package"
+description: "Build AI Agents with Kernel powered browser automation capabilities"
 ---
 
 ## Overview
@@ -22,7 +22,7 @@ npm install ai @onkernel/sdk
 
 Before using the AI SDK tool, you'll need:
 
-1. **Kernel API Key** - Obtain from the [Kernel Dashboard](https://dashboard.onkernel.com) or through the [Vercel Marketplace integration](/integrations/vercel/marketplace)
+1. **Kernel API Key** - Obtain from the [Kernel Dashboard](https://dashboard.onkernel.com) or the [Vercel Marketplace integration](/integrations/vercel/marketplace)
 2. **AI Model Provider** - An API key for your chosen LLM provider (OpenAI, Anthropic, etc.)
 3. **Kernel Browser Session** - A running browser session created via the Kernel SDK
 
@@ -80,7 +80,7 @@ console.log('Result:', result.toolResults[0].output);
 await kernel.browsers.deleteByID(sessionId);
 ```
 
-## Usage with `Agent()` Class
+## Usage with `Agent()`
 
 For more complex, multi-step automation tasks, use the Vercel AI SDK's `Agent()` class. Agents can autonomously plan and execute a series of actions to accomplish a goal:
 

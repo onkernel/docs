@@ -5,7 +5,7 @@ description: "Integrate Kernel with Vercel for seamless browser automation in yo
 
 ## Vercel + Kernel
 
-Kernel partners with Vercel to provide seamless browser automation capabilities for your Vercel applications. Our integration offers two powerful ways to add browser automation to your projects:
+Kernel and Vercel have partnered to provide seamless browser automation capabilities for your Vercel applications. Our integration offers two powerful ways to add browser automation to your projects:
 
 ### Vercel Marketplace Integration
 
@@ -29,50 +29,12 @@ With this tool, you can build AI-powered applications that browse the web, extra
 
 [Learn more about the AI SDK tool →](/integrations/vercel/ai-sdk)
 
-## Getting Started
-
-1. **Install the Kernel integration** from the [Vercel Marketplace](https://vercel.com/marketplace/kernel)
-2. **Connect Kernel to your Vercel project** to sync your API key
-3. **Install the AI SDK tool** in your application:
-   ```bash
-   npm install @onkernel/ai-sdk ai @onkernel/sdk
-   ```
-4. **Start building** browser automation agents
-
 ## Use Cases
 
-- **Web Scraping & Data Extraction** - Extract data from websites using natural language
 - **Automated Testing** - Build AI-powered test automation
 - **Web Monitoring** - Monitor websites for changes or specific content
+- **Data Extraction** - Extract data from websites using natural language
 - **Form Automation** - Automate form submissions and data entry
-- **Content Generation** - Generate screenshots, PDFs, or capture web content
-
-## Example
-
-Here's a quick example using the AI SDK tool with Vercel's `generateText()`:
-
-```typescript
-import { openai } from '@ai-sdk/openai';
-import { playwrightExecuteTool } from '@onkernel/ai-sdk';
-import { Kernel } from '@onkernel/sdk';
-import { generateText } from 'ai';
-
-const kernel = new Kernel({ apiKey: process.env.KERNEL_API_KEY });
-const browser = await kernel.browsers.create();
-
-const result = await generateText({
-  model: openai('gpt-5.1'),
-  prompt: 'Open example.com and summarize the main content',
-  tools: {
-    playwright_execute: playwrightExecuteTool({
-      client: kernel,
-      sessionId: browser.session_id,
-    }),
-  },
-});
-
-console.log(result.text);
-```
 
 ## Next Steps
 
@@ -82,13 +44,13 @@ console.log(result.text);
     icon="store"
     href="/integrations/vercel/marketplace"
   >
-    Install Kernel from the Vercel Marketplace
+    Integrate Kernel into your Vercel projects
   </Card>
   <Card
     title="AI SDK Tool"
     icon="robot"
     href="/integrations/vercel/ai-sdk"
   >
-    Build AI agents with browser automation capabilities
+    Build Agents with browser automation tools
   </Card>
 </CardGroup>
