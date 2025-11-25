@@ -7,31 +7,30 @@ title: "Browsers"
 <Info>Unless otherwise noted, `id` arguments refer to the browser session ID, not invocation IDs returned by Kernel commands.</Info>
 
 ### `kernel browsers list`
-List running and persistent browser sessions.
+List all browser sessions.
 
 ### `kernel browsers create`
 Create a new browser session.
 
 | Flag | Description |
 |------|-------------|
-| `--persistence-id <persistence-id>` | Reuse state across launches with a persistence ID. |
 | `--stealth` | Enable stealth mode to reduce automation fingerprints. |
 | `--headless` | Launch without GUI/VNC access. |
 | `--kiosk` | Launch in Chrome kiosk mode. |
 
-### `kernel browsers delete <session-id or persistence-id>`
+### `kernel browsers delete <session-id>`
 Delete a browser session. Use `-y` to skip confirmation.
 
 | Flag | Description |
 |------|-------------|
 | `--yes`, `-y` | Bypass the confirmation prompt. |
 
-### `kernel browsers view <session-id or persistence-id>`
+### `kernel browsers view <session-id>`
 Return a live view URL for remote monitoring and control.
 
 ## Browser logs
 
-### `kernel browsers logs stream <session-id or persistence-id>`
+### `kernel browsers logs stream <session-id>`
 Stream browser logs from the supervisor or a file path.
 
 | Flag | Description |
@@ -45,10 +44,10 @@ Stream browser logs from the supervisor or a file path.
 
 ## Replays
 
-### `kernel browsers replays list <session-id or persistence-id>`
+### `kernel browsers replays list <session-id>`
 List replay recordings for a browser session.
 
-### `kernel browsers replays start <session-id or persistence-id>`
+### `kernel browsers replays start <session-id>`
 Start recording a replay.
 
 | Flag | Description |
@@ -56,10 +55,10 @@ Start recording a replay.
 | `--framerate <fps>` | Recording framerate in frames per second. |
 | `--max-duration <seconds>` | Maximum recording duration. |
 
-### `kernel browsers replays stop <session-id or persistence-id> <replay-id>`
+### `kernel browsers replays stop <session-id> <replay-id>`
 Stop an active replay recording.
 
-### `kernel browsers replays download <session-id or persistence-id> <replay-id>`
+### `kernel browsers replays download <session-id> <replay-id>`
 Download a replay video.
 
 | Flag | Description |
@@ -68,7 +67,7 @@ Download a replay video.
 
 ## Process control
 
-### `kernel browsers process exec <session-id or persistence-id> [--] [command...]`
+### `kernel browsers process exec <session-id> [--] [command...]`
 Execute a command synchronously inside the browser VM.
 
 | Flag | Description |
@@ -80,7 +79,7 @@ Execute a command synchronously inside the browser VM.
 | `--as-user <user>` | Run as a specific user. |
 | `--as-root` | Run as root. |
 
-### `kernel browsers process spawn <session-id or persistence-id> [--] [command...]`
+### `kernel browsers process spawn <session-id> [--] [command...]`
 Execute a command asynchronously in the browser VM.
 
 | Flag | Description |
@@ -92,29 +91,29 @@ Execute a command asynchronously in the browser VM.
 | `--as-user <user>` | Run as a specific user. |
 | `--as-root` | Run as root. |
 
-### `kernel browsers process kill <session-id or persistence-id> <process-id>`
+### `kernel browsers process kill <session-id> <process-id>`
 Send a signal to a process running in the browser VM.
 
 | Flag | Description |
 |------|-------------|
 | `--signal <signal>` | Signal to send (`TERM`, `KILL`, `INT`, `HUP`; default: `TERM`). |
 
-### `kernel browsers process status <session-id or persistence-id> <process-id>`
+### `kernel browsers process status <session-id> <process-id>`
 Check process status information.
 
-### `kernel browsers process stdin <session-id or persistence-id> <process-id>`
+### `kernel browsers process stdin <session-id> <process-id>`
 Write base64-encoded data to a process stdin.
 
 | Flag | Description |
 |------|-------------|
 | `--data-b64 <data>` | Base64 payload to write (required). |
 
-### `kernel browsers process stdout-stream <session-id or persistence-id> <process-id>`
+### `kernel browsers process stdout-stream <session-id> <process-id>`
 Stream stdout and stderr from a process.
 
 ## Filesystem
 
-### `kernel browsers fs new-directory <session-id or persistence-id>`
+### `kernel browsers fs new-directory <session-id>`
 Create a directory in the browser VM.
 
 | Flag | Description |
@@ -122,21 +121,21 @@ Create a directory in the browser VM.
 | `--path <path>` | Absolute directory path to create (required). |
 | `--mode <mode>` | Directory mode in octal. |
 
-### `kernel browsers fs delete-directory <session-id or persistence-id>`
+### `kernel browsers fs delete-directory <session-id>`
 Delete a directory.
 
 | Flag | Description |
 |------|-------------|
 | `--path <path>` | Absolute directory path to delete (required). |
 
-### `kernel browsers fs delete-file <session-id or persistence-id>`
+### `kernel browsers fs delete-file <session-id>`
 Delete a file.
 
 | Flag | Description |
 |------|-------------|
 | `--path <path>` | Absolute file path to delete (required). |
 
-### `kernel browsers fs download-dir-zip <session-id or persistence-id>`
+### `kernel browsers fs download-dir-zip <session-id>`
 Download a directory as a zip archive.
 
 | Flag | Description |
@@ -144,21 +143,21 @@ Download a directory as a zip archive.
 | `--path <path>` | Absolute directory path to download (required). |
 | `-o, --output <path>` | Output zip file path. |
 
-### `kernel browsers fs file-info <session-id or persistence-id>`
+### `kernel browsers fs file-info <session-id>`
 Retrieve metadata for a file or directory.
 
 | Flag | Description |
 |------|-------------|
 | `--path <path>` | Absolute file or directory path (required). |
 
-### `kernel browsers fs list-files <session-id or persistence-id>`
+### `kernel browsers fs list-files <session-id>`
 List directory contents.
 
 | Flag | Description |
 |------|-------------|
 | `--path <path>` | Absolute directory path (required). |
 
-### `kernel browsers fs move <session-id or persistence-id>`
+### `kernel browsers fs move <session-id>`
 Move or rename a file or directory.
 
 | Flag | Description |
@@ -166,7 +165,7 @@ Move or rename a file or directory.
 | `--src <path>` | Absolute source path (required). |
 | `--dest <path>` | Absolute destination path (required). |
 
-### `kernel browsers fs read-file <session-id or persistence-id>`
+### `kernel browsers fs read-file <session-id>`
 Read a file from the browser VM.
 
 | Flag | Description |
@@ -174,7 +173,7 @@ Read a file from the browser VM.
 | `--path <path>` | Absolute file path (required). |
 | `-o, --output <path>` | Output path for the downloaded file. |
 
-### `kernel browsers fs set-permissions <session-id or persistence-id>`
+### `kernel browsers fs set-permissions <session-id>`
 Update file permissions or ownership.
 
 | Flag | Description |
@@ -184,7 +183,7 @@ Update file permissions or ownership.
 | `--owner <user>` | New owner username or UID. |
 | `--group <group>` | New group name or GID. |
 
-### `kernel browsers fs upload <session-id or persistence-id>`
+### `kernel browsers fs upload <session-id>`
 Upload one or more files.
 
 | Flag | Description |
@@ -193,7 +192,7 @@ Upload one or more files.
 | `--dest-dir <path>` | Destination directory for uploads. |
 | `--paths <paths>` | Local file paths to upload. |
 
-### `kernel browsers fs upload-zip <session-id or persistence-id>`
+### `kernel browsers fs upload-zip <session-id>`
 Upload a zip file and extract it.
 
 | Flag | Description |
@@ -201,7 +200,7 @@ Upload a zip file and extract it.
 | `--zip <path>` | Local zip file path (required). |
 | `--dest-dir <path>` | Directory to extract into (required). |
 
-### `kernel browsers fs write-file <session-id or persistence-id>`
+### `kernel browsers fs write-file <session-id>`
 Write a local file to the browser VM.
 
 | Flag | Description |
@@ -212,7 +211,7 @@ Write a local file to the browser VM.
 
 ## Computer controls
 
-### `kernel browsers computer click-mouse <session-id or persistence-id>`
+### `kernel browsers computer click-mouse <session-id>`
 Click the mouse at specific coordinates.
 
 | Flag | Description |
@@ -224,7 +223,7 @@ Click the mouse at specific coordinates.
 | `--click-type <type>` | `down`, `up`, or `click` (default: `click`). |
 | `--hold-key <key>` | Modifier keys to hold (repeatable). |
 
-### `kernel browsers computer move-mouse <session-id or persistence-id>`
+### `kernel browsers computer move-mouse <session-id>`
 Move the mouse pointer.
 
 | Flag | Description |
@@ -233,7 +232,7 @@ Move the mouse pointer.
 | `--y <coordinate>` | Y coordinate (required). |
 | `--hold-key <key>` | Modifier keys to hold (repeatable). |
 
-### `kernel browsers computer screenshot <session-id or persistence-id>`
+### `kernel browsers computer screenshot <session-id>`
 Capture a screenshot.
 
 | Flag | Description |
@@ -244,7 +243,7 @@ Capture a screenshot.
 | `--width <pixels>` | Region width. |
 | `--height <pixels>` | Region height. |
 
-### `kernel browsers computer type <session-id or persistence-id>`
+### `kernel browsers computer type <session-id>`
 Type text into the browser VM.
 
 | Flag | Description |
@@ -252,7 +251,7 @@ Type text into the browser VM.
 | `--text <text>` | Text to type (required). |
 | `--delay <ms>` | Delay between keystrokes in milliseconds. |
 
-### `kernel browsers computer press-key <session-id or persistence-id>`
+### `kernel browsers computer press-key <session-id>`
 Press one or more keys.
 
 | Flag | Description |
@@ -261,7 +260,7 @@ Press one or more keys.
 | `--duration <ms>` | Duration to hold keys. |
 | `--hold-key <key>` | Modifier keys to hold (repeatable). |
 
-### `kernel browsers computer scroll <session-id or persistence-id>`
+### `kernel browsers computer scroll <session-id>`
 Scroll the mouse wheel.
 
 | Flag | Description |
@@ -272,7 +271,7 @@ Scroll the mouse wheel.
 | `--delta-y <pixels>` | Vertical scroll amount (+down, -up). |
 | `--hold-key <key>` | Modifier keys to hold (repeatable). |
 
-### `kernel browsers computer drag-mouse <session-id or persistence-id>`
+### `kernel browsers computer drag-mouse <session-id>`
 Drag the mouse along a path.
 
 | Flag | Description |
@@ -284,7 +283,7 @@ Drag the mouse along a path.
 
 ## Playwright
 
-### `kernel browsers playwright execute <session-id or persistence-id> [code]`
+### `kernel browsers playwright execute <session-id> [code]`
 Execute Playwright/TypeScript code against a running browser session.
 
 | Flag | Description |
@@ -325,7 +324,7 @@ Delete an uploaded extension.
 |------|-------------|
 | `--yes`, `-y` | Skip confirmation. |
 
-### `kernel browsers extensions upload <session-id or persistence-id> <extension-path>...`
+### `kernel browsers extensions upload <session-id> <extension-path>...`
 Upload one or more unpacked Chrome extensions directly into a running browser session.
 
 ## Proxy management
