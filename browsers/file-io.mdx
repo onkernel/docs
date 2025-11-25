@@ -63,6 +63,7 @@ async function main() {
 
   // Set up CDP listeners to capture download filename and completion
   let downloadFilename: string | undefined;
+  let downloadState: string | undefined;
   let downloadCompletedResolve!: () => void;
   const downloadCompleted = new Promise<void>((resolve) => {
     downloadCompletedResolve = resolve;
@@ -75,6 +76,7 @@ async function main() {
 
   client.on('Browser.downloadProgress', (event) => {
     if (event.state === 'completed' || event.state === 'canceled') {
+      downloadState = event.state;
       downloadCompletedResolve();
     }
   });
@@ -98,6 +100,10 @@ async function main() {
     throw new Error('Unable to determine download filename');
   }
 
+  if (downloadState === 'canceled') {
+    throw new Error('Download was canceled');
+  }
+
   // Wait for the file to be available via Kernel's File I/O APIs
   console.log(`Waiting for file: ${downloadFilename}`);
   await waitForFile(kernelBrowser.session_id, DOWNLOAD_DIR, downloadFilename);
@@ -116,6 +122,7 @@ async function main() {
   console.log(`Saved to ${localPath}`);
 
   await kernel.browsers.deleteByID(kernelBrowser.session_id);
+  console.log('Kernel browser deleted successfully.');
 }
 
 main();
@@ -166,6 +173,7 @@ async def main():
 
         download_completed = asyncio.Event()
         download_filename: str | None = None
+        download_state: str | None = None
 
         def _on_download_begin(event):
             nonlocal download_filename
@@ -173,7 +181,9 @@ async def main():
             print(f"Download started: {download_filename}")
 
         def _on_download_progress(event):
+            nonlocal download_state
             if event.get("state") in ["completed", "canceled"]:
+                download_state = event.get("state")
                 download_completed.set()
 
         cdp_session.on("Browser.downloadWillBegin", _on_download_begin)
@@ -188,6 +198,10 @@ async def main():
             print("Download completed")
         except asyncio.TimeoutError:
             print("Download timed out after 10 seconds")
+            raise
+
+        if download_state == "canceled":
+            raise RuntimeError("Download was canceled")
 
         # Wait for the file to be available via Kernel's File I/O APIs
         print(f"Waiting for file: {download_filename}")
@@ -202,6 +216,7 @@ async def main():
         print(f"Saved to {local_path}")
 
         kernel.browsers.delete_by_id(kernel_browser.session_id)
+        print("Kernel browser deleted successfully.")
 
 
 if __name__ == "__main__":
