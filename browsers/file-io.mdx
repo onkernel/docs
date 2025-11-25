@@ -14,6 +14,10 @@ Playwright performs downloads via the browser itself, so there are a few steps:
 - Perform the download
 - Retrieve the file from the browser's filesystem
 
+<Info>
+The CDP `downloadProgress` event signals when the browser finishes writing a file, but there may be a brief delay before the file becomes available through Kernel's File I/O APIs. This is especially true for larger downloads. We recommend polling `listFiles` to confirm the file exists before attempting to read it.
+</Info>
+
 <CodeGroup>
 ```typescript Typescript/Javascript
 import Kernel from '@onkernel/sdk';
@@ -23,6 +27,24 @@ import pTimeout from 'p-timeout';
 
 const DOWNLOAD_DIR = '/tmp/downloads';
 const kernel = new Kernel();
+
+// Poll listFiles until the expected file appears in the directory
+async function waitForFile(
+  sessionId: string,
+  dir: string,
+  filename: string,
+  timeoutMs = 30_000
+) {
+  const start = Date.now();
+  while (Date.now() - start < timeoutMs) {
+    const files = await kernel.browsers.fs.listFiles(sessionId, { path: dir });
+    if (files.some((f) => f.name === filename)) {
+      return;
+    }
+    await new Promise((r) => setTimeout(r, 500));
+  }
+  throw new Error(`File ${filename} not found after ${timeoutMs}ms`);
+}
 
 async function main() {
   const kernelBrowser = await kernel.browsers.create();
@@ -41,6 +63,7 @@ async function main() {
 
   // Set up CDP listeners to capture download filename and completion
   let downloadFilename: string | undefined;
+  let downloadState: string | undefined;
   let downloadCompletedResolve!: () => void;
   const downloadCompleted = new Promise<void>((resolve) => {
     downloadCompletedResolve = resolve;
@@ -53,6 +76,7 @@ async function main() {
 
   client.on('Browser.downloadProgress', (event) => {
     if (event.state === 'completed' || event.state === 'canceled') {
+      downloadState = event.state;
       downloadCompletedResolve();
     }
   });
@@ -76,6 +100,14 @@ async function main() {
     throw new Error('Unable to determine download filename');
   }
 
+  if (downloadState === 'canceled') {
+    throw new Error('Download was canceled');
+  }
+
+  // Wait for the file to be available via Kernel's File I/O APIs
+  console.log(`Waiting for file: ${downloadFilename}`);
+  await waitForFile(kernelBrowser.session_id, DOWNLOAD_DIR, downloadFilename);
+
   const remotePath = `${DOWNLOAD_DIR}/${downloadFilename}`;
   console.log(`Reading file: ${remotePath}`);
 
@@ -89,7 +121,8 @@ async function main() {
   fs.writeFileSync(localPath, bytes);
   console.log(`Saved to ${localPath}`);
 
-  await browser.close();
+  await kernel.browsers.deleteByID(kernelBrowser.session_id);
+  console.log('Kernel browser deleted successfully.');
 }
 
 main();
@@ -98,6 +131,7 @@ main();
 ```python Python
 import asyncio
 import os
+import time
 from kernel import Kernel
 from playwright.async_api import async_playwright
 
@@ -105,8 +139,21 @@ DOWNLOAD_DIR = "/tmp/downloads"
 kernel = Kernel()
 
 
+# Poll list_files until the expected file appears in the directory
+async def wait_for_file(
+    session_id: str, dir: str, filename: str, timeout_sec: float = 30
+):
+    start = time.time()
+    while time.time() - start < timeout_sec:
+        files = kernel.browsers.fs.list_files(session_id, path=dir)
+        if any(f.name == filename for f in files):
+            return
+        await asyncio.sleep(0.5)
+    raise TimeoutError(f"File {filename} not found after {timeout_sec}s")
+
+
 async def main():
-    kernel_browser = await kernel.browsers.create()
+    kernel_browser = kernel.browsers.create()
     print("Kernel browser live view url:", kernel_browser.browser_live_view_url)
 
     async with async_playwright() as playwright:
@@ -126,6 +173,7 @@ async def main():
 
         download_completed = asyncio.Event()
         download_filename: str | None = None
+        download_state: str | None = None
 
         def _on_download_begin(event):
             nonlocal download_filename
@@ -133,7 +181,9 @@ async def main():
             print(f"Download started: {download_filename}")
 
         def _on_download_progress(event):
+            nonlocal download_state
             if event.get("state") in ["completed", "canceled"]:
+                download_state = event.get("state")
                 download_completed.set()
 
         cdp_session.on("Browser.downloadWillBegin", _on_download_begin)
@@ -148,16 +198,25 @@ async def main():
             print("Download completed")
         except asyncio.TimeoutError:
             print("Download timed out after 10 seconds")
+            raise
 
-        resp = await kernel.browsers.fs.read_file(
+        if download_state == "canceled":
+            raise RuntimeError("Download was canceled")
+
+        # Wait for the file to be available via Kernel's File I/O APIs
+        print(f"Waiting for file: {download_filename}")
+        await wait_for_file(kernel_browser.session_id, DOWNLOAD_DIR, download_filename)
+
+        resp = kernel.browsers.fs.read_file(
             kernel_browser.session_id, path=f"{DOWNLOAD_DIR}/{download_filename}"
         )
         local_path = f"./downloads/{download_filename}"
         os.makedirs("./downloads", exist_ok=True)
-        await resp.write_to_file(local_path)
+        resp.write_to_file(local_path)
         print(f"Saved to {local_path}")
 
-        await browser.close()
+        kernel.browsers.delete_by_id(kernel_browser.session_id)
+        print("Kernel browser deleted successfully.")
 
 
 if __name__ == "__main__":
@@ -165,7 +224,7 @@ if __name__ == "__main__":
 ```
 </CodeGroup>
 
-For more complex scenarios, you can also use the [list files](/api-reference/browsers/list-files-in-a-directory) API together with [read file](/api-reference/browsers/read-file-contents) to enumerate and save all downloads at the end of a session.
+We recommend using the [list files](/api-reference/browsers/list-files-in-a-directory) API to poll for file availability before calling [read file](/api-reference/browsers/read-file-contents), as shown in the examples above. This approach ensures reliable downloads, especially for larger files. You can also use `listFiles` to enumerate and save all downloads at the end of a session.
 
 ## Uploads
 
