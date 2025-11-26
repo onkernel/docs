@@ -37,6 +37,14 @@ Example:
 https://api.onkernel.com/browser/live/<TOKEN>?readOnly=true
 ```
 
+## Embedding in an iframe
+
+The live view URL can be embedded in an iframe to integrate the browser view into your own application or dashboard.
+
+```html
+<iframe src={browser.browser_live_view_url}></iframe>
+```
+
 ## Kiosk mode
 
 Kiosk mode provides a fullscreen live view experience without browser UI elements like the address bar and tabs. You can enable kiosk mode when creating a browser by setting the `kiosk_mode` parameter to `true`.
