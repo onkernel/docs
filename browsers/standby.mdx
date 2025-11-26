@@ -2,18 +2,10 @@
 title: "Standby Mode"
 ---
 
-Kernel browsers can enter standby mode during periods of inactivity. When a browser goes into standby mode, the browser's state remains the same but incurs zero usage costs. However, standby behavior differs between persistent and ephemeral browsers.
+Kernel browsers enter standby mode during periods of inactivity. When a browser goes into standby mode, the browser's state remains the same but incurs zero usage costs.
+
+Kernel browsers automatically enter standby when no CDP or Live View client is connected for `four seconds`. After it enters standby, the browser's [timeout](/browsers/termination#automatic-deletion-via-timeout) countdown begins.
 
 <Info>
     See [here](/browsers/termination) to learn about destroying browsers.
 </Info>
-
-## Persistent Browsers
-
-Persistent browsers go into standby mode if there aren't any network requests for the time-to-idle period (currently `4 seconds`). The browser is reactivated the moment it receives an incoming network request.
-
-This means you don't pay for the browser's idle clock time. This is especially useful for use cases that run over long periods of time or require periods of inactivity, such as **human-in-the-loop (HITL) workflows**.
-
-## Ephemeral Browsers
-
-For ephemeral browsers, standby mode works differently. When an ephemeral browser enters standby (when no CDP or Live View client is connected), the browser's timeout countdown begins rather than staying idle indefinitely.

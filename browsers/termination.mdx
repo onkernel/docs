@@ -4,9 +4,13 @@ title: "Termination & Timeouts"
 
 Kernel browsers should be terminated after you're done with them.
 
+<Info>
+  Using Playwright/Puppeteer's method `browser.close()` does not delete the browser. Use one of the methods below to delete the browser.
+</Info>
+
 ## Deleting a browser via session ID
 
-Every browser instance has a `session_id`. You can delete any browser (persistent or non-persistent) using its session ID:
+Every browser instance has a `session_id`. You can delete any browser using its session ID:
 
 <CodeGroup>
 ```typescript Typescript/Javascript
@@ -25,37 +29,9 @@ kernel.browsers.delete_by_id("htzv5orfit78e1m2biiifpbv")
 ```
 </CodeGroup>
 
-## Deleting a persistent browser by persistence ID
-
-For convenience, [persistent browsers](/browsers/persistence) can also be deleted using their `persistence_id`:
-
-<CodeGroup>
-```typescript Typescript/Javascript
-import Kernel from '@onkernel/sdk';
-
-const kernel = new Kernel();
-
-await kernel.browsers.delete({
-  persistence_id: 'unique-browser-id-for-persistence',
-})
-```
-
-```python Python
-from kernel import Kernel
-
-kernel = Kernel()
-
-kernel.browsers.delete(
-    persistent_id='unique-browser-id-for-persistence',
-)
-```
-</CodeGroup>
-
-This will permanently delete the persistent browser and all its saved state.
-
 ## Automatic deletion via timeout
 
-If you don't manually delete a non-persisted browser, it will be automatically deleted after a configurable `timeout` (default 60 seconds). The timeout begins when the browser does not see a CDP or live view connection.
+If you don't manually delete a browser, it will be automatically deleted after a configurable `timeout` (default 60 seconds). The timeout begins when the browser does not see a CDP or live view connection.
 
 You can set a custom timeout of up to 72 hours when creating a browser:
 
@@ -78,7 +54,3 @@ browser = kernel.browsers.create(timeout_seconds=300)
 print(browser.session_id)
 ```
 </CodeGroup>
-
-<Note>
-Persistent browsers are **not** automatically deleted via timeout. They exist indefinitely until you manually delete them.
-</Note>
