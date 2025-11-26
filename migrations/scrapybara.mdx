@@ -128,16 +128,16 @@ instance.resume()  # Resume work
 
 **Kernel**
 ```python
-# Automatic standby mode + persistence
+# Automatic standby mode + extended timeout
 kernel_browser = await kernel.browsers.create(
-    persistence={"id": "my-long-session"}
+    timeout_seconds=86400
 )
 # ... do some work ...
 # Browser enters standby mode between connections
 
 # Later - reuse the exact browser instance with full state
 kernel_browser2 = await kernel.browsers.create(
-    persistence={"id": "my-long-session"}
+    timeout_seconds=86400
 )
 ```
 
@@ -216,7 +216,7 @@ For a complete reference of all available Computer Controls methods in Kernel, s
 | **Timeout Config** | `timeout_hours` parameter | `timeout_seconds` parameter |
 | **Stealth Mode** | ❌ Not available | Create browser with `stealth: true` |
 | **Headless Mode** | ❌ Not available | Create browser with `headless: true` |
-| **Session Persistence** | Auth state only | Full browser state via creating browser with `persistence={"id": "persist-id"}` |
+| **Session Persistence** | Auth state only | Full browser state via creating browser with extended timeout |
 | **Video Replays** | ❌ Not available | `kernel.browsers.replays.start()` and `kernel.browsers.replays.stop()` |
 | **File Upload** | `instance.upload()` | `kernel.browsers.fs.upload()` or Playwright |
 | **File Download** | Via browser, then `instance.file()` | `kernel.browsers.fs.read_file()` |

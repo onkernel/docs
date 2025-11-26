@@ -60,7 +60,6 @@
               "browsers/viewport",
               "browsers/live-view",
               "browsers/standby",
-              "browsers/persistence",
               "browsers/profiles",
               "browsers/termination",
               {
