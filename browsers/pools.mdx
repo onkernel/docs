@@ -1,9 +1,23 @@
 ---
 title: "Browser Pools"
-description: "Pre-warm pools of browsers for instant acquisition"
+description: "Pre-warm pools of browsers for immediate acquisition"
 ---
 
-Browser pools let you maintain a set of pre-warmed, identically configured browsers ready for immediate use. Instead of waiting for browser creation on each request, you can acquire a browser from the pool instantly and release it when done.
+Browser pools let you maintain a set of pre-warmed, identically configured browsers ready for immediate use. Instead of waiting for browser creation on each request, you can acquire a browser from the pool without the startup delay and release it when done.
+
+<Info>
+Browser pools are in limited preview. [Join our Discord](https://discord.gg/FBrveQRcud) to request access or learn more.
+</Info>
+
+## When to use pools
+
+Pools are ideal when you need to:
+
+- Minimize latency for browser acquisition for more complex configurations (with profiles, proxies, etc.)
+- Run many short-lived browser tasks in parallel
+- Maintain consistent browser configuration across sessions
+
+For one-off or long-running browser sessions, [creating browsers directly](/browsers/create-a-browser) may be simpler.
 
 ## Create a pool
 
@@ -41,20 +55,6 @@ pool = kernel.browser_pools.create(
 
 print(pool.id)
 ```
-
-```bash cURL
-curl --request POST \
-  --url https://api.onkernel.com/browser_pools \
-  --header 'Authorization: Bearer <token>' \
-  --header 'Content-Type: application/json' \
-  --data '{
-    "name": "my-pool",
-    "size": 10,
-    "stealth": true,
-    "headless": false,
-    "timeout_seconds": 600
-  }'
-```
 </CodeGroup>
 
 ### Pool configuration options
@@ -73,9 +73,11 @@ curl --request POST \
 | `viewport` | object | - | Browser window size configuration. |
 | `kiosk_mode` | boolean | false | Hide address bar and tabs in live view. |
 
+See [Stealth Mode](/browsers/bot-detection/stealth), [Profiles](/browsers/profiles), and [Extensions](/browsers/extensions) for details on these options.
+
 ## Acquire a browser
 
-Acquire a browser from the pool. The request returns immediately if a browser is available, or waits until one becomes available.
+Acquire a browser from the pool. The request returns immediately if a browser is available, or waits until one becomes available. The `acquire_timeout_seconds` parameter controls how long to wait; it defaults to the calculated time it would take to fill the pool at the currently configured fill rate.
 
 <CodeGroup>
 ```typescript Typescript/Javascript
@@ -96,19 +98,13 @@ browser = kernel.browser_pools.acquire(
 print(browser.session_id)
 print(browser.cdp_ws_url)
 ```
-
-```bash cURL
-curl --request POST \
-  --url https://api.onkernel.com/browser_pools/my-pool/acquire \
-  --header 'Authorization: Bearer <token>' \
-  --header 'Content-Type: application/json' \
-  --data '{
-    "acquire_timeout_seconds": 30
-  }'
-```
 </CodeGroup>
 
 The acquired browser includes all the same properties as a regular browser session, including `cdp_ws_url` for CDP connections and `browser_live_view_url` for live viewing.
+
+### Timeout behavior
+
+Browsers remain in the pool indefinitely until acquired. Once acquired, the pool's `timeout_seconds` applies just like a [regular browser timeout](/browsers/termination#automatic-deletion-via-timeout)—if the browser is idle (no CDP or live view connection) for longer than the timeout, it is destroyed and **not** returned to the pool. The pool will automatically create a replacement browser.
 
 ## Release a browser
 
@@ -129,17 +125,6 @@ kernel.browser_pools.release(
     reuse=True,
 )
 ```
-
-```bash cURL
-curl --request POST \
-  --url https://api.onkernel.com/browser_pools/my-pool/release \
-  --header 'Authorization: Bearer <token>' \
-  --header 'Content-Type: application/json' \
-  --data '{
-    "session_id": "ts8iy3sg25ibheguyni2lg9t",
-    "reuse": true
-  }'
-```
 </CodeGroup>
 
 ## Update a pool
@@ -151,7 +136,6 @@ Update the pool configuration. By default, all idle browsers are discarded and r
 const updatedPool = await kernel.browserPools.update("my-pool", {
   size: 20,
   stealth: true,
-  discard_all_idle: true,
 });
 ```
 
@@ -160,24 +144,15 @@ updated_pool = kernel.browser_pools.update(
     "my-pool",
     size=20,
     stealth=True,
-    discard_all_idle=True,
 )
-```
-
-```bash cURL
-curl --request PATCH \
-  --url https://api.onkernel.com/browser_pools/my-pool \
-  --header 'Authorization: Bearer <token>' \
-  --header 'Content-Type: application/json' \
-  --data '{
-    "size": 20,
-    "stealth": true,
-    "discard_all_idle": true
-  }'
 ```
 </CodeGroup>
 
-Set `discard_all_idle: false` to keep existing idle browsers and only apply the new configuration to newly created browsers.
+<Info>
+The `size` parameter is always required when updating a pool, even if you only want to change other settings.
+</Info>
+
+By default, updating a pool discards all idle browsers and rebuilds them with the new configuration. Set `discard_all_idle: false` to keep existing idle browsers and only apply the new configuration to newly created browsers.
 
 ## Flush idle browsers
 
@@ -191,12 +166,6 @@ await kernel.browserPools.flush("my-pool");
 ```python Python
 kernel.browser_pools.flush("my-pool")
 ```
-
-```bash cURL
-curl --request POST \
-  --url https://api.onkernel.com/browser_pools/my-pool/flush \
-  --header 'Authorization: Bearer <token>'
-```
 </CodeGroup>
 
 ## Get pool details
@@ -205,23 +174,17 @@ Retrieve the current status and configuration of a pool.
 
 <CodeGroup>
 ```typescript Typescript/Javascript
-const pool = await kernel.browserPools.get("my-pool");
+const pool = await kernel.browserPools.retrieve("my-pool");
 
 console.log(pool.available_count);
 console.log(pool.acquired_count);
 ```
 
 ```python Python
-pool = kernel.browser_pools.get("my-pool")
+pool = kernel.browser_pools.retrieve("my-pool")
 
 print(pool.available_count)
 print(pool.acquired_count)
-```
-
-```bash cURL
-curl --request GET \
-  --url https://api.onkernel.com/browser_pools/my-pool \
-  --header 'Authorization: Bearer <token>'
 ```
 </CodeGroup>
 
@@ -244,44 +207,33 @@ pools = kernel.browser_pools.list()
 for pool in pools:
     print(pool.name, pool.available_count)
 ```
-
-```bash cURL
-curl --request GET \
-  --url https://api.onkernel.com/browser_pools \
-  --header 'Authorization: Bearer <token>'
-```
 </CodeGroup>
 
 ## Delete a pool
 
-Delete a browser pool and all browsers in it. By default, deletion is blocked if browsers are currently acquired. Use `force: true` to terminate acquired browsers.
+Delete a browser pool and all browsers in it. By default, deletion is blocked if browsers are currently acquired. Use `force: true` to terminate acquired browsers and force deletion.
 
 <CodeGroup>
 ```typescript Typescript/Javascript
-await kernel.browserPools.delete("my-pool", {
-  force: false,
-});
+// Delete a pool (fails if browsers are acquired)
+await kernel.browserPools.delete("my-pool");
+
+// Force delete even if browsers are acquired
+await kernel.browserPools.delete("my-pool", { force: true });
 ```
 
 ```python Python
-kernel.browser_pools.delete(
-    "my-pool",
-    force=False,
-)
-```
+# Delete a pool (fails if browsers are acquired)
+kernel.browser_pools.delete("my-pool")
 
-```bash cURL
-curl --request DELETE \
-  --url https://api.onkernel.com/browser_pools/my-pool \
-  --header 'Authorization: Bearer <token>' \
-  --header 'Content-Type: application/json' \
-  --data '{
-    "force": false
-  }'
+# Force delete even if browsers are acquired
+kernel.browser_pools.delete("my-pool", force=True)
 ```
 </CodeGroup>
 
 ## Full example
+
+This example assumes you've already created a pool named "my-pool". In practice, you'd create pools once (via the SDK, CLI, or dashboard) and then acquire from them repeatedly.
 
 <CodeGroup>
 ```typescript Typescript/Javascript
@@ -290,16 +242,8 @@ import { chromium } from 'playwright';
 
 const kernel = new Kernel();
 
-// Create a pool
-const pool = await kernel.browserPools.create({
-  name: "scraping-pool",
-  size: 5,
-  stealth: true,
-  timeout_seconds: 300,
-});
-
-// Acquire a browser
-const kernelBrowser = await kernel.browserPools.acquire("scraping-pool");
+// Acquire a browser from an existing pool
+const kernelBrowser = await kernel.browserPools.acquire("my-pool", {});
 
 try {
   // Connect via CDP
@@ -313,49 +257,47 @@ try {
 
   await browser.close();
 } finally {
-  // Release back to pool
-  await kernel.browserPools.release("scraping-pool", {
+  // Release back to pool for reuse
+  await kernel.browserPools.release("my-pool", {
     session_id: kernelBrowser.session_id,
-    reuse: true,
   });
 }
 ```
 
 ```python Python
+import asyncio
 from kernel import Kernel
 from playwright.async_api import async_playwright
 
 kernel = Kernel()
 
-# Create a pool
-pool = kernel.browser_pools.create(
-    name="scraping-pool",
-    size=5,
-    stealth=True,
-    timeout_seconds=300,
-)
+async def main():
+    # Acquire a browser from an existing pool
+    kernel_browser = kernel.browser_pools.acquire("my-pool")
 
-# Acquire a browser
-kernel_browser = kernel.browser_pools.acquire("scraping-pool")
+    async with async_playwright() as playwright:
+        try:
+            # Connect via CDP
+            browser = await playwright.chromium.connect_over_cdp(kernel_browser.cdp_ws_url)
+            context = browser.contexts[0]
+            page = context.pages[0]
 
-async with async_playwright() as playwright:
-    try:
-        # Connect via CDP
-        browser = await playwright.chromium.connect_over_cdp(kernel_browser.cdp_ws_url)
-        context = browser.contexts[0]
-        page = context.pages[0]
+            await page.goto('https://example.com')
+            title = await page.title()
+            print(title)
 
-        await page.goto('https://example.com')
-        title = await page.title()
-        print(title)
+            await browser.close()
+        finally:
+            # Release back to pool for reuse
+            kernel.browser_pools.release(
+                "my-pool",
+                session_id=kernel_browser.session_id,
+            )
 
-        await browser.close()
-    finally:
-        # Release back to pool
-        kernel.browser_pools.release(
-            "scraping-pool",
-            session_id=kernel_browser.session_id,
-            reuse=True,
-        )
+asyncio.run(main())
 ```
 </CodeGroup>
+
+## API reference
+
+For more details on all available endpoints and parameters, see the [Browser Pools API reference](/api-reference/browser-pools/list-browser-pools).
