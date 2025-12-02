@@ -28,10 +28,22 @@ kernel_browser = kernel.browsers.create(
 ```
 </CodeGroup>
 
-<Info>
-    [Anthropic Computer Use](/quickstart#sample-apps-reference) stops when it runs into a CAPTCHA. Use Kernel's auto-captcha solver by adding this to your prompt:
-    
-    `"If you see a CAPTCHA or similar test, just wait for it to get solved automatically by the browser."`
-</Info>
-
 If you're looking for proxy-level configuration with Kernel browsers, see [Proxies](/proxies/overview).
+
+## CAPTCHA Handling Behavior
+
+Below are tips for working with Kernel's Stealth Mode auto-CAPTCHA solver across different challenge types and automation frameworks.
+
+### Anthropic Computer Use
+
+Anthropic Computer Use stops when it encounters a CAPTCHA. Use Kernel's auto-CAPTCHA solver by adding this to your prompt:
+
+`"If you see a CAPTCHA or similar test, just wait for it to get solved automatically by the browser."`
+
+### Cloudflare
+
+When encountering a Cloudflare challenge, our auto-CAPTCHA solver will attempt to handle it. Once the "Ready" message appears on the screen, continue with your intended browser actions (e.g., entering credentials and submitting a login attempt). 
+
+<Info>
+Once the "Ready" message appears on the screen, avoid clicking the Cloudflare CAPTCHA checkbox, as this can interfere with the successful solver.
+</Info>
