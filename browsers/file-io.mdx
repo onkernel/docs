@@ -352,20 +352,142 @@ You can upload from your local filesystem into the browser directly using Playwr
 
 <CodeGroup>
 ```typescript Typescript/Javascript
-const localPath = '/path/to/a/file.txt';
+import Kernel from '@onkernel/sdk';
+import { chromium } from 'playwright';
+import { config } from 'dotenv';
 
-console.log(`Uploading ${localPath}...`);
-await page.locator('#fileUpload').setInputFiles(localPath);
-console.log('Upload completed');
+config();
+
+const REMOTE_DIR = '/tmp/downloads';
+const FILENAME = 'Kernel-Logo_Accent.png';
+const IMAGE_URL = 'https://www.onkernel.com/brand_assets/Kernel-Logo_Accent.png';
+
+const kernel = new Kernel({
+  apiKey: process.env.KERNEL_API_KEY,
+});
+
+async function main() {
+  // 1. Create Kernel browser session
+  const kernelBrowser = await kernel.browsers.create();
+  console.log('Live view:', kernelBrowser.browser_live_view_url);
+
+  // 2. Fetch the image from URL
+  console.log(`Fetching image from ${IMAGE_URL}`);
+  const response = await fetch(IMAGE_URL);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch image: ${response.status}`);
+  }
+  const imageBlob = await response.blob();
+
+  // 3. Write the fetched image to the remote browser's filesystem
+  const remotePath = `${REMOTE_DIR}/${FILENAME}`;
+  console.log(`Writing to remote browser at ${remotePath}`);
+  await kernel.browsers.fs.writeFile(kernelBrowser.session_id, imageBlob, {
+    path: remotePath,
+  });
+  console.log('File written to remote browser');
+
+  // 4. Connect Playwright and navigate to upload test page
+  const browser = await chromium.connectOverCDP(kernelBrowser.cdp_ws_url);
+  const context = browser.contexts()[0] || (await browser.newContext());
+  const page = context.pages()[0] || (await context.newPage());
+
+  console.log('Navigating to upload test page');
+  await page.goto('https://browser-tests-alpha.vercel.app/api/upload-test');
+
+  // 5. Upload the file using Playwright's file input helper
+  console.log(`Uploading ${remotePath} via file input`);
+  const remoteFile = await kernel.browsers.fs.readFile(kernelBrowser.session_id, { path: remotePath });
+  const fileBuffer = Buffer.from(await remoteFile.bytes());
+  await page.locator('#fileUpload').setInputFiles([{
+    name: FILENAME,
+    mimeType: 'image/png',
+    buffer: fileBuffer,
+  }]);
+  console.log('Upload completed');
+
+  // await kernel.browsers.deleteByID(kernelBrowser.session_id);
+  // console.log('Browser deleted');
+
+  return null;
+}
+
+main();
 
 ````
 
 ```python Python
-local_path = "/path/to/a/file.txt"
+import asyncio
+import os
+from kernel import Kernel
+from playwright.async_api import async_playwright
+from dotenv import load_dotenv
 
-print(f"Uploading {local_path}...")
-await page.locator("#fileUpload").set_input_files(str(local_path))
-print("Upload completed")
+load_dotenv()
+
+REMOTE_DIR = '/tmp/downloads'
+FILENAME = 'Kernel-Logo_Accent.png'
+IMAGE_URL = 'https://www.onkernel.com/brand_assets/Kernel-Logo_Accent.png'
+
+kernel = Kernel(api_key=os.getenv('KERNEL_API_KEY'))
+
+
+async def main():
+    # 1. Create Kernel browser session
+    kernel_browser = kernel.browsers.create()
+    print(f'Live view: {kernel_browser.browser_live_view_url}')
+
+    # 2. Fetch the image from URL
+    print(f'Fetching image from {IMAGE_URL}')
+    import aiohttp
+    async with aiohttp.ClientSession() as session:
+        async with session.get(IMAGE_URL) as response:
+            if response.status != 200:
+                raise Exception(f'Failed to fetch image: {response.status}')
+            image_bytes = await response.read()
+
+    # 3. Write the fetched image to the remote browser's filesystem
+    remote_path = f'{REMOTE_DIR}/{FILENAME}'
+    print(f'Writing to remote browser at {remote_path}')
+    kernel.browsers.fs.write_file(
+        kernel_browser.session_id,
+        image_bytes,
+        path=remote_path
+    )
+    print('File written to remote browser')
+
+    # 4. Connect Playwright and navigate to upload test page
+    async with async_playwright() as playwright:
+        browser = await playwright.chromium.connect_over_cdp(kernel_browser.cdp_ws_url)
+        context = browser.contexts[0] if browser.contexts else await browser.new_context()
+        page = context.pages[0] if context.pages else await context.new_page()
+
+        print('Navigating to upload test page')
+        await page.goto('https://browser-tests-alpha.vercel.app/api/upload-test')
+
+        # 5. Upload the file using Playwright's file input helper
+        print(f'Uploading {remote_path} via file input')
+        remote_file = kernel.browsers.fs.read_file(
+            kernel_browser.session_id,
+            path=remote_path
+        )
+        file_buffer = remote_file.read()
+        
+        await page.locator('#fileUpload').set_input_files({
+            'name': FILENAME,
+            'mimeType': 'image/png',
+            'buffer': file_buffer,
+        })
+        print('Upload completed')
+
+        # await browser.close()
+
+    # kernel.browsers.delete_by_id(kernel_browser.session_id)
+    # print('Browser deleted')
+
+
+if __name__ == '__main__':
+    asyncio.run(main())
 ````
 
 </CodeGroup>
