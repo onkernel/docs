@@ -56,7 +56,6 @@
             "group": "Browsers",
             "pages": [
               "browsers/create-a-browser",
-              "browsers/pools",
               "browsers/headless",
               "browsers/viewport",
               "browsers/live-view",
@@ -82,6 +81,7 @@
               },
               "browsers/file-io",
               "browsers/replays",
+              "browsers/pools",
               "browsers/extensions",
               "browsers/computer-controls",
               "browsers/playwright-execution",

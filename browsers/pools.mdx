@@ -6,7 +6,7 @@ description: "Pre-warm pools of browsers for immediate acquisition"
 Browser pools let you maintain a set of pre-warmed, identically configured browsers ready for immediate use. Instead of waiting for browser creation on each request, you can acquire a browser from the pool without the startup delay and release it when done.
 
 <Info>
-Browser pools are in limited preview. [Join our Discord](https://discord.gg/FBrveQRcud) to request access or learn more.
+Browser pools are in limited preview. [Book a demo](https://calendly.com/danny-kernel/browser-pools) to request access or learn more.
 </Info>
 
 ## When to use pools
@@ -17,7 +17,7 @@ Pools are ideal when you need to:
 - Run many short-lived browser tasks in parallel
 - Maintain consistent browser configuration across sessions
 
-For one-off or long-running browser sessions, [creating browsers directly](/browsers/create-a-browser) may be simpler.
+For one-off or long-running browser sessions, [creating browsers directly](/browsers/create-a-browser) with an optional extended timeout may be simpler.
 
 ## Create a pool
 
@@ -254,8 +254,6 @@ try {
   await page.goto('https://example.com');
   const title = await page.title();
   console.log(title);
-
-  await browser.close();
 } finally {
   // Release back to pool for reuse
   await kernel.browserPools.release("my-pool", {
@@ -285,8 +283,6 @@ async def main():
             await page.goto('https://example.com')
             title = await page.title()
             print(title)
-
-            await browser.close()
         finally:
             # Release back to pool for reuse
             kernel.browser_pools.release(
