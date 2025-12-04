@@ -275,10 +275,80 @@ asyncio.run(main())
 [Stagehand](https://github.com/browserbase/stagehand) is an AI browser automation framework. Here's how to use it with Laminar and Kernel:
 
 <Info>
-This example shows Stagehand v2 instrumentation setup.
+Stagehand v3 requires `@lmnr-ai/lmnr@0.7.11` or later.
 </Info>
 
-```javascript Typescript/Javascript
+<CodeGroup>
+```javascript Stagehand v3
+import { Laminar, observe } from '@lmnr-ai/lmnr';
+import { Stagehand } from '@browserbasehq/stagehand';
+import Kernel from '@onkernel/sdk';
+import { z } from 'zod';
+
+// Initialize Laminar with Stagehand instrumentation
+Laminar.initialize({
+  projectApiKey: process.env.LMNR_PROJECT_API_KEY,
+  instrumentModules: {
+    stagehand: Stagehand,
+    kernel: Kernel,
+  },
+});
+
+// Initialize Kernel and create a browser
+const kernel = new Kernel();
+
+const main = async () => observe({ name: 'main' }, async () => {
+  // Create browser
+  const kernelBrowser = await kernel.browsers.create({
+    stealth: true,
+  });
+
+  console.log("Live view url:", kernelBrowser.browser_live_view_url);
+
+  // Configure Stagehand to use Kernel's browser
+  const stagehand = new Stagehand({
+    env: "LOCAL",
+    localBrowserLaunchOptions: {
+      cdpUrl: kernelBrowser.cdp_ws_url,
+    },
+    model: "openai/gpt-4.1",
+    apiKey: process.env.OPENAI_API_KEY,
+    verbose: 1,
+    domSettleTimeout: 30_000
+  });
+  await stagehand.init();
+
+  // Your automation code
+  const page = stagehand.context.pages()[0];
+  if (!page) {
+    throw new Error('No page available');
+  }
+  await page.goto("https://www.ycombinator.com/companies");
+
+  await stagehand.act("Type in Kernel into the search box");
+  await stagehand.act("Click on the first search result");
+
+  // Extract team size from the YC startup page
+  const output = await stagehand.extract(
+    "Extract the team size (number of employees) shown on this Y Combinator company page.",
+    z.object({
+      teamSize: z.string(),
+    })
+  );
+
+  console.log("Team size:", output.teamSize);
+
+  // Cleanup
+  await stagehand.close();
+  await kernel.browsers.deleteByID(kernelBrowser.session_id);
+});
+
+await main();
+await new Promise(resolve => setTimeout(resolve, 5000));
+await Laminar.flush();
+```
+
+```javascript Stagehand v2
 import { Laminar, observe } from '@lmnr-ai/lmnr';
 import { Stagehand } from '@browserbasehq/stagehand';
 import Kernel from '@onkernel/sdk';
@@ -304,14 +374,14 @@ const main = async () => observe({ name: 'main' }, async () => {
   // Configure Stagehand to use Kernel's browser
   const stagehand = new Stagehand({
     env: 'LOCAL',
+    localBrowserLaunchOptions: {
+      cdpUrl: kernelBrowser.cdp_ws_url
+    }
     verbose: 1,
     domSettleTimeoutMs: 30_000,
     modelName: 'openai/gpt-4.1',
     modelClientOptions: {
       apiKey: process.env.OPENAI_API_KEY
-    },
-    localBrowserLaunchOptions: {
-      cdpUrl: kernelBrowser.cdp_ws_url
     }
   });
   await stagehand.init();
@@ -342,8 +412,10 @@ const main = async () => observe({ name: 'main' }, async () => {
 });
 
 await main();
+await new Promise(resolve => setTimeout(resolve, 5000));
 await Laminar.flush();
 ```
+</CodeGroup>
 
 ## Tracing Kernel Apps & Computer Controls
 
