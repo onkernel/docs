@@ -222,6 +222,120 @@ async def main():
 if __name__ == "__main__":
     asyncio.run(main())
 ```
+
+```typescript Stagehand v3
+import "dotenv/config";
+import { Stagehand } from "@browserbasehq/stagehand";
+import Kernel from "@onkernel/sdk";
+import fs from "fs";
+
+// Poll listFiles until the expected file appears in the directory
+async function waitForFile(
+  kernel: Kernel,
+  sessionId: string,
+  dir: string,
+  filename: string,
+  timeoutMs = 30_000
+) {
+  const start = Date.now();
+  while (Date.now() - start < timeoutMs) {
+    const files = await kernel.browsers.fs.listFiles(sessionId, { path: dir });
+    if (files.some((f) => f.name === filename)) {
+      return;
+    }
+    await new Promise((r) => setTimeout(r, 500));
+  }
+  throw new Error(`File ${filename} not found after ${timeoutMs}ms`);
+}
+
+async function main() {
+  // Initialize Kernel client
+  const kernel = new Kernel({
+    apiKey: process.env.KERNEL_API_KEY,
+  });
+
+  // Create browser using Kernel MCP
+  console.log("Creating browser via Kernel...");
+  const kernelBrowser = await kernel.browsers.create({
+    stealth: true,
+  });
+
+  console.log(`Kernel Browser Session Started`);
+  console.log(`Session ID: ${kernelBrowser.session_id}`);
+  console.log(`Watch live: ${kernelBrowser.browser_live_view_url}`);
+  const DOWNLOAD_DIR = "/tmp/downloads";
+
+  // Initialize Stagehand with Kernel's CDP URL
+  const stagehand = new Stagehand({
+    env: "LOCAL",
+    verbose: 1,
+    localBrowserLaunchOptions: {
+      cdpUrl: kernelBrowser.cdp_ws_url,
+      downloadsPath: DOWNLOAD_DIR,
+      acceptDownloads: true,
+    },
+  });
+
+  await stagehand.init();
+
+  const page = stagehand.context.pages()[0];
+
+  await page.goto("https://browser-tests-alpha.vercel.app/api/download-test");
+
+  // Use Stagehand to click the download button
+  await stagehand.act("Click the download file link");
+  console.log("Download triggered");
+
+  // Wait a bit for the download to complete
+  await new Promise((r) => setTimeout(r, 6000));
+
+  // List files in the download directory to see what was downloaded
+  console.log("Checking download directory...");
+  const files = await kernel.browsers.fs.listFiles(kernelBrowser.session_id, {
+    path: DOWNLOAD_DIR,
+  });
+
+  if (files.length === 0) {
+    console.log("No files found in download directory");
+  } else {
+    const downloadedFile = files[0];
+    console.log(`File found: ${downloadedFile.name}`);
+
+    // Wait for the file to be fully available via Kernel's File I/O APIs
+    console.log(`Waiting for file: ${downloadedFile.name}`);
+    await waitForFile(
+      kernel,
+      kernelBrowser.session_id,
+      DOWNLOAD_DIR,
+      downloadedFile.name
+    );
+
+    const remotePath = `${DOWNLOAD_DIR}/${downloadedFile.name}`;
+    console.log(`Reading file from: ${remotePath}`);
+
+    // Read the file from Kernel browser's filesystem
+    const resp = await kernel.browsers.fs.readFile(kernelBrowser.session_id, {
+      path: remotePath,
+    });
+
+    // Save to local filesystem
+    const bytes = await resp.bytes();
+    fs.mkdirSync("downloads", { recursive: true });
+    const localPath = `downloads/${downloadedFile.name}`;
+    fs.writeFileSync(localPath, bytes);
+  }
+
+  // Clean up
+  await stagehand.close();
+  // await kernel.browsers.deleteByID(kernelBrowser.session_id);
+  console.log("Browser session closed");
+}
+
+main().catch((err) => {
+  console.error(err);
+  process.exit(1);
+});
+```
 </CodeGroup>
 
 We recommend using the [list files](/api-reference/browsers/list-files-in-a-directory) API to poll for file availability before calling [read file](/api-reference/browsers/read-file-contents), as shown in the examples above. This approach ensures reliable downloads, especially for larger files. You can also use `listFiles` to enumerate and save all downloads at the end of a session.
