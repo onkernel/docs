@@ -146,8 +146,7 @@
             "pages": [
               "info/concepts",
               "info/pricing",
-              "info/unikernels",
-              "info/changelog"
+              "info/unikernels"
             ]
           },
           {
