@@ -190,7 +190,7 @@
         "tab": "Changelog",
         "icon": "clock-rotate-left",
         "pages": [
-          "changelog"
+          "changelog",
           {
             "page": "Node SDK",
             "href": "https://github.com/onkernel/kernel-node-sdk/blob/main/CHANGELOG.md"
