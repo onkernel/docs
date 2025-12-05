@@ -260,87 +260,74 @@ import fs from "fs";
 
 const DOWNLOAD_DIR = "/tmp/downloads";
 
-// Poll listFiles until the expected file appears in the directory
+// Poll listFiles until any file appears in the directory
 async function waitForFile(
-  kernel: Kernel,
-  sessionId: string,
-  dir: string,
-  filename: string,
-  timeoutMs = 30_000
+    kernel: Kernel,
+    sessionId: string,
+    dir: string,
+    timeoutMs = 30_000
 ) {
-  const start = Date.now();
-  while (Date.now() - start < timeoutMs) {
-    const files = await kernel.browsers.fs.listFiles(sessionId, { path: dir });
-    if (files.some((f) => f.name === filename)) {
-      return;
+    const start = Date.now();
+    while (Date.now() - start < timeoutMs) {
+        const files = await kernel.browsers.fs.listFiles(sessionId, { path: dir });
+        if (files.length > 0) {
+            return files[0];
+        }
+        await new Promise((r) => setTimeout(r, 500));
     }
-    await new Promise((r) => setTimeout(r, 500));
-  }
-  throw new Error(`File ${filename} not found after ${timeoutMs}ms`);
+    throw new Error(`No files found in ${dir} after ${timeoutMs}ms`);
 }
 
 async function main() {
-  const kernel = new Kernel({
-    apiKey: process.env.KERNEL_API_KEY,
-  });
+    const kernel = new Kernel({
+        apiKey: process.env.KERNEL_API_KEY,
+    });
 
-  console.log("Creating browser via Kernel...");
-  const kernelBrowser = await kernel.browsers.create({
-    stealth: true,
-  });
+    console.log("Creating browser via Kernel...");
+    const kernelBrowser = await kernel.browsers.create({
+        stealth: true,
+    });
 
-  console.log(`Kernel Browser Session Started`);
-  console.log(`Session ID: ${kernelBrowser.session_id}`);
-  console.log(`Watch live: ${kernelBrowser.browser_live_view_url}`);
+    console.log(`Kernel Browser Session Started`);
+    console.log(`Session ID: ${kernelBrowser.session_id}`);
+    console.log(`Watch live: ${kernelBrowser.browser_live_view_url}`);
 
-  // Initialize Stagehand with Kernel's CDP URL and download configuration
-  const stagehand = new Stagehand({
-    env: "LOCAL",
-    verbose: 1,
-    localBrowserLaunchOptions: {
-      cdpUrl: kernelBrowser.cdp_ws_url,
-      downloadsPath: DOWNLOAD_DIR,
-      acceptDownloads: true,
-    },
-  });
+    // Initialize Stagehand with Kernel's CDP URL and download configuration
+    const stagehand = new Stagehand({
+        env: "LOCAL",
+        verbose: 1,
+        localBrowserLaunchOptions: {
+            cdpUrl: kernelBrowser.cdp_ws_url,
+            downloadsPath: DOWNLOAD_DIR,
+            acceptDownloads: true,
+        },
+    });
 
-  await stagehand.init();
+    await stagehand.init();
 
-  const page = stagehand.context.pages()[0];
+    const page = stagehand.context.pages()[0];
 
-  await page.goto("https://browser-tests-alpha.vercel.app/api/download-test");
+    await page.goto("https://browser-tests-alpha.vercel.app/api/download-test");
 
-  // Use Stagehand to click the download button
-  await stagehand.act("Click the download file link");
-  console.log("Download triggered");
-
-  // List files in the download directory to see what was downloaded
-  console.log("Checking download directory...");
-  const files = await kernel.browsers.fs.listFiles(kernelBrowser.session_id, {
-    path: DOWNLOAD_DIR,
-  });
-
-  if (files.length === 0) {
-    console.log("No files found in download directory");
-  } else {
-    const downloadedFile = files[0];
-    console.log(`File found: ${downloadedFile.name}`);
+    // Use Stagehand to click the download button
+    await stagehand.act("Click the download file link");
+    console.log("Download triggered");
 
     // Wait for the file to be fully available via Kernel's File I/O APIs
-    console.log(`Waiting for file: ${downloadedFile.name}`);
-    await waitForFile(
-      kernel,
-      kernelBrowser.session_id,
-      DOWNLOAD_DIR,
-      downloadedFile.name
+    console.log("Waiting for file to appear...");
+    const downloadedFile = await waitForFile(
+        kernel,
+        kernelBrowser.session_id,
+        DOWNLOAD_DIR
     );
+    console.log(`File found: ${downloadedFile.name}`);
 
     const remotePath = `${DOWNLOAD_DIR}/${downloadedFile.name}`;
     console.log(`Reading file from: ${remotePath}`);
 
     // Read the file from Kernel browser's filesystem
     const resp = await kernel.browsers.fs.readFile(kernelBrowser.session_id, {
-      path: remotePath,
+        path: remotePath,
     });
 
     // Save to local filesystem
@@ -348,18 +335,17 @@ async function main() {
     fs.mkdirSync("downloads", { recursive: true });
     const localPath = `downloads/${downloadedFile.name}`;
     fs.writeFileSync(localPath, bytes);
-    console.log(`✅ Saved to ${localPath}`);
-  }
+    console.log(`Saved to ${localPath}`);
 
-  // Clean up
-  await stagehand.close();
-  await kernel.browsers.deleteByID(kernelBrowser.session_id);
-  console.log("Browser session closed");
+    // Clean up
+    await stagehand.close();
+    await kernel.browsers.deleteByID(kernelBrowser.session_id);
+    console.log("Browser session closed");
 }
 
 main().catch((err) => {
-  console.error(err);
-  process.exit(1);
+    console.error(err);
+    process.exit(1);
 });
 ```
 
