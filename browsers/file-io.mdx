@@ -3,8 +3,6 @@ title: "File I/O"
 description: "Downloads, uploads, and manipulating the browser's filesystem"
 ---
 
-Kernel browsers run in fully sandboxed environments with a writable filesystem that you control. Anything your automation downloads during a session is saved inside this filesystem and can be retrieved directly while the session is running.
-
 ## Downloads
 
 Kernel browsers run in fully sandboxed environments with writable filesystems. When your automation downloads a file, it's saved inside the browser's filesystem and can be retrieved using Kernel's File I/O APIs.
@@ -18,6 +16,8 @@ Kernel browsers run in fully sandboxed environments with writable filesystems. W
 </Info>
 
 ### Playwright
+
+Kernel browsers run in fully sandboxed environments with a writable filesystem that you control. Anything your automation downloads during a session is saved inside this filesystem and can be retrieved directly while the session is running.
 
 Playwright performs downloads via the browser itself, so there are a few steps:
 
@@ -38,99 +38,99 @@ const kernel = new Kernel();
 
 // Poll listFiles until the expected file appears in the directory
 async function waitForFile(
-  sessionId: string,
-  dir: string,
-  filename: string,
-  timeoutMs = 30_000
+sessionId: string,
+dir: string,
+filename: string,
+timeoutMs = 30_000
 ) {
-  const start = Date.now();
-  while (Date.now() - start < timeoutMs) {
-    const files = await kernel.browsers.fs.listFiles(sessionId, { path: dir });
-    if (files.some((f) => f.name === filename)) {
-      return;
-    }
-    await new Promise((r) => setTimeout(r, 500));
-  }
-  throw new Error(`File ${filename} not found after ${timeoutMs}ms`);
+const start = Date.now();
+while (Date.now() - start < timeoutMs) {
+const files = await kernel.browsers.fs.listFiles(sessionId, { path: dir });
+if (files.some((f) => f.name === filename)) {
+return;
+}
+await new Promise((r) => setTimeout(r, 500));
+}
+throw new Error(`File ${filename} not found after ${timeoutMs}ms`);
 }
 
 async function main() {
-  const kernelBrowser = await kernel.browsers.create();
-  console.log('live view:', kernelBrowser.browser_live_view_url);
+const kernelBrowser = await kernel.browsers.create();
+console.log('live view:', kernelBrowser.browser_live_view_url);
 
-  const browser = await chromium.connectOverCDP(kernelBrowser.cdp_ws_url);
-  const context = browser.contexts()[0] || (await browser.newContext());
-  const page = context.pages()[0] || (await context.newPage());
+const browser = await chromium.connectOverCDP(kernelBrowser.cdp_ws_url);
+const context = browser.contexts()[0] || (await browser.newContext());
+const page = context.pages()[0] || (await context.newPage());
 
-  const client = await context.newCDPSession(page);
-  await client.send('Browser.setDownloadBehavior', {
-    behavior: 'allow',
-    downloadPath: DOWNLOAD_DIR,
-    eventsEnabled: true,
-  });
+const client = await context.newCDPSession(page);
+await client.send('Browser.setDownloadBehavior', {
+behavior: 'allow',
+downloadPath: DOWNLOAD_DIR,
+eventsEnabled: true,
+});
 
-  // Set up CDP listeners to capture download filename and completion
-  let downloadFilename: string | undefined;
-  let downloadState: string | undefined;
-  let downloadCompletedResolve!: () => void;
-  const downloadCompleted = new Promise<void>((resolve) => {
-    downloadCompletedResolve = resolve;
-  });
+// Set up CDP listeners to capture download filename and completion
+let downloadFilename: string | undefined;
+let downloadState: string | undefined;
+let downloadCompletedResolve!: () => void;
+const downloadCompleted = new Promise<void>((resolve) => {
+downloadCompletedResolve = resolve;
+});
 
-  client.on('Browser.downloadWillBegin', (event) => {
-    downloadFilename = event.suggestedFilename ?? 'unknown';
-    console.log('Download started:', downloadFilename);
-  });
+client.on('Browser.downloadWillBegin', (event) => {
+downloadFilename = event.suggestedFilename ?? 'unknown';
+console.log('Download started:', downloadFilename);
+});
 
-  client.on('Browser.downloadProgress', (event) => {
-    if (event.state === 'completed' || event.state === 'canceled') {
-      downloadState = event.state;
-      downloadCompletedResolve();
-    }
-  });
+client.on('Browser.downloadProgress', (event) => {
+if (event.state === 'completed' || event.state === 'canceled') {
+downloadState = event.state;
+downloadCompletedResolve();
+}
+});
 
-  console.log('Navigating to download test page');
-  await page.goto('https://browser-tests-alpha.vercel.app/api/download-test');
-  await page.getByRole('link', { name: 'Download File' }).click();
+console.log('Navigating to download test page');
+await page.goto('https://browser-tests-alpha.vercel.app/api/download-test');
+await page.getByRole('link', { name: 'Download File' }).click();
 
-  try {
-    await pTimeout(downloadCompleted, {
-      milliseconds: 10_000,
-      message: new Error('Download timed out after 10 seconds'),
-    });
-    console.log('Download completed');
-  } catch (err) {
-    console.error(err);
-    throw err;
-  }
+try {
+await pTimeout(downloadCompleted, {
+milliseconds: 10_000,
+message: new Error('Download timed out after 10 seconds'),
+});
+console.log('Download completed');
+} catch (err) {
+console.error(err);
+throw err;
+}
 
-  if (!downloadFilename) {
-    throw new Error('Unable to determine download filename');
-  }
+if (!downloadFilename) {
+throw new Error('Unable to determine download filename');
+}
 
-  if (downloadState === 'canceled') {
-    throw new Error('Download was canceled');
-  }
+if (downloadState === 'canceled') {
+throw new Error('Download was canceled');
+}
 
-  // Wait for the file to be available via Kernel's File I/O APIs
-  console.log(`Waiting for file: ${downloadFilename}`);
-  await waitForFile(kernelBrowser.session_id, DOWNLOAD_DIR, downloadFilename);
+// Wait for the file to be available via Kernel's File I/O APIs
+console.log(`Waiting for file: ${downloadFilename}`);
+await waitForFile(kernelBrowser.session_id, DOWNLOAD_DIR, downloadFilename);
 
-  const remotePath = `${DOWNLOAD_DIR}/${downloadFilename}`;
-  console.log(`Reading file: ${remotePath}`);
+const remotePath = `${DOWNLOAD_DIR}/${downloadFilename}`;
+console.log(`Reading file: ${remotePath}`);
 
-  const resp = await kernel.browsers.fs.readFile(kernelBrowser.session_id, {
-    path: remotePath,
-  });
+const resp = await kernel.browsers.fs.readFile(kernelBrowser.session_id, {
+path: remotePath,
+});
 
-  const bytes = await resp.bytes();
-  fs.mkdirSync('downloads', { recursive: true });
-  const localPath = `downloads/${downloadFilename}`;
-  fs.writeFileSync(localPath, bytes);
-  console.log(`Saved to ${localPath}`);
+const bytes = await resp.bytes();
+fs.mkdirSync('downloads', { recursive: true });
+const localPath = `downloads/${downloadFilename}`;
+fs.writeFileSync(localPath, bytes);
+console.log(`Saved to ${localPath}`);
 
-  await kernel.browsers.deleteByID(kernelBrowser.session_id);
-  console.log('Kernel browser deleted successfully.');
+await kernel.browsers.deleteByID(kernelBrowser.session_id);
+console.log('Kernel browser deleted successfully.');
 }
 
 main();
@@ -245,7 +245,7 @@ const stagehand = new Stagehand({
   localBrowserLaunchOptions: {
     cdpUrl: kernelBrowser.cdp_ws_url,
     downloadsPath: DOWNLOAD_DIR, // Specify where downloads should be saved
-    acceptDownloads: true,        // Enable downloads
+    acceptDownloads: true, // Enable downloads
   },
 });
 ```
@@ -314,6 +314,15 @@ async function main() {
   await stagehand.act("Click the download file link");
   console.log("Download triggered");
 
+  // List files in the download directory to see what was downloaded
+  console.log("Checking download directory...");
+  const files = await kernel.browsers.fs.listFiles(kernelBrowser.session_id, {
+    path: DOWNLOAD_DIR,
+  });
+
+  if (files.length === 0) {
+    console.log("No files found in download directory");
+  } else {
     const downloadedFile = files[0];
     console.log(`File found: ${downloadedFile.name}`);
 
@@ -339,7 +348,7 @@ async function main() {
     fs.mkdirSync("downloads", { recursive: true });
     const localPath = `downloads/${downloadedFile.name}`;
     fs.writeFileSync(localPath, bytes);
-    console.log(`Saved to ${localPath}`);
+    console.log(`✅ Saved to ${localPath}`);
   }
 
   // Clean up
@@ -379,53 +388,53 @@ const FILENAME = 'Kernel-Logo_Accent.png';
 const IMAGE_URL = 'https://www.onkernel.com/brand_assets/Kernel-Logo_Accent.png';
 
 const kernel = new Kernel({
-  apiKey: process.env.KERNEL_API_KEY,
+apiKey: process.env.KERNEL_API_KEY,
 });
 
 async function main() {
-  // 1. Create Kernel browser session
-  const kernelBrowser = await kernel.browsers.create();
-  console.log('Live view:', kernelBrowser.browser_live_view_url);
+// 1. Create Kernel browser session
+const kernelBrowser = await kernel.browsers.create();
+console.log('Live view:', kernelBrowser.browser_live_view_url);
 
-  // 2. Fetch the image from URL
-  console.log(`Fetching image from ${IMAGE_URL}`);
-  const response = await fetch(IMAGE_URL);
-  if (!response.ok) {
-    throw new Error(`Failed to fetch image: ${response.status}`);
-  }
-  const imageBlob = await response.blob();
+// 2. Fetch the image from URL
+console.log(`Fetching image from ${IMAGE_URL}`);
+const response = await fetch(IMAGE_URL);
+if (!response.ok) {
+throw new Error(`Failed to fetch image: ${response.status}`);
+}
+const imageBlob = await response.blob();
 
-  // 3. Write the fetched image to the remote browser's filesystem
-  const remotePath = `${REMOTE_DIR}/${FILENAME}`;
-  console.log(`Writing to remote browser at ${remotePath}`);
-  await kernel.browsers.fs.writeFile(kernelBrowser.session_id, imageBlob, {
-    path: remotePath,
-  });
-  console.log('File written to remote browser');
+// 3. Write the fetched image to the remote browser's filesystem
+const remotePath = `${REMOTE_DIR}/${FILENAME}`;
+console.log(`Writing to remote browser at ${remotePath}`);
+await kernel.browsers.fs.writeFile(kernelBrowser.session_id, imageBlob, {
+path: remotePath,
+});
+console.log('File written to remote browser');
 
-  // 4. Connect Playwright and navigate to upload test page
-  const browser = await chromium.connectOverCDP(kernelBrowser.cdp_ws_url);
-  const context = browser.contexts()[0] || (await browser.newContext());
-  const page = context.pages()[0] || (await context.newPage());
+// 4. Connect Playwright and navigate to upload test page
+const browser = await chromium.connectOverCDP(kernelBrowser.cdp_ws_url);
+const context = browser.contexts()[0] || (await browser.newContext());
+const page = context.pages()[0] || (await context.newPage());
 
-  console.log('Navigating to upload test page');
-  await page.goto('https://browser-tests-alpha.vercel.app/api/upload-test');
+console.log('Navigating to upload test page');
+await page.goto('https://browser-tests-alpha.vercel.app/api/upload-test');
 
-  // 5. Upload the file using Playwright's file input helper
-  console.log(`Uploading ${remotePath} via file input`);
-  const remoteFile = await kernel.browsers.fs.readFile(kernelBrowser.session_id, { path: remotePath });
-  const fileBuffer = Buffer.from(await remoteFile.bytes());
-  await page.locator('#fileUpload').setInputFiles([{
-    name: FILENAME,
-    mimeType: 'image/png',
-    buffer: fileBuffer,
-  }]);
-  console.log('Upload completed');
+// 5. Upload the file using Playwright's file input helper
+console.log(`Uploading ${remotePath} via file input`);
+const remoteFile = await kernel.browsers.fs.readFile(kernelBrowser.session_id, { path: remotePath });
+const fileBuffer = Buffer.from(await remoteFile.bytes());
+await page.locator('#fileUpload').setInputFiles([{
+name: FILENAME,
+mimeType: 'image/png',
+buffer: fileBuffer,
+}]);
+console.log('Upload completed');
 
-  // await kernel.browsers.deleteByID(kernelBrowser.session_id);
-  // console.log('Browser deleted');
+// await kernel.browsers.deleteByID(kernelBrowser.session_id);
+// console.log('Browser deleted');
 
-  return null;
+return null;
 }
 
 main();
@@ -488,7 +497,7 @@ async def main():
             path=remote_path
         )
         file_buffer = remote_file.read()
-        
+
         await page.locator('#fileUpload').set_input_files({
             'name': FILENAME,
             'mimeType': 'image/png',
