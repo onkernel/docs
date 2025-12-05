@@ -189,8 +189,30 @@
       {
         "tab": "Changelog",
         "icon": "clock-rotate-left",
-        "pages": [
-          "changelog"
+        "groups": [
+          {
+            "group": "Changelog",
+            "pages": [
+              "changelog"
+            ]
+          },
+          {
+            "group": "SDK Changelogs",
+            "pages": [
+              {
+                "title": "Node SDK",
+                "href": "https://github.com/onkernel/kernel-node-sdk/blob/main/CHANGELOG.md"
+              },
+              {
+                "title": "Python SDK",
+                "href": "https://github.com/onkernel/kernel-python-sdk/blob/next/CHANGELOG.md"
+              },
+              {
+                "title": "Go SDK",
+                "href": "https://github.com/onkernel/kernel-go-sdk/blob/main/CHANGELOG.md"
+              }
+            ]
+          }
         ]
       }
     ]
