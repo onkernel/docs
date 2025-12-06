@@ -1,0 +1,64 @@
+---
+title: "Extensions"
+---
+
+## Extension management
+
+### `kernel extensions list`
+List all uploaded extensions.
+
+### `kernel extensions upload <directory>`
+Upload an unpacked browser extension directory.
+
+| Flag | Description |
+|------|-------------|
+| `--name <name>` | Optional unique extension name. |
+
+### `kernel extensions download <id-or-name>`
+Download an extension archive.
+
+| Flag | Description |
+|------|-------------|
+| `--to <directory>` | Output directory (required). |
+
+### `kernel extensions download-web-store <url>`
+Download an extension from the Chrome Web Store.
+
+| Flag | Description |
+|------|-------------|
+| `--to <directory>` | Output directory (required). |
+| `--os <os>` | Target OS: `mac`, `win`, or `linux` (default: `linux`). |
+
+### `kernel extensions delete <id-or-name>`
+Delete an extension by ID or name.
+
+| Flag | Description |
+|------|-------------|
+| `--yes`, `-y` | Skip confirmation prompt. |
+
+### `kernel extensions build-web-bot-auth`
+Build Cloudflare's [Web Bot Auth](/integrations/web-bot-auth) browser extension for signing HTTP requests with RFC 9421 signatures.
+
+| Flag | Description |
+|------|-------------|
+| `--to <dir>` | Output directory for the built extension (required). |
+| `--key <path>` | Path to JWK file with Ed25519 signing key (defaults to RFC9421 test key). |
+| `--upload` | Upload the extension to Kernel after building. |
+| `--name <name>` | Extension name when uploading (default: `web-bot-auth`). |
+
+**Examples:**
+
+```bash
+# Build with default test key
+kernel extensions build-web-bot-auth --to ./web-bot-auth-ext
+
+# Build with custom key and upload
+kernel extensions build-web-bot-auth --to ./web-bot-auth-ext --key ./my-key.jwk --upload
+
+# Build with custom name
+kernel extensions build-web-bot-auth --to ./web-bot-auth-ext --upload --name my-company-bot
+```
+
+<Info>
+This command requires Node.js and npm to be installed on your system.
+</Info>

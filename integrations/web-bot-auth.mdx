@@ -1,0 +1,172 @@
+---
+title: "Web Bot Auth"
+description: "Cryptographically sign browser requests with Cloudflare's Web Bot Auth"
+---
+
+[Web Bot Auth](https://github.com/cloudflare/web-bot-auth) is Cloudflare's implementation of cryptographic authentication for automated web agents. It uses [RFC 9421 HTTP Message Signatures](https://datatracker.ietf.org/doc/html/rfc9421) to sign outgoing HTTP requests, allowing websites to verify the identity and integrity of bot traffic.
+
+By integrating Web Bot Auth with Kernel, your browser automations can cryptographically prove their identity to websites that support signature verification.
+
+## How it works
+
+Web Bot Auth works via a Chrome extension that intercepts all outgoing HTTP requests and adds cryptographic signature headers:
+
+- **`Signature`**: The RFC 9421 signature of the request
+- **`Signature-Input`**: Metadata about how the signature was created
+
+Websites can verify these signatures against your public key to confirm the request came from your authenticated agent.
+
+## Quick Start with Test Key
+
+The fastest way to get started is using Cloudflare's RFC9421 test key, which works with their [test verification site](https://http-message-signatures-example.research.cloudflare.com/).
+
+### 1. Build the extension
+
+Use the Kernel CLI to build the Web Bot Auth extension:
+
+```bash
+kernel extensions build-web-bot-auth --to ./web-bot-auth-ext --upload
+```
+
+This command:
+- Downloads Cloudflare's web-bot-auth browser extension source
+- Builds it with the default RFC9421 test key
+- Uploads it to Kernel as `web-bot-auth`
+
+<Info>
+The build command requires Node.js and npm to be installed on your system.
+</Info>
+
+### 2. Create a browser with the extension
+
+<CodeGroup>
+```bash CLI
+# Create a browser with the web-bot-auth extension
+kernel browsers create --extension web-bot-auth
+
+# The command outputs the browser ID and live view URL
+# Open the live view URL in your browser, then navigate to:
+# https://http-message-signatures-example.research.cloudflare.com/
+```
+
+```typescript TypeScript
+import { Kernel } from "@onkernel/sdk";
+import { chromium } from "playwright";
+
+const kernel = new Kernel();
+
+// Create browser with web-bot-auth extension
+const browser = await kernel.browsers.create({
+  extensions: [{ name: "web-bot-auth" }],
+});
+
+// Connect via Playwright
+const pw = await chromium.connectOverCDP(browser.browser_url);
+const context = pw.contexts()[0];
+const page = context?.pages()[0] || await context.newPage();
+
+// Navigate to a page - requests will be automatically signed
+await page.goto("https://http-message-signatures-example.research.cloudflare.com/");
+```
+
+```python Python
+from kernel import Kernel
+from playwright.sync_api import sync_playwright
+
+kernel = Kernel()
+
+# Create browser with web-bot-auth extension
+browser = kernel.browsers.create(extensions=[{"name": "web-bot-auth"}])
+
+# Connect via Playwright
+with sync_playwright() as p:
+    pw = p.chromium.connect_over_cdp(browser.browser_url)
+    context = pw.contexts[0]
+    page = context.pages[0] if context.pages else context.new_page()
+
+    # Navigate to a page - requests will be automatically signed
+    page.goto("https://http-message-signatures-example.research.cloudflare.com/")
+```
+
+</CodeGroup>
+
+### 3. Verify it's working
+
+Navigate to Cloudflare's test site to verify your signatures are being accepted:
+
+```
+https://http-message-signatures-example.research.cloudflare.com/
+```
+
+This site validates requests signed with the RFC9421 test key and shows whether the signature was verified successfully.
+
+## Using Your Own Keys
+
+For production use, you'll want to use your own signing keys instead of the test key.
+
+### 1. Generate an Ed25519 key pair
+
+Create a JWK file with your Ed25519 private key. The key must include both the public (`x`) and private (`d`) components:
+
+```json my-key.jwk
+{
+  "kty": "OKP",
+  "crv": "Ed25519",
+  "x": "YOUR_PUBLIC_KEY_BASE64URL",
+  "d": "YOUR_PRIVATE_KEY_BASE64URL"
+}
+```
+
+<Info>
+See [Cloudflare's web-bot-auth documentation](https://github.com/cloudflare/web-bot-auth) for tools to generate Ed25519 key pairs.
+</Info>
+
+### 2. Build with your key
+
+```bash
+kernel extensions build-web-bot-auth --to ./web-bot-auth-ext --key ./my-key.jwk --upload --name my-web-bot-auth
+```
+
+### 3. Host your public key
+
+For websites to verify your signatures, you need to host your public key at a well-known URL. Create a key directory at:
+
+```
+https://yourdomain.com/.well-known/http-message-signatures-directory
+```
+
+The directory should contain your public keys in JWKS format:
+
+```json
+{
+  "keys": [
+    {
+      "kty": "OKP",
+      "crv": "Ed25519",
+      "x": "YOUR_PUBLIC_KEY_BASE64URL",
+      "kid": "YOUR_KEY_ID"
+    }
+  ],
+  "purpose": "your-bot-purpose"
+}
+```
+
+### 4. Register with Cloudflare (optional)
+
+If you want Cloudflare-protected sites to recognize your bot, you can register your key directory with Cloudflare:
+
+1. Log into the Cloudflare dashboard
+2. Navigate to **Manage Account > Configurations**
+3. Select the **Bot Submission Form** tab
+4. Choose **Request Signature** as the verification method
+5. Enter your key directory URL
+
+See [Cloudflare's Web Bot Auth documentation](https://developers.cloudflare.com/bots/reference/bot-verification/web-bot-auth/) for complete details.
+
+## References
+
+- [Web Bot Auth GitHub Repository](https://github.com/cloudflare/web-bot-auth)
+- [Cloudflare Web Bot Auth Documentation](https://developers.cloudflare.com/bots/reference/bot-verification/web-bot-auth/)
+- [RFC 9421 - HTTP Message Signatures](https://datatracker.ietf.org/doc/html/rfc9421)
+- [Cloudflare Test Verification Site](https://http-message-signatures-example.research.cloudflare.com/)
+- [Web Bot Auth Architecture Draft](https://thibmeu.github.io/http-message-signatures-directory/draft-meunier-web-bot-auth-architecture.html)
