@@ -36,99 +36,99 @@ const kernel = new Kernel();
 
 // Poll listFiles until the expected file appears in the directory
 async function waitForFile(
-sessionId: string,
-dir: string,
-filename: string,
-timeoutMs = 30_000
+  sessionId: string,
+  dir: string,
+  filename: string,
+  timeoutMs = 30_000
 ) {
-const start = Date.now();
-while (Date.now() - start < timeoutMs) {
-const files = await kernel.browsers.fs.listFiles(sessionId, { path: dir });
-if (files.some((f) => f.name === filename)) {
-return;
-}
-await new Promise((r) => setTimeout(r, 500));
-}
-throw new Error(`File ${filename} not found after ${timeoutMs}ms`);
+  const start = Date.now();
+  while (Date.now() - start < timeoutMs) {
+    const files = await kernel.browsers.fs.listFiles(sessionId, { path: dir });
+    if (files.some((f) => f.name === filename)) {
+      return;
+    }
+    await new Promise((r) => setTimeout(r, 500));
+  }
+  throw new Error(`File ${filename} not found after ${timeoutMs}ms`);
 }
 
 async function main() {
-const kernelBrowser = await kernel.browsers.create();
-console.log('live view:', kernelBrowser.browser_live_view_url);
+  const kernelBrowser = await kernel.browsers.create();
+  console.log('live view:', kernelBrowser.browser_live_view_url);
 
-const browser = await chromium.connectOverCDP(kernelBrowser.cdp_ws_url);
-const context = browser.contexts()[0] || (await browser.newContext());
-const page = context.pages()[0] || (await context.newPage());
+  const browser = await chromium.connectOverCDP(kernelBrowser.cdp_ws_url);
+  const context = browser.contexts()[0] || (await browser.newContext());
+  const page = context.pages()[0] || (await context.newPage());
 
-const client = await context.newCDPSession(page);
-await client.send('Browser.setDownloadBehavior', {
-behavior: 'allow',
-downloadPath: DOWNLOAD_DIR,
-eventsEnabled: true,
-});
+  const client = await context.newCDPSession(page);
+  await client.send('Browser.setDownloadBehavior', {
+    behavior: 'allow',
+    downloadPath: DOWNLOAD_DIR,
+    eventsEnabled: true,
+  });
 
-// Set up CDP listeners to capture download filename and completion
-let downloadFilename: string | undefined;
-let downloadState: string | undefined;
-let downloadCompletedResolve!: () => void;
-const downloadCompleted = new Promise<void>((resolve) => {
-downloadCompletedResolve = resolve;
-});
+  // Set up CDP listeners to capture download filename and completion
+  let downloadFilename: string | undefined;
+  let downloadState: string | undefined;
+  let downloadCompletedResolve!: () => void;
+  const downloadCompleted = new Promise<void>((resolve) => {
+    downloadCompletedResolve = resolve;
+  });
 
-client.on('Browser.downloadWillBegin', (event) => {
-downloadFilename = event.suggestedFilename ?? 'unknown';
-console.log('Download started:', downloadFilename);
-});
+  client.on('Browser.downloadWillBegin', (event) => {
+    downloadFilename = event.suggestedFilename ?? 'unknown';
+    console.log('Download started:', downloadFilename);
+  });
 
-client.on('Browser.downloadProgress', (event) => {
-if (event.state === 'completed' || event.state === 'canceled') {
-downloadState = event.state;
-downloadCompletedResolve();
-}
-});
+  client.on('Browser.downloadProgress', (event) => {
+    if (event.state === 'completed' || event.state === 'canceled') {
+      downloadState = event.state;
+      downloadCompletedResolve();
+    }
+  });
 
-console.log('Navigating to download test page');
-await page.goto('https://browser-tests-alpha.vercel.app/api/download-test');
-await page.getByRole('link', { name: 'Download File' }).click();
+  console.log('Navigating to download test page');
+  await page.goto('https://browser-tests-alpha.vercel.app/api/download-test');
+  await page.getByRole('link', { name: 'Download File' }).click();
 
-try {
-await pTimeout(downloadCompleted, {
-milliseconds: 10_000,
-message: new Error('Download timed out after 10 seconds'),
-});
-console.log('Download completed');
-} catch (err) {
-console.error(err);
-throw err;
-}
+  try {
+    await pTimeout(downloadCompleted, {
+      milliseconds: 10_000,
+      message: new Error('Download timed out after 10 seconds'),
+    });
+    console.log('Download completed');
+  } catch (err) {
+    console.error(err);
+    throw err;
+  }
 
-if (!downloadFilename) {
-throw new Error('Unable to determine download filename');
-}
+  if (!downloadFilename) {
+    throw new Error('Unable to determine download filename');
+  }
 
-if (downloadState === 'canceled') {
-throw new Error('Download was canceled');
-}
+  if (downloadState === 'canceled') {
+    throw new Error('Download was canceled');
+  }
 
-// Wait for the file to be available via Kernel's File I/O APIs
-console.log(`Waiting for file: ${downloadFilename}`);
-await waitForFile(kernelBrowser.session_id, DOWNLOAD_DIR, downloadFilename);
+  // Wait for the file to be available via Kernel's File I/O APIs
+  console.log(`Waiting for file: ${downloadFilename}`);
+  await waitForFile(kernelBrowser.session_id, DOWNLOAD_DIR, downloadFilename);
 
-const remotePath = `${DOWNLOAD_DIR}/${downloadFilename}`;
-console.log(`Reading file: ${remotePath}`);
+  const remotePath = `${DOWNLOAD_DIR}/${downloadFilename}`;
+  console.log(`Reading file: ${remotePath}`);
 
-const resp = await kernel.browsers.fs.readFile(kernelBrowser.session_id, {
-path: remotePath,
-});
+  const resp = await kernel.browsers.fs.readFile(kernelBrowser.session_id, {
+    path: remotePath,
+  });
 
-const bytes = await resp.bytes();
-fs.mkdirSync('downloads', { recursive: true });
-const localPath = `downloads/${downloadFilename}`;
-fs.writeFileSync(localPath, bytes);
-console.log(`Saved to ${localPath}`);
+  const bytes = await resp.bytes();
+  fs.mkdirSync('downloads', { recursive: true });
+  const localPath = `downloads/${downloadFilename}`;
+  fs.writeFileSync(localPath, bytes);
+  console.log(`Saved to ${localPath}`);
 
-await kernel.browsers.deleteByID(kernelBrowser.session_id);
-console.log('Kernel browser deleted successfully.');
+  await kernel.browsers.deleteByID(kernelBrowser.session_id);
+  console.log('Kernel browser deleted successfully.');
 }
 
 main();
@@ -251,7 +251,6 @@ const stagehand = new Stagehand({
 Here's a complete example:
 
 ```typescript
-import "dotenv/config";
 import { Stagehand } from "@browserbasehq/stagehand";
 import Kernel from "@onkernel/sdk";
 import fs from "fs";
@@ -277,9 +276,7 @@ async function waitForFile(
 }
 
 async function main() {
-    const kernel = new Kernel({
-        apiKey: process.env.KERNEL_API_KEY,
-    });
+    const kernel = new Kernel();
 
     console.log("Creating browser via Kernel...");
     const kernelBrowser = await kernel.browsers.create({
