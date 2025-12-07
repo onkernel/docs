@@ -7,14 +7,6 @@ description: "Downloads, uploads, and manipulating the browser's filesystem"
 
 Kernel browsers run in fully sandboxed environments with writable filesystems. When your automation downloads a file, it's saved inside the browser's filesystem and can be retrieved using Kernel's File I/O APIs.
 
-<Info>
-  The CDP `downloadProgress` event signals when the browser finishes writing a
-  file, but there may be a brief delay before the file becomes available through
-  Kernel's File I/O APIs. This is especially true for larger downloads. We
-  recommend polling `listFiles` to confirm the file exists before attempting to
-  read it.
-</Info>
-
 ### Playwright
 
 Kernel browsers run in fully sandboxed environments with a writable filesystem that you control. Anything your automation downloads during a session is saved inside this filesystem and can be retrieved directly while the session is running.
@@ -25,6 +17,14 @@ Playwright performs downloads via the browser itself, so there are a few steps:
 - Configure where the browser saves downloads using CDP
 - Perform the download
 - Retrieve the file from the browser's filesystem
+
+<Info>
+  The CDP `downloadProgress` event signals when the browser finishes writing a
+  file, but there may be a brief delay before the file becomes available through
+  Kernel's File I/O APIs. This is especially true for larger downloads. We
+  recommend polling `listFiles` to confirm the file exists before attempting to
+  read it.
+</Info>
 
 <CodeGroup>
 ```typescript Typescript/Javascript
