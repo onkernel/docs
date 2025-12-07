@@ -7,6 +7,7 @@ description: "Downloads, uploads, and manipulating the browser's filesystem"
 
 Kernel browsers run in fully sandboxed environments with writable filesystems. When your automation downloads a file, it's saved inside the browser's filesystem and can be retrieved using Kernel's File I/O APIs.
 
+
 ### Playwright
 
 Playwright performs downloads via the browser itself, so there are a few steps:
@@ -232,6 +233,8 @@ if __name__ == "__main__":
 
 </CodeGroup>
 
+<Info>We recommend using the [list files](/api-reference/browsers/list-files-in-a-directory) API to poll for file availability before calling [read file](/api-reference/browsers/read-file-contents), as shown in the examples above. This approach ensures reliable downloads, especially for larger files. You can also use `listFiles` to enumerate and save all downloads at the end of a session.</Info>
+
 ### Stagehand v3
 
 When using Stagehand with Kernel browsers, you need to configure the download behavior in the `localBrowserLaunchOptions`:
@@ -348,10 +351,6 @@ main().catch((err) => {
 
 Browser Use handles downloads automatically when configured properly. Documentation for Browser Use downloads coming soon.
 
----
-
-We recommend using the [list files](/api-reference/browsers/list-files-in-a-directory) API to poll for file availability before calling [read file](/api-reference/browsers/read-file-contents), as shown in the examples above. This approach ensures reliable downloads, especially for larger files. You can also use `listFiles` to enumerate and save all downloads at the end of a session.
-
 ## Uploads
 
 You can upload from your local filesystem into the browser directly using Playwright's file input helpers.
@@ -368,54 +367,52 @@ const REMOTE_DIR = '/tmp/downloads';
 const FILENAME = 'Kernel-Logo_Accent.png';
 const IMAGE_URL = 'https://www.onkernel.com/brand_assets/Kernel-Logo_Accent.png';
 
-const kernel = new Kernel({
-apiKey: process.env.KERNEL_API_KEY,
-});
+const kernel = new Kernel();
 
 async function main() {
-// 1. Create Kernel browser session
-const kernelBrowser = await kernel.browsers.create();
-console.log('Live view:', kernelBrowser.browser_live_view_url);
+    // 1. Create Kernel browser session
+    const kernelBrowser = await kernel.browsers.create();
+    console.log('Live view:', kernelBrowser.browser_live_view_url);
 
-// 2. Fetch the image from URL
-console.log(`Fetching image from ${IMAGE_URL}`);
-const response = await fetch(IMAGE_URL);
-if (!response.ok) {
-throw new Error(`Failed to fetch image: ${response.status}`);
-}
-const imageBlob = await response.blob();
+    // 2. Fetch the image from URL
+    console.log(`Fetching image from ${IMAGE_URL}`);
+    const response = await fetch(IMAGE_URL);
+    if (!response.ok) {
+        throw new Error(`Failed to fetch image: ${response.status}`);
+    }
+    const imageBlob = await response.blob();
 
-// 3. Write the fetched image to the remote browser's filesystem
-const remotePath = `${REMOTE_DIR}/${FILENAME}`;
-console.log(`Writing to remote browser at ${remotePath}`);
-await kernel.browsers.fs.writeFile(kernelBrowser.session_id, imageBlob, {
-path: remotePath,
-});
-console.log('File written to remote browser');
+    // 3. Write the fetched image to the remote browser's filesystem
+    const remotePath = `${REMOTE_DIR}/${FILENAME}`;
+    console.log(`Writing to remote browser at ${remotePath}`);
+    await kernel.browsers.fs.writeFile(kernelBrowser.session_id, imageBlob, {
+        path: remotePath,
+    });
+    console.log('File written to remote browser');
 
-// 4. Connect Playwright and navigate to upload test page
-const browser = await chromium.connectOverCDP(kernelBrowser.cdp_ws_url);
-const context = browser.contexts()[0] || (await browser.newContext());
-const page = context.pages()[0] || (await context.newPage());
+    // 4. Connect Playwright and navigate to upload test page
+    const browser = await chromium.connectOverCDP(kernelBrowser.cdp_ws_url);
+    const context = browser.contexts()[0] || (await browser.newContext());
+    const page = context.pages()[0] || (await context.newPage());
 
-console.log('Navigating to upload test page');
-await page.goto('https://browser-tests-alpha.vercel.app/api/upload-test');
+    console.log('Navigating to upload test page');
+    await page.goto('https://browser-tests-alpha.vercel.app/api/upload-test');
 
-// 5. Upload the file using Playwright's file input helper
-console.log(`Uploading ${remotePath} via file input`);
-const remoteFile = await kernel.browsers.fs.readFile(kernelBrowser.session_id, { path: remotePath });
-const fileBuffer = Buffer.from(await remoteFile.bytes());
-await page.locator('#fileUpload').setInputFiles([{
-name: FILENAME,
-mimeType: 'image/png',
-buffer: fileBuffer,
-}]);
-console.log('Upload completed');
+    // 5. Upload the file using Playwright's file input helper
+    console.log(`Uploading ${remotePath} via file input`);
+    const remoteFile = await kernel.browsers.fs.readFile(kernelBrowser.session_id, { path: remotePath });
+    const fileBuffer = Buffer.from(await remoteFile.bytes());
+    await page.locator('#fileUpload').setInputFiles([{
+        name: FILENAME,
+        mimeType: 'image/png',
+        buffer: fileBuffer,
+    }]);
+    console.log('Upload completed');
 
-// await kernel.browsers.deleteByID(kernelBrowser.session_id);
-// console.log('Browser deleted');
+    await kernel.browsers.deleteByID(kernelBrowser.session_id);
+    console.log('Browser deleted');
 
-return null;
+    return null;
 }
 
 main();
@@ -435,7 +432,7 @@ REMOTE_DIR = '/tmp/downloads'
 FILENAME = 'Kernel-Logo_Accent.png'
 IMAGE_URL = 'https://www.onkernel.com/brand_assets/Kernel-Logo_Accent.png'
 
-kernel = Kernel(api_key=os.getenv('KERNEL_API_KEY'))
+kernel = Kernel()
 
 
 async def main():
