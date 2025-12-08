@@ -1,0 +1,45 @@
+---
+title: "OpenAGI"
+---
+
+The [OpenAGI](https://lux.agiopen.org/) Lux Model is a computer-use model that enables AI agents to interact with computers the way humans do. Lux operates in a continuous action-observation loop: it receives a task, analyzes a screenshot of the current screen state, generates the next UI interaction (click, type, etc.), and repeats until the goal is achieved.
+
+By integrating OpenAGI with Kernel, you can run these AI-powered browser automations on cloud-hosted infrastructure, eliminating the need for local browser management and enabling scalable, reliable computer-using agents.
+
+## Getting started
+
+To get started with OpenAGI Lux and Kernel:
+
+1. Get your `OAGI_API_KEY` on the [OpenAGI Developer Platform](https://developer.agiopen.org/) 
+2. Get your `KERNEL_API_KEY` from the [Kernel Dashboard](https://dashboard.onkernel.com)
+
+For more information about Lux's capabilities, visit the [OpenAGI Lux Documentation](https://lux.agiopen.org/).
+
+## Quick setup with Computer Use
+
+Get started with OpenAGI and Kernel by cloning our pre-configured integration repo:
+
+```bash
+git clone https://github.com/onkernel/kernel-oagi.git
+```
+
+You can also browse the open-source repo directly at [github.com/onkernel/kernel-oagi](https://github.com/onkernel/kernel-oagi).
+
+<Info>Follow the [App Platform docs](/apps/develop) to turn this into a Kernel App, deploy it, and run your Computer Use automation on Kernel's infrastructure.</Info>
+
+## Benefits of using Kernel with OpenAGI
+
+- **No local browser management**: Run OpenAGI automations without installing or maintaining browsers locally
+- **Scalability**: Launch multiple browser sessions in parallel for concurrent AI agents
+- **Stealth mode**: Built-in anti-detection features for reliable web interactions
+- **Session state**: Maintain browser state across runs via [Profiles](/browsers/profiles)
+- **Live view**: Debug your OpenAGI agents with real-time browser viewing
+- **Cloud infrastructure**: Run computationally intensive AI agents without local resource constraints
+
+## Next steps
+
+- Check out [live view](/browsers/live-view) for debugging your OpenAGI automations
+- Learn about [stealth mode](/browsers/bot-detection/stealth) for avoiding detection
+- Learn how to properly [terminate browser sessions](/browsers/termination)
+- Learn how to [deploy](/apps/deploy) your OpenAGI app to Kernel
+
