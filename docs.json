@@ -110,6 +110,7 @@
                 "pages": [
                   "integrations/computer-use/anthropic",
                   "integrations/computer-use/gemini",
+                  "integrations/computer-use/openagi",
                   "integrations/computer-use/openai"
                 ]
               },
