@@ -1,0 +1,86 @@
+---
+title: "Create"
+---
+
+## `kernel create`
+Create a new Kernel application from a template. The CLI provides an interactive prompt to guide you through selecting a language and template, or you can specify all options via flags.
+
+| Flag | Description |
+|------|-------------|
+| `--name <name>`, `-n` | Name of the application directory to create. |
+| `--language <language>`, `-l` | Programming language: `typescript` (`ts`) or `python` (`py`). |
+| `--template <template>`, `-t` | Template to scaffold (see available templates below). |
+
+<Info>If any option is omitted, the CLI will prompt you interactively.</Info>
+
+## Available templates
+
+### TypeScript templates
+- **`sample-app`** — Basic template with Playwright integration for page title extraction
+- **`advanced-sample`** — Demonstrates advanced Kernel configurations
+- **`stagehand`** — Integrates the [Stagehand SDK](https://github.com/browserbase/stagehand) for AI-powered browser automation
+- **`computer-use`** — Implements Anthropic's Computer Use API in a prompt loop
+- **`cua`** — OpenAI Computer Using Agent (CUA) sample implementation
+- **`gemini-cua`** — Google Gemini CUA sample implementation
+- **`magnitude`** — [Magnitude framework](https://github.com/magnitude-labs/magnitude) integration
+
+### Python templates
+- **`sample-app`** — Basic template with Playwright integration for page title extraction
+- **`advanced-sample`** — Demonstrates advanced Kernel configurations
+- **`browser-use`** — Integrates the [Browser Use SDK](https://github.com/browser-use/browser-use) for AI-powered web automation
+- **`computer-use`** — Implements Anthropic's Computer Use API in a prompt loop
+- **`cua`** — OpenAI Computer Using Agent (CUA) sample implementation
+
+## Examples
+
+```bash
+# Interactive mode (prompts for all options)
+kernel create
+
+# Create a TypeScript app with the sample template
+kernel create --name my-app --language typescript --template sample-app
+
+# Create a Python app with Browser Use
+kernel create --name my-scraper --language python --template browser-use
+
+# Create a TypeScript app with Stagehand (shorthand language flag)
+kernel create --name my-agent --language ts --template stagehand
+
+# Create a Python Computer Use app
+kernel create --name my-cu-app --language py --template computer-use
+```
+
+## Next steps
+
+After creating your app:
+
+1. **Navigate to the project directory:**
+   ```bash
+   cd my-app
+   ```
+
+2. **Install dependencies:**
+   - TypeScript: `npm install`
+   - Python: `uv venv && source .venv/bin/activate && uv sync`
+
+3. **Authenticate with Kernel:**
+   ```bash
+   kernel login or export KERNEL_API_KEY=<YOUR_API_KEY>
+   ```
+
+4. **Deploy your app:**
+   ```bash
+   # TypeScript
+   kernel deploy index.ts
+
+   # Python
+   kernel deploy main.py
+   ```
+
+5. **Invoke your app:**
+   ```bash
+   kernel invoke my-app action-name --payload '{"key": "value"}'
+   ```
+
+<Info>Some templates require environment variables (e.g., `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`). Set them using `--env` or `--env-file` flags when deploying. See [`kernel deploy`](/reference/cli/apps#kernel-deploy-file) for details.</Info>
+

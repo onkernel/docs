@@ -25,6 +25,9 @@ kernel --version
 ```
 
 <Columns cols={2}>
+  <Card icon="code" title="Create" href="/reference/cli/create">
+    Scaffold new Kernel apps from templates.
+  </Card>
   <Card icon="key" title="Authentication" href="/reference/cli/auth">
     Login, logout, and check auth status.
   </Card>
@@ -39,13 +42,16 @@ kernel --version
 ## Quick Start
 
 ```bash
-# 1) Login
+# 1) Create a new app
+kernel create
+
+# 2) Login
 kernel login
 
-# 2) Deploy your app
+# 3) Deploy your app
 kernel deploy index.ts
 
-# 3) Invoke your app
+# 4) Invoke your app
 kernel invoke my-app action-name --payload '{"key":"value"}'
 ```
 
