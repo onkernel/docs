@@ -17,18 +17,11 @@ This quickstart guide will help you deploy and invoke your first browser automat
 ## Prerequisites
 
 - `brew` for the Kernel CLI
-- `npm` or `pnpm` to generate a sample Kernel app
 - A [Kernel account](https://dashboard.onkernel.com/sign-up)
 
 > **Note:** You can also deploy and invoke apps using the [Kernel MCP server](/reference/mcp-server) from AI assistants (Cursor, Goose, Claude, etc.).
 
-## 1. Download the sample app
-
-```bash
-npx @onkernel/create-kernel-app sample-app
-```
-
-## 2. Install the Kernel CLI
+## 1. Install the Kernel CLI
 
 ```bash
 # Using brew
@@ -45,6 +38,12 @@ Verify the installation exists:
 
 ```bash
 which kernel
+```
+
+## 2. Create a new Kernel app
+
+```bash
+kernel create
 ```
 
 ## 3. Authenticate with Kernel
@@ -110,7 +109,7 @@ You can now update your browser automation with your own logic and deploy it aga
 
 ## Sample apps reference
 
-These are the sample apps currently available when you run `npx @onkernel/create-kernel-app`:
+These are the sample apps currently available when you run `kernel create`:
 
 | Template               | Description                                               | Framework                  | Params           |
 |------------------------|-----------------------------------------------------------|----------------------------|------------------|
@@ -120,3 +119,5 @@ These are the sample apps currently available when you run `npx @onkernel/create
 | **advanced-sample**    | Implements sample apps using advanced Kernel configs      | Playwright                 | n/a              |
 | **computer-use**       | Implements an Anthropic Computer Use prompt loop          | Anthropic Computer Use API | `{ query }`      |
 | **cua**                | Implements an OpenAI CUA prompt loop                      | OpenAI CUA API             | `{ task }`       |
+| **gemini-cua**         | Implements a Gemini Computer Use prompt loop              | Gemini Computer Use API    | `{ task }`       |
+| **magnitude**          | Implements the Magnitude.run SDK                          | Magnitude.run             | n/a              |
