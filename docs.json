@@ -182,6 +182,7 @@
         "icon": "terminal",
         "pages": [
           "reference/cli",
+          "reference/cli/create",
           "reference/cli/auth",
           "reference/cli/browsers",
           "reference/cli/apps"

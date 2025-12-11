@@ -75,10 +75,8 @@ await kernel.browsers.deleteByID(kernelBrowser.session_id);
 Alternatively, you can use our Kernel app template that includes a pre-configured Magnitude integration:
 
 ```bash
-npx @onkernel/create-kernel-app my-magnitude-app
+kernel create --name my-magnitude-app --language typescript --template magnitude
 ```
-
-Choose `TypeScript` as the programming language and then select `Magnitude` as the template.
 
 Then follow the [Quickstart guide](/quickstart/) to deploy and run your Magnitude automation on Kernel's infrastructure.
 
