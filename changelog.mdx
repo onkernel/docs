@@ -7,6 +7,20 @@ description: Updates and improvements
 For API library updates, see the [Node SDK](https://github.com/onkernel/kernel-node-sdk/blob/main/CHANGELOG.md), [Python SDK](https://github.com/onkernel/kernel-python-sdk/blob/next/CHANGELOG.md), and [Go SDK](https://github.com/onkernel/kernel-go-sdk/blob/main/CHANGELOG.md) changelogs.
 </Note>
 
+<Update label="December 12" tags={["Product", "Docs"]}>
+## Product updates
+- Refreshed our [Vercel template](https://kernel-nextjs-template.vercel.app/) with an enhanced UI and AI agent example
+- Deprecated the "persistent" feature from browsers in favor of using extended `timeout_seconds` with [Profiles](/browsers/profiles#3-use-the-browser,-then-close-it-to-persist-the-state); added `name` field to browsers for easier identification
+- Unified browser creation tools by porting [Create Kernel App](/reference/cli/create) functionality into the Kernel CLI
+- Added configurable `async_timeout_seconds` [parameter](/apps/invoke#asynchronous-invocations) for app invocations
+- Added CLI support for managing browser pools
+- Added TLS support for ingress, enabling secure HTTPS connections to workloads
+- Improved replay videos to include full video length metadata, enabling timestamp navigation and deep linking
+
+## Documentation updates
+- Added OpenAGI [integration guide](/integrations/computer-use/openagi) to the Computer Use integrations section
+</Update>
+
 <Update label="December 5" tags={["Product", "Docs"]}>
 ## Product updates
 - Added option to include ephemeral and deleted browsers when [listing sessions](/api-reference/browsers/list-browser-sessions) via API
