@@ -1,5 +1,15 @@
 {
   "$schema": "https://mintlify.com/docs.json",
+  "redirects": [
+    { "source": "/careers/intro", "destination": "https://jobs.ashbyhq.com/usekernel" },
+    { "source": "/careers/infra-engineer", "destination": "https://jobs.ashbyhq.com/usekernel" },
+    { "source": "/careers/backend-engineer", "destination": "https://jobs.ashbyhq.com/usekernel" },
+    { "source": "/careers/browser-security-engineer", "destination": "https://jobs.ashbyhq.com/usekernel" },
+    { "source": "/careers/engineer-new-grad", "destination": "https://jobs.ashbyhq.com/usekernel" },
+    { "source": "/careers/devrel-engineer", "destination": "https://jobs.ashbyhq.com/usekernel" },
+    { "source": "/careers/customer-engineer", "destination": "https://jobs.ashbyhq.com/usekernel" },
+    { "source": "/careers/solutions-engineer", "destination": "https://jobs.ashbyhq.com/usekernel" }
+  ],
   "theme": "palm",
   "name": "Kernel",
   "colors": {
@@ -148,19 +158,6 @@
               "info/concepts",
               "info/pricing",
               "info/unikernels"
-            ]
-          },
-          {
-            "group": "Careers",
-            "pages": [
-              "careers/intro",
-              "careers/infra-engineer",
-              "careers/backend-engineer",
-              "careers/browser-security-engineer",
-              "careers/engineer-new-grad",
-              "careers/devrel-engineer",
-              "careers/customer-engineer",
-              "careers/solutions-engineer"
             ]
           }
         ]
