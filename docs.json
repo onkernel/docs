@@ -136,7 +136,8 @@
                   "integrations/vercel/ai-sdk",
                   "integrations/vercel/marketplace"
                 ]
-              }
+              },
+              "integrations/web-bot-auth"
             ]
           },
           {
@@ -182,7 +183,8 @@
           "reference/cli/create",
           "reference/cli/auth",
           "reference/cli/browsers",
-          "reference/cli/apps"
+          "reference/cli/apps",
+          "reference/cli/extensions"
         ]
       },
       {
