@@ -19,8 +19,8 @@ Agent Auth is an AI-powered authentication system that helps you log users into 
 - Saves authenticated browser profiles for reuse
 - Hourly session checks to detect when re-authentication is needed
 - Credentials are encrypted and submitted programmatically—never stored in plaintext or shared with LLMs
-- **NEW:** Store credentials for fully automated re-authentication
-- **NEW:** `reauth()` endpoint for programmatic session refresh
+- Store credentials for fully automated re-authentication
+- `reauth()` endpoint for programmatic session refresh
 
 ## Choose Your Integration
 
@@ -36,7 +36,7 @@ Agent Auth is an AI-powered authentication system that helps you log users into 
 2. User is redirected to `hosted_url` → Enters credentials when prompted → Handles 2FA/OTP if needed → Profile saved on success
 3. Your backend polls invocation status → Uses saved profile in future browser automations
 4. After authentication completes, Agent Auth automatically monitors the session every hour and updates the status if re-authentication is required
-5. **NEW:** If credentials are stored, Agent Auth can automatically re-authenticate when sessions expire
+5. If credentials are stored, Agent Auth can automatically re-authenticate when sessions expire
 
 <Tip>
 **Plan for re-auth from the start.** If you want automated re-authentication later, use `save_credential_as` during the initial login. This saves credentials and form selectors, enabling `can_reauth` for future sessions.
@@ -63,8 +63,8 @@ The Auth Agent stores:
 - The login URL (learned during discovery, used to speed up future invocations)
 - The auth check URL (where to verify logged-in state)
 - Current authentication status (`AUTHENTICATED` or `NEEDS_AUTH`)
-- **NEW:** Linked credential ID for automated re-auth
-- **NEW:** Saved form selectors for deterministic re-auth
+- Linked credential ID for automated re-auth
+- Saved form selectors for deterministic re-auth
 
 **Auth Agent fields:**
 
@@ -279,7 +279,7 @@ const agent = await kernel.agents.auth.create({
 // Step 2: Start the Auth Flow
 const invocation = await kernel.agents.auth.invocations.create({
   auth_agent_id: agent.id,
-  save_credential_as: 'netflix-creds', // NEW: Save credentials for future re-auth
+  save_credential_as: 'netflix-creds', // Save credentials for future re-auth
 });
 
 // invocation returns: status, invocation_id, hosted_url, handoff_code, expires_at
