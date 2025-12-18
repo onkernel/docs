@@ -1,0 +1,355 @@
+---
+title: "Hosted UI"
+description: "The simplest way to authenticate users - redirect to our hosted authentication UI"
+---
+
+The Hosted UI flow is the recommended approach for most applications. You redirect users to a Kernel-hosted authentication page where they complete the login process, then poll for completion.
+
+## When to Use Hosted UI
+
+Use the Hosted UI when:
+- Building user-facing applications where the user can complete login
+- You want Kernel to handle the login UI and form discovery
+- You need a quick integration with minimal code
+- You want to avoid handling multi-step auth flows yourself
+
+## Complete Example
+
+<CodeGroup>
+```typescript TypeScript
+import Kernel from '@onkernel/sdk';
+
+const kernel = new Kernel();
+
+// Step 1: Create or get existing Auth Agent
+const agent = await kernel.agents.auth.create({
+  target_domain: 'doordash.com',
+  profile_name: 'doordash-user-123',
+  login_url: 'https://identity.doordash.com/auth', // Optional: speeds up discovery
+});
+
+// Step 2: Start the auth flow
+const invocation = await kernel.agents.auth.invocations.create({
+  auth_agent_id: agent.id,
+});
+
+// Step 3: Check if already logged in
+if (invocation.status === 'already_authenticated') {
+  console.log('Already authenticated! Profile is ready to use.');
+  // Skip to Step 6: Use the Profile
+} else {
+  // Redirect user to hosted UI
+  console.log('Redirect user to:', invocation.hosted_url);
+  // In a web app: window.location.href = invocation.hosted_url;
+}
+
+// Step 4: Poll for completion (do this on your backend)
+const pollForCompletion = async (invocationId: string) => {
+  const maxWaitMs = 5 * 60 * 1000; // 5 minutes
+  const startTime = Date.now();
+
+  while (Date.now() - startTime < maxWaitMs) {
+    const status = await kernel.agents.auth.invocations.retrieve(invocationId);
+
+    if (status.status === 'SUCCESS') {
+      return { success: true };
+    }
+    if (status.status === 'EXPIRED' || status.status === 'CANCELED') {
+      return { success: false, reason: status.status };
+    }
+
+    // Poll every 2 seconds
+    await new Promise(r => setTimeout(r, 2000));
+  }
+
+  return { success: false, reason: 'TIMEOUT' };
+};
+
+const result = await pollForCompletion(invocation.invocation_id);
+
+// Step 5: Verify the auth agent status
+if (result.success) {
+  const authAgent = await kernel.agents.auth.retrieve(agent.id);
+  console.log('Auth status:', authAgent.status); // "AUTHENTICATED"
+}
+
+// Step 6: Use the authenticated profile
+const browser = await kernel.browsers.create({
+  profile: { name: 'doordash-user-123' },
+  stealth: true,
+});
+
+console.log('Browser ready:', browser.cdp_ws_url);
+// Run your automation - the browser is already logged in!
+
+// Clean up when done
+await kernel.browsers.deleteByID(browser.session_id);
+```
+
+```python Python
+from kernel import Kernel
+import asyncio
+
+kernel = Kernel()
+
+# Step 1: Create or get existing Auth Agent
+agent = await kernel.agents.auth.create(
+    target_domain="doordash.com",
+    profile_name="doordash-user-123",
+    login_url="https://identity.doordash.com/auth",  # Optional
+)
+
+# Step 2: Start the auth flow
+invocation = await kernel.agents.auth.invocations.create(
+    auth_agent_id=agent.id,
+)
+
+# Step 3: Check if already logged in
+if invocation.status == "already_authenticated":
+    print("Already authenticated! Profile is ready to use.")
+else:
+    print(f"Redirect user to: {invocation.hosted_url}")
+
+# Step 4: Poll for completion
+async def poll_for_completion(invocation_id: str):
+    max_wait_seconds = 5 * 60
+    start_time = asyncio.get_event_loop().time()
+
+    while asyncio.get_event_loop().time() - start_time < max_wait_seconds:
+        status = await kernel.agents.auth.invocations.retrieve(invocation_id)
+
+        if status.status == "SUCCESS":
+            return {"success": True}
+        if status.status in ("EXPIRED", "CANCELED"):
+            return {"success": False, "reason": status.status}
+
+        await asyncio.sleep(2)
+
+    return {"success": False, "reason": "TIMEOUT"}
+
+result = await poll_for_completion(invocation.invocation_id)
+
+# Step 5: Verify auth agent status
+if result["success"]:
+    auth_agent = await kernel.agents.auth.retrieve(agent.id)
+    print(f"Auth status: {auth_agent.status}")
+
+# Step 6: Use the authenticated profile
+browser = await kernel.browsers.create(
+    profile={"name": "doordash-user-123"},
+    stealth=True,
+)
+
+print(f"Browser ready: {browser.cdp_ws_url}")
+
+# Clean up when done
+await kernel.browsers.delete_by_id(browser.session_id)
+```
+</CodeGroup>
+
+## Step-by-Step Breakdown
+
+### 1. Create an Auth Agent
+
+An Auth Agent represents a (domain, profile) pair. Creating one is idempotent—if an agent already exists for the domain and profile, it returns the existing one.
+
+```typescript
+const agent = await kernel.agents.auth.create({
+  target_domain: 'example.com',      // Required: domain to authenticate
+  profile_name: 'my-profile',        // Required: profile to store session
+  login_url: 'https://example.com/login', // Optional: speeds up discovery
+});
+```
+
+**Parameters:**
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| `target_domain` | Yes | The domain to authenticate (e.g., `netflix.com`) |
+| `profile_name` | Yes | Name of the profile to store the authenticated session |
+| `login_url` | No | Direct URL to the login page. Providing this speeds up discovery. |
+| `proxy` | No | Proxy configuration (see [Proxies](/proxies/overview)) |
+
+### 2. Start an Invocation
+
+An invocation starts a new authentication attempt. It returns a `hosted_url` where the user completes login.
+
+```typescript
+const invocation = await kernel.agents.auth.invocations.create({
+  auth_agent_id: agent.id,
+});
+```
+
+**Response fields:**
+| Field | Description |
+|-------|-------------|
+| `invocation_id` | Unique ID for this auth attempt |
+| `hosted_url` | URL to redirect the user to |
+| `handoff_code` | One-time code for programmatic flows |
+| `expires_at` | When the invocation expires (5 minutes) |
+| `logged_in` | If `true`, already authenticated—no login needed |
+
+<Warning>
+If `logged_in` is `true`, the profile is already authenticated. Skip the redirect and go straight to using the profile.
+</Warning>
+
+### 3. Redirect the User
+
+In a web application, redirect the user to the hosted URL:
+
+```typescript
+// Frontend code
+window.location.href = invocation.hosted_url;
+```
+
+The hosted UI will:
+1. Navigate to the target domain
+2. Find and display the login form
+3. Let the user enter credentials
+4. Handle multi-step auth (2FA, OTP, etc.)
+5. Save the authenticated session to the profile
+
+### 4. Poll for Completion
+
+On your backend, poll the invocation status until it completes:
+
+```typescript
+let status = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id);
+
+while (status.status === 'IN_PROGRESS') {
+  await new Promise(r => setTimeout(r, 2000)); // Poll every 2 seconds
+  status = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id);
+}
+
+switch (status.status) {
+  case 'SUCCESS':
+    console.log('Authentication successful!');
+    break;
+  case 'EXPIRED':
+    console.log('User did not complete login in time');
+    break;
+  case 'CANCELED':
+    console.log('Authentication was canceled');
+    break;
+}
+```
+
+<Tip>
+Poll every 2 seconds with a maximum timeout of 5 minutes. The invocation expires after 5 minutes if not completed.
+</Tip>
+
+### 5. Use the Authenticated Profile
+
+Once authentication succeeds, create browsers with the profile to get an already-logged-in session:
+
+```typescript
+const browser = await kernel.browsers.create({
+  profile: { name: 'my-profile' },
+  stealth: true,
+});
+
+// Connect with Playwright
+import { chromium } from 'playwright';
+const playwrightBrowser = await chromium.connectOverCDP(browser.cdp_ws_url);
+const page = playwrightBrowser.contexts()[0].pages()[0];
+
+// Navigate - you're already logged in!
+await page.goto('https://example.com/dashboard');
+```
+
+<Warning>
+Use `stealth: true` when creating browsers for authenticated sessions. Agent Auth runs authentication with stealth mode enabled, and mismatched settings may cause issues with bot detection.
+</Warning>
+
+## Using Proxies
+
+If the target site requires a specific IP or region, configure a proxy:
+
+```typescript
+// Create auth agent with proxy
+const agent = await kernel.agents.auth.create({
+  target_domain: 'region-locked-site.com',
+  profile_name: 'my-profile',
+  proxy: { proxy_id: 'proxy_abc123' },
+});
+
+// Use the same proxy when creating browsers
+const browser = await kernel.browsers.create({
+  profile: { name: 'my-profile' },
+  proxy_id: 'proxy_abc123',
+  stealth: true,
+});
+```
+
+<Warning>
+Use the same proxy configuration for both the Auth Agent and subsequent browser sessions. Different IPs may trigger security measures on the target site.
+</Warning>
+
+## Saving Credentials for Re-auth
+
+You can save credentials during the hosted flow to enable automatic re-authentication when sessions expire:
+
+```typescript
+const invocation = await kernel.agents.auth.invocations.create({
+  auth_agent_id: agent.id,
+  save_credential_as: 'my-saved-creds', // Save credentials for future re-auth
+});
+```
+
+When credentials are saved, the Auth Agent can automatically re-authenticate without user interaction. See [Session Monitoring](/agent-auth/session-monitoring) for details.
+
+## Handling Callback URLs
+
+For web applications, you may want to redirect users back to your app after authentication completes. Use the invocation's `hosted_url` as a starting point and implement webhook or polling patterns:
+
+```typescript
+// Backend: Start auth flow
+const invocation = await kernel.agents.auth.invocations.create({
+  auth_agent_id: agent.id,
+});
+
+// Frontend: Redirect to hosted UI
+window.location.href = invocation.hosted_url;
+
+// Backend: Poll for completion and notify frontend via WebSocket or SSE
+// OR: Use a webhook URL (coming soon)
+```
+
+## Error Handling
+
+Handle common error scenarios:
+
+```typescript
+try {
+  const agent = await kernel.agents.auth.create({
+    target_domain: 'example.com',
+    profile_name: 'my-profile',
+  });
+
+  const invocation = await kernel.agents.auth.invocations.create({
+    auth_agent_id: agent.id,
+  });
+
+  // ... polling logic ...
+} catch (error) {
+  if (error.status === 401) {
+    console.error('Invalid API key');
+  } else if (error.status === 404) {
+    console.error('Auth agent not found');
+  } else if (error.status === 409) {
+    console.error('Conflict - invocation already in progress');
+  } else {
+    console.error('Unexpected error:', error.message);
+  }
+}
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Programmatic Guide" icon="code" href="/agent-auth/programmatic">
+    Build custom auth flows with full control
+  </Card>
+  <Card title="Credentials" icon="key" href="/agent-auth/credentials">
+    Store credentials for automated re-auth
+  </Card>
+</CardGroup>
