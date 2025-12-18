@@ -114,8 +114,8 @@ Different endpoints return different status values. Here's the complete referenc
 
 | Status | Description |
 |--------|-------------|
-| `invocation_created` | New invocation started, redirect user to `hosted_url` |
-| `already_authenticated` | Profile is already logged in, no invocation needed |
+| `INVOCATION_CREATED` | New invocation started, redirect user to `hosted_url` |
+| `ALREADY_AUTHENTICATED` | Profile is already logged in, no invocation needed |
 
 **Auth Agent status** (from `agents.auth.retrieve()`):
 
@@ -128,9 +128,9 @@ Different endpoints return different status values. Here's the complete referenc
 
 | Status | Description |
 |--------|-------------|
-| `reauth_started` | Automated re-auth started, poll `invocation_id` for completion |
-| `already_authenticated` | Session is still valid, no action needed |
-| `cannot_reauth` | Missing credentials or selectors, manual login required |
+| `REAUTH_STARTED` | Automated re-auth started, poll `invocation_id` for completion |
+| `ALREADY_AUTHENTICATED` | Session is still valid, no action needed |
+| `CANNOT_REAUTH` | Missing credentials or selectors, manual login required |
 
 ### Automatic Session Monitoring
 
@@ -243,8 +243,8 @@ The simplest approach—redirect users to our hosted authentication UI, then pol
 const agent = await kernel.agents.auth.create({ target_domain: 'example.com', profile_name: 'user-123' });
 const invocation = await kernel.agents.auth.invocations.create({ auth_agent_id: agent.id });
 
-// 2. Redirect user (or skip if already_authenticated)
-if (invocation.status !== 'already_authenticated') {
+// 2. Redirect user (or skip if ALREADY_AUTHENTICATED)
+if (invocation.status !== 'ALREADY_AUTHENTICATED') {
   redirect(invocation.hosted_url);
 }
 
@@ -289,7 +289,7 @@ const invocation = await kernel.agents.auth.invocations.create({
 
 ```typescript
 // Check if already logged in
-if (invocation.status === 'already_authenticated') {
+if (invocation.status === 'ALREADY_AUTHENTICATED') {
   console.log('Already logged in! Profile is ready to use.');
   // Skip to Step 4 - Use the Profile
 } else {
@@ -377,13 +377,13 @@ if (agent.status === 'NEEDS_AUTH') {
     // Automated re-auth (no user interaction needed)
     const reauth = await kernel.agents.auth.reauth(agent.id);
 
-    if (reauth.status === 'reauth_started') {
+    if (reauth.status === 'REAUTH_STARTED') {
       // Poll for completion using the same backoff pattern
       const result = await pollForCompletion(reauth.invocation_id);
       console.log('Re-auth complete:', result);
-    } else if (reauth.status === 'already_authenticated') {
+    } else if (reauth.status === 'ALREADY_AUTHENTICATED') {
       console.log('Session is still valid');
-    } else if (reauth.status === 'cannot_reauth') {
+    } else if (reauth.status === 'CANNOT_REAUTH') {
       // Selectors may have drifted - fall back to manual login
       console.log('Cannot reauth:', reauth.message);
     }
@@ -647,7 +647,7 @@ const invocation = await kernel.agents.auth.invocations.create({
   save_credential_as: 'bot-creds', // Enable reauth
 });
 
-if (invocation.status === 'already_authenticated') {
+if (invocation.status === 'ALREADY_AUTHENTICATED') {
   console.log('Already logged in!');
 } else {
   // 2. Discover fields (API key auth works, no JWT needed)
@@ -721,7 +721,7 @@ async function setupAuth(userId: string, targetDomain: string) {
     save_credential_as: `${profileName}-creds`, // Enable future reauth!
   });
 
-  if (invocation.status === 'already_authenticated') {
+  if (invocation.status === 'ALREADY_AUTHENTICATED') {
     return { agentId: agent.id, profileName, ready: true };
   }
 
@@ -744,7 +744,7 @@ async function runAutomation(agentId: string, profileName: string) {
     if (agent.can_reauth) {
       // Automated re-auth
       const reauth = await kernel.agents.auth.reauth(agentId);
-      if (reauth.status === 'reauth_started') {
+      if (reauth.status === 'REAUTH_STARTED') {
         await pollForCompletion(reauth.invocation_id);
       }
     } else {
@@ -857,14 +857,14 @@ if (agent.status === 'NEEDS_AUTH' && agent.can_reauth) {
   const reauth = await kernel.agents.auth.reauth(agent.id);
 
   switch (reauth.status) {
-    case 'reauth_started':
+    case 'REAUTH_STARTED':
       console.log('Re-auth in progress:', reauth.invocation_id);
       // Poll for completion...
       break;
-    case 'already_authenticated':
+    case 'ALREADY_AUTHENTICATED':
       console.log('Session is still valid');
       break;
-    case 'cannot_reauth':
+    case 'CANNOT_REAUTH':
       console.log('Cannot reauth:', reauth.message);
       // Fall back to manual login
       break;
@@ -1020,7 +1020,7 @@ Trigger automated re-authentication.
 
 ```json
 {
-  "status": "reauth_started",
+  "status": "REAUTH_STARTED",
   "invocation_id": "inv_xyz789"
 }
 ```
@@ -1029,7 +1029,7 @@ Trigger automated re-authentication.
 
 ```json
 {
-  "status": "already_authenticated"
+  "status": "ALREADY_AUTHENTICATED"
 }
 ```
 
@@ -1037,7 +1037,7 @@ Trigger automated re-authentication.
 
 ```json
 {
-  "status": "cannot_reauth",
+  "status": "CANNOT_REAUTH",
   "message": "Missing stored credential or form selectors"
 }
 ```
@@ -1070,7 +1070,7 @@ Create an invocation to start an auth flow for an existing auth agent.
 
 ```json
 {
-  "status": "invocation_created",
+  "status": "INVOCATION_CREATED",
   "invocation_id": "inv_xyz789",
   "handoff_code": "aBcD123EfGh456IjKl789",
   "hosted_url": "https://agent-auth.onkernel.com/agents/auth/invocations/inv_xyz789?code=aBcD123",
@@ -1082,12 +1082,12 @@ Create an invocation to start an auth flow for an existing auth agent.
 
 ```json
 {
-  "status": "already_authenticated"
+  "status": "ALREADY_AUTHENTICATED"
 }
 ```
 
 <Note>
-When `status` is `already_authenticated`, the agent is already logged in and no invocation was created. You can proceed directly to using the profile.
+When `status` is `ALREADY_AUTHENTICATED`, the agent is already logged in and no invocation was created. You can proceed directly to using the profile.
 </Note>
 
 #### GET /agents/auth/invocations/{invocation_id}
