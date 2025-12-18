@@ -1,0 +1,210 @@
+---
+title: "Overview"
+description: "Secure authentication for AI agents - log users into any website and save authenticated browser sessions"
+---
+
+Agent Auth is an AI-powered authentication system that helps you log users into any website and save their authenticated browser session (profile) for future automations. It uses web agents to intelligently discover login forms, dynamically generate credential inputs, and handle multi-step authentication flows like 2FA/OTP.
+
+## Why Agent Auth?
+
+AI agents can navigate the open web with ease, but the most valuable workflows live behind logins. To perform tasks on behalf of real users, agents need a secure way to access authenticated sessions.
+
+Agent Auth solves this by providing:
+
+- **Unified access to logged-in websites** - One API to log agents into any site with user consent
+- **Automatic form discovery** - Detects login form fields on any website
+- **Multi-step auth handling** - Handles 2FA, OTP, magic links, and CAPTCHAs
+- **Credential security** - Credentials are encrypted and submitted programmatically—never stored in plaintext or shared with LLMs
+- **Session persistence** - Saves authenticated browser profiles for reuse
+- **Automatic session monitoring** - Hourly checks detect when re-authentication is needed
+
+## How It Works
+
+<Steps>
+  <Step title="Create an Auth Agent">
+    Your backend calls `kernel.agents.auth.create()` to create an Auth Agent for a specific domain and profile combination.
+  </Step>
+  <Step title="Start an Authentication Flow">
+    Call `kernel.agents.auth.invocations.create()` to start the auth flow. This returns a `hosted_url` where users complete login, or you can use the programmatic API for headless flows.
+  </Step>
+  <Step title="User Completes Login">
+    The user is redirected to the hosted UI where they enter credentials and handle 2FA if needed. The profile is saved on success.
+  </Step>
+  <Step title="Use the Authenticated Profile">
+    Create browsers with the saved profile using `kernel.browsers.create({ profile: { name: 'my-profile' } })`. The browser is already logged in.
+  </Step>
+</Steps>
+
+## Key Concepts
+
+### Auth Agent
+
+An **Auth Agent** is a persistent entity that manages authentication for a specific domain + profile combination. It stores:
+
+- The target domain (e.g., `netflix.com`)
+- The linked browser profile
+- The login URL (learned during discovery)
+- Current authentication status (`AUTHENTICATED` or `NEEDS_AUTH`)
+- Optional linked credentials for automated re-auth
+
+Auth Agents are **idempotent**—if an agent already exists for the domain and profile, `kernel.agents.auth.create()` returns the existing one.
+
+### Invocation
+
+An **Invocation** is a single authentication attempt. You start one by calling `kernel.agents.auth.invocations.create()`. Over time, an Auth Agent accumulates multiple invocations as sessions need to be established or refreshed.
+
+**Invocation statuses:**
+- `IN_PROGRESS` - User is completing the auth flow
+- `SUCCESS` - Authentication completed, profile saved
+- `EXPIRED` - Invocation timed out (5 minutes)
+- `CANCELED` - Invocation was explicitly canceled
+
+### Profile
+
+A **Profile** stores browser session state (cookies, localStorage) that persists across browser sessions. Once authenticated via Agent Auth, use the profile with `kernel.browsers.create()` to get an already-logged-in browser.
+
+See [Profiles](/browsers/profiles) for more details on working with profiles.
+
+### Credentials
+
+**Credentials** are securely stored login credentials that enable automated re-authentication when sessions expire. Values are encrypted at rest and never exposed to LLMs or API responses.
+
+See [Credentials](/agent-auth/credentials) for details on storing and using credentials.
+
+## Integration Options
+
+Agent Auth offers two integration approaches:
+
+### Hosted UI (Recommended)
+
+The simplest approach—redirect users to our hosted authentication UI. Best for:
+- User-facing applications
+- When you want Kernel to handle the login UI
+- Quick integration with minimal code
+
+See [Hosted UI Guide](/agent-auth/hosted-ui) for implementation details.
+
+### Programmatic API
+
+Build your own authentication UI using the lower-level discover and submit APIs. Best for:
+- Custom UI requirements
+- Automated/headless scenarios
+- When you have credentials stored
+
+See [Programmatic Guide](/agent-auth/programmatic) for implementation details.
+
+## Security
+
+Agent Auth is designed with security as a first principle:
+
+| Security Feature | Description |
+|-----------------|-------------|
+| **Credentials never stored in plaintext** | All credential values are encrypted at rest using per-organization encryption keys |
+| **Credentials never shared with LLMs** | Credentials are submitted programmatically to target sites, never passed through AI models |
+| **Short-lived tokens** | JWT tokens for programmatic flows expire after 30 minutes |
+| **One-time handoff codes** | Handoff codes can only be exchanged once and expire after 5 minutes |
+| **Profile encryption** | Browser profiles are encrypted end-to-end |
+| **Isolated execution** | Each auth flow runs in an isolated browser environment |
+
+## Quick Example
+
+Here's a complete example using the Hosted UI flow:
+
+<CodeGroup>
+```typescript TypeScript
+import Kernel from '@onkernel/sdk';
+
+const kernel = new Kernel();
+
+// 1. Create or get existing Auth Agent
+const agent = await kernel.agents.auth.create({
+  target_domain: 'netflix.com',
+  profile_name: 'netflix-user-123',
+});
+
+// 2. Start the auth flow
+const invocation = await kernel.agents.auth.invocations.create({
+  auth_agent_id: agent.id,
+});
+
+// 3. Check if already logged in
+if (invocation.status === 'already_authenticated') {
+  console.log('Already authenticated!');
+} else {
+  // Redirect user to hosted UI
+  console.log('Redirect to:', invocation.hosted_url);
+}
+
+// 4. Poll for completion
+let status = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id);
+while (status.status === 'IN_PROGRESS') {
+  await new Promise(r => setTimeout(r, 2000));
+  status = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id);
+}
+
+if (status.status === 'SUCCESS') {
+  // 5. Use the authenticated profile
+  const browser = await kernel.browsers.create({
+    profile: { name: 'netflix-user-123' },
+    stealth: true,
+  });
+  console.log('Browser ready:', browser.cdp_ws_url);
+}
+```
+
+```python Python
+from kernel import Kernel
+import asyncio
+
+kernel = Kernel()
+
+# 1. Create or get existing Auth Agent
+agent = await kernel.agents.auth.create(
+    target_domain="netflix.com",
+    profile_name="netflix-user-123",
+)
+
+# 2. Start the auth flow
+invocation = await kernel.agents.auth.invocations.create(
+    auth_agent_id=agent.id,
+)
+
+# 3. Check if already logged in
+if invocation.status == "already_authenticated":
+    print("Already authenticated!")
+else:
+    # Redirect user to hosted UI
+    print(f"Redirect to: {invocation.hosted_url}")
+
+# 4. Poll for completion
+status = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id)
+while status.status == "IN_PROGRESS":
+    await asyncio.sleep(2)
+    status = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id)
+
+if status.status == "SUCCESS":
+    # 5. Use the authenticated profile
+    browser = await kernel.browsers.create(
+        profile={"name": "netflix-user-123"},
+        stealth=True,
+    )
+    print(f"Browser ready: {browser.cdp_ws_url}")
+```
+</CodeGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Hosted UI Guide" icon="browser" href="/agent-auth/hosted-ui">
+    Get started with the simplest integration path
+  </Card>
+  <Card title="Programmatic Guide" icon="code" href="/agent-auth/programmatic">
+    Build custom auth flows with full control
+  </Card>
+  <Card title="Credentials" icon="key" href="/agent-auth/credentials">
+    Store credentials for automated re-auth
+  </Card>
+  <Card title="Session Monitoring" icon="clock" href="/agent-auth/session-monitoring">
+    Keep sessions alive automatically
+  </Card>
+</CardGroup>
