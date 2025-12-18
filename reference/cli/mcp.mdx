@@ -1,0 +1,71 @@
+---
+title: "MCP"
+---
+
+## `kernel mcp install --target <target>`
+
+Install Kernel MCP server configuration for a supported AI development tool. This command automatically configures the MCP server in your tool's settings file.
+
+| Flag | Description |
+|------|-------------|
+| `--target <target>` | Target AI tool to configure. Required. |
+
+### Supported Targets
+
+- `cursor` - Cursor editor
+- `claude` - Claude Desktop app
+- `claude-code` - Claude Code CLI
+- `windsurf` - Windsurf editor
+- `vscode` - Visual Studio Code
+- `goose` - Goose AI
+- `zed` - Zed editor
+
+### Examples
+
+```bash
+# Install for Cursor
+kernel mcp install --target cursor
+
+# Install for Claude Desktop
+kernel mcp install --target claude
+
+# Install for VS Code
+kernel mcp install --target vscode
+```
+
+### What It Does
+
+The `mcp install` command:
+
+1. **Locates the configuration file** for your target tool (e.g., `~/.cursor/mcp.json` for Cursor)
+2. **Creates the file if it doesn't exist** or reads the existing configuration
+3. **Adds the Kernel MCP server** configuration with the correct settings for your tool
+4. **Preserves existing MCP servers** - your other MCP configurations remain intact
+
+### Configuration Details
+
+The command automatically configures the appropriate transport and settings for each tool:
+
+- **Cursor, Claude Code, VS Code**: Uses HTTP transport (`https://mcp.onkernel.com/mcp`)
+- **Claude Desktop, Windsurf, Goose, Zed**: Uses stdio transport via `mcp-remote`
+
+### Next Steps
+
+After installation:
+
+1. **Restart your tool** (or reload the window) to load the new MCP server
+2. **Authenticate** when prompted - you'll be redirected to authorize Kernel access via OAuth
+3. **Start using Kernel tools** - browser automation capabilities will be available in your AI conversations
+
+<Info>
+For manual setup instructions or troubleshooting, see the [MCP Server documentation](/reference/mcp-server).
+</Info>
+
+### Troubleshooting
+
+If installation fails:
+
+- Ensure you have write permissions to the configuration directory
+- Check that the target tool's configuration directory exists
+- For Zed, the command handles JSON5 format (comments) automatically
+- For Goose, the command displays YAML configuration instructions (manual copy-paste required)
