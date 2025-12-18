@@ -128,7 +128,7 @@ const invocation = await kernel.agents.auth.invocations.create({
 });
 
 // 3. Check if already logged in
-if (invocation.status === 'already_authenticated') {
+if (invocation.status === 'ALREADY_AUTHENTICATED') {
   console.log('Already authenticated!');
 } else {
   // Redirect user to hosted UI
@@ -170,7 +170,7 @@ invocation = await kernel.agents.auth.invocations.create(
 )
 
 # 3. Check if already logged in
-if invocation.status == "already_authenticated":
+if invocation.status == "ALREADY_AUTHENTICATED":
     print("Already authenticated!")
 else:
     # Redirect user to hosted UI

@@ -111,16 +111,16 @@ async function triggerReauth(agent) {
   const reauth = await kernel.agents.auth.reauth(agent.id);
 
   switch (reauth.status) {
-    case 'reauth_started':
+    case 'REAUTH_STARTED':
       console.log('Re-auth started:', reauth.invocation_id);
       // Poll for completion
       return await pollForCompletion(reauth.invocation_id);
 
-    case 'already_authenticated':
+    case 'ALREADY_AUTHENTICATED':
       console.log('Already authenticated');
       return { success: true };
 
-    case 'cannot_reauth':
+    case 'CANNOT_REAUTH':
       console.log('Cannot reauth:', reauth.message);
       return await manualReauth(agent.id);
   }
@@ -190,7 +190,7 @@ async function ensureAuthenticated(agentId: string) {
   // Need to re-auth
   if (agent.can_reauth) {
     const reauth = await kernel.agents.auth.reauth(agentId);
-    if (reauth.status === 'reauth_started') {
+    if (reauth.status === 'REAUTH_STARTED') {
       await pollForCompletion(reauth.invocation_id);
     }
   } else {
@@ -304,9 +304,9 @@ class AuthSessionManager {
   private async triggerReauth(agent: AuthAgent) {
     const reauth = await kernel.agents.auth.reauth(agent.id);
 
-    if (reauth.status === 'reauth_started' && reauth.invocation_id) {
+    if (reauth.status === 'REAUTH_STARTED' && reauth.invocation_id) {
       await this.pollForCompletion(reauth.invocation_id);
-    } else if (reauth.status === 'cannot_reauth') {
+    } else if (reauth.status === 'CANNOT_REAUTH') {
       throw new CannotReauthError(reauth.message, agent.id);
     }
   }
