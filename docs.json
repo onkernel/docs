@@ -63,17 +63,6 @@
             ]
           },
           {
-            "group": "Agent Auth",
-            "pages": [
-              "agent-auth/overview",
-              "agent-auth/hosted-ui",
-              "agent-auth/programmatic",
-              "agent-auth/credentials",
-              "agent-auth/session-monitoring",
-              "agent-auth/early-preview"
-            ]
-          },
-          {
             "group": "Browsers",
             "pages": [
               "browsers/create-a-browser",
