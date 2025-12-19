@@ -78,8 +78,14 @@ kernel deploy main.py # --env ANTHROPIC_API_KEY=XXX if Browser Use or Computer U
 # Sample app
 kernel invoke ts-basic get-page-title --payload '{"url": "https://www.google.com"}'
 
+# CAPTCHA Solver
+kernel invoke ts-captcha-solver test-captcha-solver
+
 # Stagehand
 kernel invoke ts-stagehand teamsize-task --payload '{"company": "Kernel"}'
+
+# Magnitude
+kernel invoke ts-magnitude mag-url-extract --payload '{"url": "https://en.wikipedia.org/wiki/Special:Random"}'
 
 # Anthropic Computer Use
 kernel invoke ts-anthropic-cua cua-task --payload '{"query": "Return the first url of a search result for NYC restaurant reviews Pete Wells"}'
