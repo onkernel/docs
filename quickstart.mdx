@@ -81,8 +81,14 @@ kernel invoke ts-basic get-page-title --payload '{"url": "https://www.google.com
 # Stagehand
 kernel invoke ts-stagehand stagehand-task --payload '{"query": "Best wired earbuds"}'
 
-# Computer Use
-kernel invoke ts-cu cu-task --payload '{"query": "Search for the top 3 restaurants in NYC according to Pete Wells"}'
+# Anthropic Computer Use
+kernel invoke ts-anthropic-cua cua-task --payload '{"query": "Search for the top 3 restaurants in NYC according to Pete Wells"}'
+
+# OpenAI Computer Use
+kernel invoke ts-openai-cua cua-task --payload '{"task": "Go to https://news.ycombinator.com and get the top 5 articles"}'
+
+# Gemini Computer Use
+kernel invoke ts-gemini-cua gemini-cua-task
 ```
 
 ```bash Python
@@ -92,8 +98,14 @@ kernel invoke python-basic get-page-title --payload '{"url": "https://www.google
 # Browser Use
 kernel invoke python-bu bu-task --payload '{"task": "Compare the price of gpt-4o and DeepSeek-V3"}'
 
-# Computer Use
-kernel invoke python-cu cu-task --payload '{"query": "Search for the top 3 restaurants in NYC according to Pete Wells"}'
+# Anthropic Computer Use
+kernel invoke python-anthropic-cua cua-task --payload '{"query": "Search for the top 3 restaurants in NYC according to Pete Wells"}'
+
+# OpenAI Computer Use
+kernel invoke python-openai-cua cua-task --payload '{"task": "Go to https://news.ycombinator.com and get the top 5 articles"}'
+
+# OpenAGI Computer Use
+kernel invoke python-openagi-cua openagi-default-task -p '{"instruction": "Navigate to https://agiopen.org and click the What is Computer Use? button"}'
 ```
 
 </CodeGroup>
@@ -111,13 +123,14 @@ You can now update your browser automation with your own logic and deploy it aga
 
 These are the sample apps currently available when you run `kernel create`:
 
-| Template               | Description                                               | Framework                  | Params           |
-|------------------------|-----------------------------------------------------------|----------------------------|------------------|
-| **sample-app**         | Returns the page title of a specified URL                 | Playwright                 | `{ url }`        |
-| **browser-use**        | Completes a specified task                                | Browser Use                | `{ task }`       |
-| **stagehand**          | Returns the first result of a specified Google search     | Stagehand                  | `{ query }`      |
-| **advanced-sample**    | Implements sample apps using advanced Kernel configs      | Playwright                 | n/a              |
-| **computer-use**       | Implements an Anthropic Computer Use prompt loop          | Anthropic Computer Use API | `{ query }`      |
-| **cua**                | Implements an OpenAI CUA prompt loop                      | OpenAI CUA API             | `{ task }`       |
-| **gemini-cua**         | Implements a Gemini Computer Use prompt loop              | Gemini Computer Use API    | `{ task }`       |
-| **magnitude**          | Implements the Magnitude.run SDK                          | Magnitude.run             | n/a              |
+| Template                      | Description                                               | Framework                  | Params           |
+|-------------------------------|-----------------------------------------------------------|----------------------------|------------------|
+| **sample-app**                | Returns the page title of a specified URL                 | Playwright                 | `{ url }`        |
+| **browser-use**               | Completes a specified task                                | Browser Use                | `{ task }`       |
+| **stagehand**                 | Returns the first result of a specified Google search     | Stagehand                  | `{ query }`      |
+| **advanced-sample**           | Implements sample apps using advanced Kernel configs      | Playwright                 | n/a              |
+| **anthropic-computer-use**    | Implements an Anthropic Computer Use prompt loop          | Anthropic Computer Use API | `{ query }`      |
+| **openai-computer-use**       | Implements an OpenAI Computer Use Agent prompt loop       | OpenAI CUA API             | `{ task }`       |
+| **gemini-computer-use**       | Implements a Gemini Computer Use prompt loop              | Gemini Computer Use API    | `{ task }`       |
+| **openagi-computer-use**      | Implements an OpenAGI Lux computer-use agent              | OpenAGI Lux API            | `{ instruction }`|
+| **magnitude**                 | Implements the Magnitude.run SDK                          | Magnitude.run              | n/a              |
