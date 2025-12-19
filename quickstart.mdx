@@ -101,6 +101,9 @@ kernel invoke ts-gemini-cua gemini-cua-task
 # Sample app
 kernel invoke python-basic get-page-title --payload '{"url": "https://www.google.com"}'
 
+# CAPTCHA Solver
+kernel invoke python-captcha-solver test-captcha-solver
+
 # Browser Use
 kernel invoke python-bu bu-task --payload '{"task": "Compare the price of gpt-4o and DeepSeek-V3"}'
 
