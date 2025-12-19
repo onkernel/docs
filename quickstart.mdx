@@ -114,7 +114,7 @@ kernel invoke python-anthropic-cua cua-task --payload '{"query": "Return the fir
 kernel invoke python-openai-cua cua-task --payload '{"task": "Go to https://news.ycombinator.com and get the top 5 articles"}'
 
 # OpenAGI Computer Use
-kernel invoke python-openagi-cua openagi-default-task -p '{"instruction": "Navigate to https://agiopen.org and click the What is Computer Use? button", "record_replay": "True"}'
+kernel invoke python-openagi-cua openagi-default-task --payload '{"instruction": "Navigate to https://agiopen.org and click the What is Computer Use? button", "record_replay": "True"}'
 ```
 
 </CodeGroup>
