@@ -61,12 +61,12 @@ This will open your browser to complete the authentication flow. Your credential
 <CodeGroup>
 ```bash Typescript / Javascript
 cd sample-app
-kernel deploy index.ts # --env ANTHROPIC_API_KEY=XXX if Stagehand or Computer Use
+kernel deploy index.ts # --env-file .env if environment variables are needed
 ```
 
 ```bash Python
 cd sample-app
-kernel deploy main.py # --env ANTHROPIC_API_KEY=XXX if Browser Use or Computer Use
+kernel deploy main.py # --env-file .env if environment variables are needed
 ```
 
 </CodeGroup>
