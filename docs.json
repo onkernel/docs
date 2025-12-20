@@ -63,17 +63,6 @@
             ]
           },
           {
-            "group": "Agent Auth",
-            "pages": [
-              "agent-auth/overview",
-              "agent-auth/hosted-ui",
-              "agent-auth/programmatic",
-              "agent-auth/credentials",
-              "agent-auth/session-monitoring",
-              "agent-auth/early-preview"
-            ]
-          },
-          {
             "group": "Browsers",
             "pages": [
               "browsers/create-a-browser",
@@ -83,6 +72,17 @@
               "browsers/standby",
               "browsers/profiles",
               "browsers/termination",
+              {
+                "group": "Agent Auth",
+                "pages": [
+                  "agent-auth/overview",
+                  "agent-auth/auto-login",
+                  "agent-auth/hosted-ui",
+                  "agent-auth/programmatic",
+                  "agent-auth/credentials",
+                  "agent-auth/session-monitoring"
+                ]
+              },
               {
                 "group": "Bot Anti-Detection",
                 "pages": [

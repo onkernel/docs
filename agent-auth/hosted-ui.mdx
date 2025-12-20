@@ -13,6 +13,43 @@ Use the Hosted UI when:
 - You need a quick integration with minimal code
 - You want to avoid handling multi-step auth flows yourself
 
+## How It Works
+
+<Steps>
+  <Step title="Create Auth Agent and Invocation">
+    ```typescript
+    const agent = await kernel.agents.auth.create({
+      target_domain: 'example.com',
+      profile_name: 'my-profile',
+    });
+    const invocation = await kernel.agents.auth.invocations.create({
+      auth_agent_id: agent.id,
+    });
+    ```
+  </Step>
+  <Step title="Redirect User to Hosted UI">
+    ```typescript
+    if (invocation.status !== 'ALREADY_AUTHENTICATED') {
+      window.location.href = invocation.hosted_url;
+    }
+    ```
+  </Step>
+  <Step title="Poll for Completion">
+    ```typescript
+    const status = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id);
+    // Poll until status.status === 'SUCCESS'
+    ```
+  </Step>
+  <Step title="Use the Authenticated Profile">
+    ```typescript
+    const browser = await kernel.browsers.create({
+      profile: { name: 'my-profile' },
+      stealth: true,
+    });
+    ```
+  </Step>
+</Steps>
+
 ## Complete Example
 
 <CodeGroup>
@@ -184,12 +221,11 @@ const invocation = await kernel.agents.auth.invocations.create({
 |-------|-------------|
 | `invocation_id` | Unique ID for this auth attempt |
 | `hosted_url` | URL to redirect the user to |
-| `handoff_code` | One-time code for programmatic flows |
 | `expires_at` | When the invocation expires (5 minutes) |
-| `logged_in` | If `true`, already authenticated—no login needed |
+| `status` | If `ALREADY_AUTHENTICATED`, profile is already logged in—no redirect needed |
 
 <Warning>
-If `logged_in` is `true`, the profile is already authenticated. Skip the redirect and go straight to using the profile.
+If `status` is `ALREADY_AUTHENTICATED`, the profile is already logged in. Skip the redirect and go straight to using the profile.
 </Warning>
 
 ### 3. Redirect the User

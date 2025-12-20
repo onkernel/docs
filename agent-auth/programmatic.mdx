@@ -9,27 +9,54 @@ The Programmatic flow gives you complete control over the authentication process
 
 Use the Programmatic flow when:
 - You need a custom authentication UI that matches your app's design
-- You're building automated/headless authentication scenarios
-- You have credentials stored and want to authenticate without user interaction
-- You need fine-grained control over the auth flow
+- You need fine-grained control over the discover/submit flow
+- You want to build your own credential mapping logic
+
+<Tip>
+**Have credentials stored?** If you just want automated login with pre-linked credentials, [Auto-Login](/agent-auth/auto-login) is simpler—it handles discover/submit automatically. Use Programmatic when you need custom control over each step.
+</Tip>
 
 ## How It Works
 
 <Steps>
   <Step title="Create Auth Agent and Invocation">
-    Same as Hosted UI - create an agent and start an invocation
-  </Step>
-  <Step title="Exchange Handoff Code for JWT">
-    Exchange the one-time handoff code for a scoped JWT token
+    ```typescript
+    const agent = await kernel.agents.auth.create({
+      target_domain: 'example.com',
+      profile_name: 'my-profile',
+    });
+    const invocation = await kernel.agents.auth.invocations.create({
+      auth_agent_id: agent.id,
+    });
+    ```
   </Step>
   <Step title="Discover Login Fields">
-    Call `discover()` to get the form fields on the login page
+    ```typescript
+    const discover = await kernel.agents.auth.invocations.discover(
+      invocation.invocation_id,
+      {}
+    );
+    // discover.fields contains the form fields
+    ```
   </Step>
   <Step title="Submit Credentials">
-    Call `submit()` with the field values to attempt login
+    ```typescript
+    const submit = await kernel.agents.auth.invocations.submit(
+      invocation.invocation_id,
+      { field_values: { email: 'user@example.com', password: 'secret' } }
+    );
+    ```
   </Step>
   <Step title="Handle Multi-Step Auth">
-    If additional fields are returned (2FA, OTP), collect and submit again
+    ```typescript
+    // If submit.needs_additional_auth, collect the new fields and submit again
+    if (submit.needs_additional_auth) {
+      await kernel.agents.auth.invocations.submit(
+        invocation.invocation_id,
+        { field_values: { code: '123456' } }
+      );
+    }
+    ```
   </Step>
 </Steps>
 
@@ -53,19 +80,9 @@ const invocation = await kernel.agents.auth.invocations.create({
 
 if (invocation.status === 'ALREADY_AUTHENTICATED') {
   console.log('Already authenticated!');
-  // Profile is ready to use
 } else {
-  // Step 2: Exchange handoff code for JWT
-  const exchange = await kernel.agents.auth.invocations.exchange(
-    invocation.invocation_id,
-    { code: invocation.handoff_code }
-  );
-
-  // Step 3: Create JWT-authenticated client
-  const jwtKernel = new Kernel({ apiKey: exchange.jwt });
-
-  // Step 4: Discover login fields
-  const discoverResponse = await jwtKernel.agents.auth.invocations.discover(
+  // Step 2: Discover login fields
+  const discoverResponse = await kernel.agents.auth.invocations.discover(
     invocation.invocation_id,
     {}
   );
@@ -75,19 +92,19 @@ if (invocation.status === 'ALREADY_AUTHENTICATED') {
   } else if (discoverResponse.success && discoverResponse.fields) {
     console.log('Discovered fields:', discoverResponse.fields);
 
-    // Step 5: Map credentials to discovered fields
+    // Step 3: Map credentials to discovered fields
     const fieldValues = mapCredentialsToFields(discoverResponse.fields, {
       email: 'user@example.com',
       password: 'secretpassword',
     });
 
-    // Step 6: Submit credentials
-    let submitResponse = await jwtKernel.agents.auth.invocations.submit(
+    // Step 4: Submit credentials
+    let submitResponse = await kernel.agents.auth.invocations.submit(
       invocation.invocation_id,
       { field_values: fieldValues }
     );
 
-    // Step 7: Handle multi-step auth
+    // Step 5: Handle multi-step auth
     while (submitResponse.needs_additional_auth && submitResponse.additional_fields) {
       console.log('Additional auth required:', submitResponse.additional_fields);
 
@@ -99,7 +116,7 @@ if (invocation.status === 'ALREADY_AUTHENTICATED') {
         { code: otpCode }
       );
 
-      submitResponse = await jwtKernel.agents.auth.invocations.submit(
+      submitResponse = await kernel.agents.auth.invocations.submit(
         invocation.invocation_id,
         { field_values: additionalValues }
       );
@@ -158,17 +175,8 @@ invocation = await kernel.agents.auth.invocations.create(
 if invocation.status == "ALREADY_AUTHENTICATED":
     print("Already authenticated!")
 else:
-    # Step 2: Exchange handoff code for JWT
-    exchange = await kernel.agents.auth.invocations.exchange(
-        invocation.invocation_id,
-        code=invocation.handoff_code,
-    )
-
-    # Step 3: Create JWT-authenticated client
-    jwt_kernel = Kernel(api_key=exchange.jwt)
-
-    # Step 4: Discover login fields
-    discover_response = await jwt_kernel.agents.auth.invocations.discover(
+    # Step 2: Discover login fields
+    discover_response = await kernel.agents.auth.invocations.discover(
         invocation.invocation_id,
     )
 
@@ -177,19 +185,19 @@ else:
     elif discover_response.success and discover_response.fields:
         print(f"Discovered fields: {discover_response.fields}")
 
-        # Step 5: Map credentials to discovered fields
+        # Step 3: Map credentials to discovered fields
         field_values = map_credentials_to_fields(
             discover_response.fields,
             {"email": "user@example.com", "password": "secretpassword"},
         )
 
-        # Step 6: Submit credentials
-        submit_response = await jwt_kernel.agents.auth.invocations.submit(
+        # Step 4: Submit credentials
+        submit_response = await kernel.agents.auth.invocations.submit(
             invocation.invocation_id,
             field_values=field_values,
         )
 
-        # Step 7: Handle multi-step auth
+        # Step 5: Handle multi-step auth
         while (
             submit_response.needs_additional_auth
             and submit_response.additional_fields
@@ -202,7 +210,7 @@ else:
                 {"code": otp_code},
             )
 
-            submit_response = await jwt_kernel.agents.auth.invocations.submit(
+            submit_response = await kernel.agents.auth.invocations.submit(
                 invocation.invocation_id,
                 field_values=additional_values,
             )
@@ -235,39 +243,12 @@ def map_credentials_to_fields(fields, credentials):
 
 ## Step-by-Step Breakdown
 
-### 1. Exchange Handoff Code for JWT
-
-The handoff code is a one-time credential that you exchange for a JWT token. This JWT is scoped to the specific invocation and grants permission to control the browser session.
-
-```typescript
-const exchange = await kernel.agents.auth.invocations.exchange(
-  invocation.invocation_id,
-  { code: invocation.handoff_code }
-);
-
-const jwt = exchange.jwt; // Valid for 30 minutes
-```
-
-<Warning>
-The handoff code can only be used once and expires after 5 minutes. The JWT is valid for 30 minutes.
-</Warning>
-
-### 2. Create JWT-Authenticated Client
-
-Create a new Kernel client using the JWT for subsequent API calls:
-
-```typescript
-const jwtKernel = new Kernel({ apiKey: exchange.jwt });
-```
-
-This client has limited permissions—it can only call the discover and submit endpoints for this specific invocation.
-
-### 3. Discover Login Fields
+### 1. Discover Login Fields
 
 Call `discover()` to navigate to the login page and extract form fields:
 
 ```typescript
-const discoverResponse = await jwtKernel.agents.auth.invocations.discover(
+const discoverResponse = await kernel.agents.auth.invocations.discover(
   invocation.invocation_id,
   { login_url: 'https://example.com/login' } // Optional: override login URL
 );
@@ -305,7 +286,7 @@ const discoverResponse = await jwtKernel.agents.auth.invocations.discover(
 If `discover()` returns `logged_in: true`, the profile is already authenticated from a previous session. No credentials are needed—proceed to using the profile.
 </Tip>
 
-### 4. Map Credentials to Fields
+### 2. Map Credentials to Fields
 
 The discover response returns an array of fields with `name`, `type`, and `label` properties. Use the `name` as the key when submitting credentials:
 
@@ -340,12 +321,12 @@ const fieldValues = {
 | `number` | Numeric input | 12345 |
 | `code` | Verification code (OTP/2FA) | 123456 |
 
-### 5. Submit Credentials
+### 3. Submit Credentials
 
 Submit the mapped field values to attempt login:
 
 ```typescript
-const submitResponse = await jwtKernel.agents.auth.invocations.submit(
+const submitResponse = await kernel.agents.auth.invocations.submit(
   invocation.invocation_id,
   { field_values: fieldValues }
 );
@@ -390,7 +371,7 @@ const submitResponse = await jwtKernel.agents.auth.invocations.submit(
 }
 ```
 
-### 6. Handle Multi-Step Auth
+### 4. Handle Multi-Step Auth
 
 When `needs_additional_auth` is `true`, the page is showing new fields (typically 2FA/OTP). Collect the additional values and submit again:
 
@@ -408,7 +389,7 @@ while (submitResponse.needs_additional_auth && submitResponse.additional_fields)
   }
 
   // Submit again
-  submitResponse = await jwtKernel.agents.auth.invocations.submit(
+  submitResponse = await kernel.agents.auth.invocations.submit(
     invocation.invocation_id,
     { field_values: additionalValues }
   );
@@ -470,7 +451,7 @@ See [Credentials](/agent-auth/credentials) for details on pre-storing credential
 
 ```typescript
 try {
-  const discoverResponse = await jwtKernel.agents.auth.invocations.discover(
+  const discoverResponse = await kernel.agents.auth.invocations.discover(
     invocation.invocation_id,
     {}
   );
@@ -480,7 +461,7 @@ try {
     return;
   }
 
-  const submitResponse = await jwtKernel.agents.auth.invocations.submit(
+  const submitResponse = await kernel.agents.auth.invocations.submit(
     invocation.invocation_id,
     { field_values: fieldValues }
   );
@@ -490,9 +471,7 @@ try {
     // Show error to user, let them retry
   }
 } catch (error) {
-  if (error.status === 401) {
-    console.error('JWT expired - exchange a new handoff code');
-  } else if (error.status === 404) {
+  if (error.status === 404) {
     console.error('Invocation not found or expired');
   } else {
     console.error('Unexpected error:', error.message);
@@ -502,7 +481,6 @@ try {
 
 ## Security Considerations
 
-- The JWT is scoped to the specific invocation and cannot access other resources
 - Credentials submitted via `submit()` are sent directly to the target site
 - Credentials are never logged, stored in plaintext, or passed to LLMs
 - The browser session is isolated and destroyed after the invocation completes

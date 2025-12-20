@@ -1,0 +1,387 @@
+---
+title: "Auto-Login"
+description: "Fully automated authentication with pre-linked credentials"
+---
+
+Auto-Login is the simplest approach for automated flows—pre-create credentials, link them to the auth agent, and the system handles everything automatically. Just poll for completion.
+
+## When to Use Auto-Login
+
+Use Auto-Login when:
+- You already have the user's credentials (from your secrets manager, user input collected earlier, etc.)
+- You want fully automated login with minimal code
+- You're building headless/bot workflows that don't require user interaction
+
+<Tip>
+If you need users to enter their own credentials, use the [Hosted UI](/agent-auth/hosted-ui) or [Programmatic](/agent-auth/programmatic) flows instead.
+</Tip>
+
+## How It Works
+
+<Steps>
+  <Step title="Create a Credential">
+    ```typescript
+    const credential = await kernel.credentials.create({
+      name: 'user-123-netflix',
+      domain: 'netflix.com',
+      values: { username: 'user@example.com', password: 'secretpassword' },
+    });
+    ```
+  </Step>
+  <Step title="Create Auth Agent with Credential Linked">
+    ```typescript
+    const agent = await kernel.agents.auth.create({
+      target_domain: 'netflix.com',
+      profile_name: 'netflix-user-123',
+      credential_name: credential.name,
+    });
+    ```
+  </Step>
+  <Step title="Start an Invocation">
+    ```typescript
+    const invocation = await kernel.agents.auth.invocations.create({
+      auth_agent_id: agent.id,
+    });
+    // System automatically discovers fields, maps credentials, and submits
+    ```
+  </Step>
+  <Step title="Poll for Completion">
+    ```typescript
+    const status = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id);
+    // Poll until status.status === 'SUCCESS'
+    ```
+  </Step>
+  <Step title="Use the Authenticated Profile">
+    ```typescript
+    const browser = await kernel.browsers.create({
+      profile: { name: 'netflix-user-123' },
+      stealth: true,
+    });
+    ```
+  </Step>
+</Steps>
+
+## Complete Example
+
+<CodeGroup>
+```typescript TypeScript
+import Kernel from '@onkernel/sdk';
+
+const kernel = new Kernel();
+
+// Step 1: Create credential with login values
+const credential = await kernel.credentials.create({
+  name: 'user-123-netflix',
+  domain: 'netflix.com',
+  values: {
+    username: 'user@example.com',
+    password: 'secretpassword',
+  },
+});
+
+// Step 2: Create auth agent with credential linked
+const agent = await kernel.agents.auth.create({
+  target_domain: 'netflix.com',
+  profile_name: 'netflix-user-123',
+  credential_name: credential.name,
+  login_url: 'https://netflix.com/login', // Optional: speeds up discovery
+});
+
+// Step 3: Start invocation - auto-login kicks in automatically
+const invocation = await kernel.agents.auth.invocations.create({
+  auth_agent_id: agent.id,
+});
+
+// Check if already authenticated
+if (invocation.status === 'ALREADY_AUTHENTICATED') {
+  console.log('Already logged in! Profile ready.');
+} else {
+  // Step 4: Poll for completion
+  console.log(`Invocation type: ${invocation.type}`); // "auto_login"
+
+  const result = await pollForCompletion(invocation.invocation_id);
+
+  if (result.success) {
+    console.log('Auto-login successful!');
+  }
+}
+
+// Step 5: Use the profile
+const browser = await kernel.browsers.create({
+  profile: { name: 'netflix-user-123' },
+  stealth: true,
+});
+
+// Run your automation...
+await kernel.browsers.deleteByID(browser.session_id);
+```
+
+```python Python
+from kernel import Kernel
+import asyncio
+
+kernel = Kernel()
+
+# Step 1: Create credential with login values
+credential = await kernel.credentials.create(
+    name="user-123-netflix",
+    domain="netflix.com",
+    values={
+        "username": "user@example.com",
+        "password": "secretpassword",
+    },
+)
+
+# Step 2: Create auth agent with credential linked
+agent = await kernel.agents.auth.create(
+    target_domain="netflix.com",
+    profile_name="netflix-user-123",
+    credential_name=credential.name,
+    login_url="https://netflix.com/login",  # Optional: speeds up discovery
+)
+
+# Step 3: Start invocation - auto-login kicks in automatically
+invocation = await kernel.agents.auth.invocations.create(
+    auth_agent_id=agent.id,
+)
+
+# Check if already authenticated
+if invocation.status == "ALREADY_AUTHENTICATED":
+    print("Already logged in! Profile ready.")
+else:
+    # Step 4: Poll for completion
+    print(f"Invocation type: {invocation.type}")  # "auto_login"
+
+    result = await poll_for_completion(invocation.invocation_id)
+
+    if result["success"]:
+        print("Auto-login successful!")
+
+# Step 5: Use the profile
+browser = await kernel.browsers.create(
+    profile={"name": "netflix-user-123"},
+    stealth=True,
+)
+
+# Run your automation...
+await kernel.browsers.delete_by_id(browser.session_id)
+```
+</CodeGroup>
+
+## Polling for Completion
+
+Auto-login runs asynchronously. Poll the invocation status to know when it completes:
+
+<CodeGroup>
+```typescript TypeScript
+async function pollForCompletion(invocationId: string) {
+  const maxWaitMs = 5 * 60 * 1000; // 5 minutes
+  const start = Date.now();
+  let delay = 3000;
+
+  while (Date.now() - start < maxWaitMs) {
+    const status = await kernel.agents.auth.invocations.retrieve(invocationId);
+
+    console.log(`Status: ${status.status}, Step: ${status.step}`);
+
+    if (status.status === 'SUCCESS') {
+      return { success: true, status };
+    }
+    if (status.status === 'EXPIRED' || status.status === 'CANCELED') {
+      return { success: false, reason: status.status };
+    }
+
+    // Check if manual input needed (e.g., MFA code not in credentials)
+    if (status.step === 'awaiting_input') {
+      return { success: false, reason: 'MANUAL_INPUT_REQUIRED', status };
+    }
+
+    await new Promise(r => setTimeout(r, delay));
+    delay = Math.min(delay * 1.5, 5000);
+  }
+
+  return { success: false, reason: 'TIMEOUT' };
+}
+```
+
+```python Python
+async def poll_for_completion(invocation_id: str):
+    max_wait_seconds = 5 * 60
+    start_time = asyncio.get_event_loop().time()
+    delay = 3
+
+    while asyncio.get_event_loop().time() - start_time < max_wait_seconds:
+        status = await kernel.agents.auth.invocations.retrieve(invocation_id)
+
+        print(f"Status: {status.status}, Step: {status.step}")
+
+        if status.status == "SUCCESS":
+            return {"success": True, "status": status}
+        if status.status in ("EXPIRED", "CANCELED"):
+            return {"success": False, "reason": status.status}
+
+        # Check if manual input needed (e.g., MFA code not in credentials)
+        if status.step == "awaiting_input":
+            return {"success": False, "reason": "MANUAL_INPUT_REQUIRED", "status": status}
+
+        await asyncio.sleep(delay)
+        delay = min(delay * 1.5, 5)
+
+    return {"success": False, "reason": "TIMEOUT"}
+```
+</CodeGroup>
+
+**Invocation step values** (useful for monitoring progress):
+
+| Step | Description |
+|------|-------------|
+| `initialized` | Invocation just started |
+| `discovering` | Currently discovering login fields |
+| `awaiting_input` | Waiting for input (manual intervention needed) |
+| `submitting` | Currently submitting credentials |
+| `completed` | Login flow finished |
+
+## Credential Field Mapping
+
+Auto-login maps your credential values to discovered form fields:
+
+1. **Direct name match** - If your credential has `username` and the form has a field named `username`, they match
+2. **Type-based fallback** - If no name match, maps by field type:
+   - `email` type → uses `email` or `username` from credentials
+   - `password` type → uses `password` from credentials
+   - `tel` type → uses `phone` from credentials
+   - `text` type → uses `username` or `email` as fallback
+
+**Recommended credential structure:**
+
+```typescript
+{
+  values: {
+    username: 'user@example.com',  // Works for email and text fields
+    password: 'secretpassword',
+    // Optional for sites that need them:
+    phone: '+1234567890',
+    code: '123456',  // For TOTP if you have a generator
+  }
+}
+```
+
+## Multi-Step Form Handling
+
+Auto-login automatically handles multi-step login forms:
+
+- **Step 1**: Discovers username/email field → maps and submits
+- **Step 2**: New password field appears → maps and submits
+- **Step 3**: 2FA code field appears → maps if `code` is in credentials, otherwise pauses
+
+If the system encounters fields it can't map from your credentials (like a 2FA code field without a `code` value), it sets `step: 'awaiting_input'` and pauses.
+
+### Handling Paused Flows
+
+When auto-login pauses, you can continue manually:
+
+<CodeGroup>
+```typescript TypeScript
+const result = await pollForCompletion(invocation.invocation_id);
+
+if (result.reason === 'MANUAL_INPUT_REQUIRED') {
+  // Get the 2FA code from user or TOTP generator
+  const otpCode = await getOTPCode();
+
+  // Call discover to see current fields
+  const discover = await kernel.agents.auth.invocations.discover(
+    invocation.invocation_id,
+    {}
+  );
+
+  // Submit the missing value
+  const submit = await kernel.agents.auth.invocations.submit(
+    invocation.invocation_id,
+    { field_values: { code: otpCode } }
+  );
+
+  if (submit.logged_in) {
+    console.log('Login completed!');
+  }
+}
+```
+
+```python Python
+result = await poll_for_completion(invocation.invocation_id)
+
+if result["reason"] == "MANUAL_INPUT_REQUIRED":
+    # Get the 2FA code from user or TOTP generator
+    otp_code = await get_otp_code()
+
+    # Call discover to see current fields
+    discover = await kernel.agents.auth.invocations.discover(
+        invocation.invocation_id,
+    )
+
+    # Submit the missing value
+    submit = await kernel.agents.auth.invocations.submit(
+        invocation.invocation_id,
+        field_values={"code": otp_code},
+    )
+
+    if submit.logged_in:
+        print("Login completed!")
+```
+</CodeGroup>
+
+<Warning>
+**2FA handling:** If the site requires 2FA, include a `code` value in your credentials using a TOTP generator library. If you can't provide the code upfront, auto-login will pause at `step: 'awaiting_input'` and you can continue manually.
+</Warning>
+
+## Using Proxies
+
+If the target site requires a specific IP or region, configure a proxy:
+
+<CodeGroup>
+```typescript TypeScript
+const agent = await kernel.agents.auth.create({
+  target_domain: 'region-locked-site.com',
+  profile_name: 'my-profile',
+  credential_name: 'my-credential',
+  proxy: { proxy_id: 'proxy_abc123' },
+});
+
+// Use the same proxy when creating browsers
+const browser = await kernel.browsers.create({
+  profile: { name: 'my-profile' },
+  proxy_id: 'proxy_abc123',
+  stealth: true,
+});
+```
+
+```python Python
+agent = await kernel.agents.auth.create(
+    target_domain="region-locked-site.com",
+    profile_name="my-profile",
+    credential_name="my-credential",
+    proxy={"proxy_id": "proxy_abc123"},
+)
+
+# Use the same proxy when creating browsers
+browser = await kernel.browsers.create(
+    profile={"name": "my-profile"},
+    proxy_id="proxy_abc123",
+    stealth=True,
+)
+```
+</CodeGroup>
+
+<Warning>
+Use the same proxy configuration for both the Auth Agent and subsequent browser sessions. Different IPs may trigger security measures on the target site.
+</Warning>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Credentials" icon="key" href="/agent-auth/credentials">
+    Store and manage login credentials
+  </Card>
+  <Card title="Session Monitoring" icon="clock" href="/agent-auth/session-monitoring">
+    Automatic session health checks and re-auth
+  </Card>
+</CardGroup>

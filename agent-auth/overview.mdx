@@ -22,16 +22,32 @@ Agent Auth solves this by providing:
 
 <Steps>
   <Step title="Create an Auth Agent">
-    Your backend calls `kernel.agents.auth.create()` to create an Auth Agent for a specific domain and profile combination.
+    ```typescript
+    const agent = await kernel.agents.auth.create({
+      target_domain: 'example.com',
+      profile_name: 'my-profile',
+    });
+    ```
   </Step>
   <Step title="Start an Authentication Flow">
-    Call `kernel.agents.auth.invocations.create()` to start the auth flow. This returns a `hosted_url` where users complete login, or you can use the programmatic API for headless flows.
+    ```typescript
+    const invocation = await kernel.agents.auth.invocations.create({
+      auth_agent_id: agent.id,
+    });
+    // Returns hosted_url for user login, or use programmatic API
+    ```
   </Step>
   <Step title="User Completes Login">
-    The user is redirected to the hosted UI where they enter credentials and handle 2FA if needed. The profile is saved on success.
+    Redirect the user to `invocation.hosted_url` where they enter credentials and handle 2FA. The profile is saved on success.
   </Step>
   <Step title="Use the Authenticated Profile">
-    Create browsers with the saved profile using `kernel.browsers.create({ profile: { name: 'my-profile' } })`. The browser is already logged in.
+    ```typescript
+    const browser = await kernel.browsers.create({
+      profile: { name: 'my-profile' },
+      stealth: true,
+    });
+    // Browser is already logged in!
+    ```
   </Step>
 </Steps>
 
@@ -61,37 +77,31 @@ An **Invocation** is a single authentication attempt. You start one by calling `
 
 ### Profile
 
-A **Profile** stores browser session state (cookies, localStorage) that persists across browser sessions. Once authenticated via Agent Auth, use the profile with `kernel.browsers.create()` to get an already-logged-in browser.
-
-See [Profiles](/browsers/profiles) for more details on working with profiles.
+A **Profile** stores browser session state (cookies, localStorage) that persists across browser sessions. Once authenticated via Agent Auth, use the profile with `kernel.browsers.create()` to get an already-logged-in browser. See [Profiles](/browsers/profiles) for more.
 
 ### Credentials
 
-**Credentials** are securely stored login credentials that enable automated re-authentication when sessions expire. Values are encrypted at rest and never exposed to LLMs or API responses.
+**Credentials** are securely stored login credentials that enable automated re-authentication when sessions expire. Values are encrypted at rest and never exposed to LLMs or API responses. See [Credentials](/agent-auth/credentials) for more.
 
-See [Credentials](/agent-auth/credentials) for details on storing and using credentials.
+## Choose Your Integration
 
-## Integration Options
+<CardGroup cols={3}>
+  <Card title="Auto-Login" icon="bolt" href="/agent-auth/auto-login">
+    **Best for:** Fully automated flows
 
-Agent Auth offers two integration approaches:
+    Credentials are pre-linked. System handles everything automatically.
+  </Card>
+  <Card title="Hosted UI" icon="browser" href="/agent-auth/hosted-ui">
+    **Best for:** User-facing apps
 
-### Hosted UI (Recommended)
+    Redirect users to Kernel's hosted login page.
+  </Card>
+  <Card title="Programmatic" icon="code" href="/agent-auth/programmatic">
+    **Best for:** Custom UI or headless
 
-The simplest approach—redirect users to our hosted authentication UI. Best for:
-- User-facing applications
-- When you want Kernel to handle the login UI
-- Quick integration with minimal code
-
-See [Hosted UI Guide](/agent-auth/hosted-ui) for implementation details.
-
-### Programmatic API
-
-Build your own authentication UI using the lower-level discover and submit APIs. Best for:
-- Custom UI requirements
-- Automated/headless scenarios
-- When you have credentials stored
-
-See [Programmatic Guide](/agent-auth/programmatic) for implementation details.
+    Build your own UI with discover/submit APIs.
+  </Card>
+</CardGroup>
 
 ## Security
 
@@ -101,8 +111,6 @@ Agent Auth is designed with security as a first principle:
 |-----------------|-------------|
 | **Credentials never stored in plaintext** | All credential values are encrypted at rest using per-organization encryption keys |
 | **Credentials never shared with LLMs** | Credentials are submitted programmatically to target sites, never passed through AI models |
-| **Short-lived tokens** | JWT tokens for programmatic flows expire after 30 minutes |
-| **One-time handoff codes** | Handoff codes can only be exchanged once and expire after 5 minutes |
 | **Profile encryption** | Browser profiles are encrypted end-to-end |
 | **Isolated execution** | Each auth flow runs in an isolated browser environment |
 
@@ -191,20 +199,3 @@ if status.status == "SUCCESS":
     print(f"Browser ready: {browser.cdp_ws_url}")
 ```
 </CodeGroup>
-
-## Next Steps
-
-<CardGroup cols={2}>
-  <Card title="Hosted UI Guide" icon="browser" href="/agent-auth/hosted-ui">
-    Get started with the simplest integration path
-  </Card>
-  <Card title="Programmatic Guide" icon="code" href="/agent-auth/programmatic">
-    Build custom auth flows with full control
-  </Card>
-  <Card title="Credentials" icon="key" href="/agent-auth/credentials">
-    Store credentials for automated re-auth
-  </Card>
-  <Card title="Session Monitoring" icon="clock" href="/agent-auth/session-monitoring">
-    Keep sessions alive automatically
-  </Card>
-</CardGroup>
