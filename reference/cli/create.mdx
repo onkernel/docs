@@ -17,19 +17,20 @@ Create a new Kernel application from a template. The CLI provides an interactive
 
 ### TypeScript templates
 - **`sample-app`** — Basic template with Playwright integration for page title extraction
-- **`advanced-sample`** — Demonstrates advanced Kernel configurations
+- **`captcha-solver`** — Demo of Kernel's auto-CAPTCHA solving capability
+- **`anthropic-computer-use`** — Anthropic Computer Use API sample implementation
+- **`openai-computer-use`** — OpenAI Computer Using Agent (CUA) sample implementation
+- **`gemini-computer-use`** — Google Gemini CUA sample implementation
 - **`stagehand`** — Returns the first result of a specified Google search
-- **`computer-use`** — Implements Anthropic's Computer Use API in a prompt loop
-- **`cua`** — OpenAI Computer Using Agent (CUA) sample implementation
-- **`gemini-cua`** — Google Gemini CUA sample implementation
 - **`magnitude`** — [Magnitude framework](https://github.com/magnitude-labs/magnitude) integration
 
 ### Python templates
 - **`sample-app`** — Basic template with Playwright integration for page title extraction
-- **`advanced-sample`** — Demonstrates advanced Kernel configurations
+- **`captcha-solver`** — Demo of Kernel's auto-CAPTCHA solving capability
+- **`openagi-computer-use`** — OpenAGI's Lux Computer Use API sample implementation
+- **`anthropic-computer-use`** — Anthropic Computer Use API sample implementation
+- **`openai-computer-use`** — OpenAI Computer Using Agent (CUA) sample implementation
 - **`browser-use`** — Integrates the Browser Use for AI-powered web automation
-- **`computer-use`** — Implements Anthropic's Computer Use API in a prompt loop
-- **`cua`** — OpenAI Computer Using Agent (CUA) sample implementation
 
 ## Examples
 
@@ -47,7 +48,7 @@ kernel create --name my-scraper --language python --template browser-use
 kernel create --name my-agent --language ts --template stagehand
 
 # Create a Python Computer Use app
-kernel create --name my-cu-app --language py --template computer-use
+kernel create --name my-cu-app --language py --template anthropic-computer-use
 ```
 
 ## Next steps

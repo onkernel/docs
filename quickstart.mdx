@@ -61,12 +61,12 @@ This will open your browser to complete the authentication flow. Your credential
 <CodeGroup>
 ```bash Typescript / Javascript
 cd sample-app
-kernel deploy index.ts # --env ANTHROPIC_API_KEY=XXX if Stagehand or Computer Use
+kernel deploy index.ts # --env-file .env if environment variables are needed
 ```
 
 ```bash Python
 cd sample-app
-kernel deploy main.py # --env ANTHROPIC_API_KEY=XXX if Browser Use or Computer Use
+kernel deploy main.py # --env-file .env if environment variables are needed
 ```
 
 </CodeGroup>
@@ -78,22 +78,43 @@ kernel deploy main.py # --env ANTHROPIC_API_KEY=XXX if Browser Use or Computer U
 # Sample app
 kernel invoke ts-basic get-page-title --payload '{"url": "https://www.google.com"}'
 
-# Stagehand
-kernel invoke ts-stagehand stagehand-task --payload '{"query": "Best wired earbuds"}'
+# CAPTCHA Solver
+kernel invoke ts-captcha-solver test-captcha-solver
 
-# Computer Use
-kernel invoke ts-cu cu-task --payload '{"query": "Search for the top 3 restaurants in NYC according to Pete Wells"}'
+# Stagehand
+kernel invoke ts-stagehand teamsize-task --payload '{"company": "Kernel"}'
+
+# Magnitude
+kernel invoke ts-magnitude mag-url-extract --payload '{"url": "https://en.wikipedia.org/wiki/Special:Random"}'
+
+# Anthropic Computer Use
+kernel invoke ts-anthropic-cua cua-task --payload '{"query": "Return the first url of a search result for NYC restaurant reviews Pete Wells"}'
+
+# OpenAI Computer Use
+kernel invoke ts-openai-cua cua-task --payload '{"task": "Go to https://news.ycombinator.com and get the top 5 articles"}'
+
+# Gemini Computer Use
+kernel invoke ts-gemini-cua gemini-cua-task
 ```
 
 ```bash Python
 # Sample app
 kernel invoke python-basic get-page-title --payload '{"url": "https://www.google.com"}'
 
+# CAPTCHA Solver
+kernel invoke python-captcha-solver test-captcha-solver
+
 # Browser Use
 kernel invoke python-bu bu-task --payload '{"task": "Compare the price of gpt-4o and DeepSeek-V3"}'
 
-# Computer Use
-kernel invoke python-cu cu-task --payload '{"query": "Search for the top 3 restaurants in NYC according to Pete Wells"}'
+# Anthropic Computer Use
+kernel invoke python-anthropic-cua cua-task --payload '{"query": "Return the first url of a search result for NYC restaurant reviews Pete Wells"}'
+
+# OpenAI Computer Use
+kernel invoke python-openai-cua cua-task --payload '{"task": "Go to https://news.ycombinator.com and get the top 5 articles"}'
+
+# OpenAGI Computer Use
+kernel invoke python-openagi-cua openagi-default-task --payload '{"instruction": "Navigate to https://agiopen.org and click the What is Computer Use? button", "record_replay": "True"}'
 ```
 
 </CodeGroup>
@@ -111,13 +132,14 @@ You can now update your browser automation with your own logic and deploy it aga
 
 These are the sample apps currently available when you run `kernel create`:
 
-| Template               | Description                                               | Framework                  | Params           |
-|------------------------|-----------------------------------------------------------|----------------------------|------------------|
-| **sample-app**         | Returns the page title of a specified URL                 | Playwright                 | `{ url }`        |
-| **browser-use**        | Completes a specified task                                | Browser Use                | `{ task }`       |
-| **stagehand**          | Returns the first result of a specified Google search     | Stagehand                  | `{ query }`      |
-| **advanced-sample**    | Implements sample apps using advanced Kernel configs      | Playwright                 | n/a              |
-| **computer-use**       | Implements an Anthropic Computer Use prompt loop          | Anthropic Computer Use API | `{ query }`      |
-| **cua**                | Implements an OpenAI CUA prompt loop                      | OpenAI CUA API             | `{ task }`       |
-| **gemini-cua**         | Implements a Gemini Computer Use prompt loop              | Gemini Computer Use API    | `{ task }`       |
-| **magnitude**          | Implements the Magnitude.run SDK                          | Magnitude.run             | n/a              |
+| Template                      | Description                                               | Framework                  |
+|-------------------------------|-----------------------------------------------------------|----------------------------|
+| **sample-app**                | Implements a basic Kernel app                             | Playwright                 |
+| **captcha-solver**            | Demo of Kernel's auto-CAPTCHA solving capability          | Playwright                 |
+| **browser-use**               | Implements Browser Use SDK                                | Browser Use                |
+| **stagehand**                 | Implements the Stagehand v3 SDK                           | Stagehand                  |
+| **anthropic-computer-use**    | Implements an Anthropic computer use agent                | Anthropic Computer Use API |
+| **openai-computer-use**       | Implements an OpenAI computer use agent                   | OpenAI Computer Use API    |
+| **gemini-computer-use**       | Implements a Gemini computer use agent                    | Gemini Computer Use API    |
+| **openagi-computer-use**      | Implements an OpenAGI computer use agent                  | OpenAGI Computer Use API   |
+| **magnitude**                 | Implements the Magnitude.run SDK                          | Magnitude.run              |

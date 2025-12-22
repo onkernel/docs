@@ -52,6 +52,10 @@ API key authentication is useful for:
 
 ## Connect in your client
 
+<Tip>
+**Quick setup**: Use the Kernel CLI to automatically configure MCP for your tool: `kernel mcp install --target <target>`. See the [CLI MCP documentation](/reference/cli/mcp) for details.
+</Tip>
+
 ### Claude
 
 <Info>Our remote MCP server is not compatible with the method Free users of Claude use to add MCP servers.</Info>
@@ -67,6 +71,14 @@ API key authentication is useful for:
 
 #### Claude Code CLI
 
+**Using Kernel CLI (recommended):**
+```bash
+kernel mcp install --target claude-code
+# Then in the REPL run once to authenticate:
+/mcp
+```
+
+**Manual setup:**
 ```bash
 claude mcp add --transport http kernel https://mcp.onkernel.com/mcp
 # Then in the REPL run once to authenticate:
@@ -75,6 +87,12 @@ claude mcp add --transport http kernel https://mcp.onkernel.com/mcp
 
 ### Cursor
 
+**Using Kernel CLI (recommended):**
+```bash
+kernel mcp install --target cursor
+```
+
+**One-click install:**
 Click [here](https://cursor.com/en/install-mcp?name=Kernel&config=eyJ1cmwiOiAiaHR0cHM6Ly9tY3Aub25rZXJuZWwuY29tL21jcCJ9) to install Kernel on Cursor.
 
 #### Manual setup
@@ -95,8 +113,41 @@ Click [here](https://cursor.com/en/install-mcp?name=Kernel&config=eyJ1cmwiOiAiaH
 
 4. Save. The server will appear in Tools.
 
+### OpenCode
+
+Add the following to your `~/.config/opencode/opencode.jsonc`:
+
+```jsonc
+{
+  "mcp": {
+    "kernel": {
+      "type": "remote",
+      "url": "https://mcp.onkernel.com/mcp"
+    }
+  }
+}
+```
+
+Then authenticate using the OpenCode CLI:
+
+```bash
+# Authenticate with Kernel
+opencode mcp auth kernel
+
+# If you need to re-authenticate, first logout then auth again
+opencode mcp logout kernel
+opencode mcp auth kernel
+```
+
 ### Goose
 
+**Using Kernel CLI (recommended):**
+```bash
+kernel mcp install --target goose
+```
+The command will display the YAML configuration to add to your Goose config file.
+
+**One-click install:**
 Click [here](goose://extension?cmd=npx&arg=-y&arg=mcp-remote&arg=https%3A%2F%2Fmcp.onkernel.com%2Fmcp&timeout=300&id=kernel&name=Kernel&description=Access%20Kernel%27s%20cloud-based%20browsers%20via%20MCP) to install Kernel on Goose in one click.
 
 #### Goose Desktop
@@ -127,6 +178,14 @@ Click [here](goose://extension?cmd=npx&arg=-y&arg=mcp-remote&arg=https%3A%2F%2Fm
 
 ### Visual Studio Code
 
+**Using Kernel CLI (recommended):**
+```bash
+kernel mcp install --target vscode
+```
+
+**Manual setup:**
+
+Add to your VS Code settings.json:
 ```json
 {
   "mcpServers": {
@@ -138,12 +197,20 @@ Click [here](goose://extension?cmd=npx&arg=-y&arg=mcp-remote&arg=https%3A%2F%2Fm
 }
 ```
 
+Or use the UI:
 1. Press **⌘/Ctrl Shift P** → search **MCP: Add Server**.
 2. Select **HTTP (HTTP or Server-Sent Events)**.
 3. Enter: `https://mcp.onkernel.com/mcp`
 4. Name the server **Kernel** → Enter.
 
 ### Windsurf
+
+**Using Kernel CLI (recommended):**
+```bash
+kernel mcp install --target windsurf
+```
+
+**Manual setup:**
 
 1. Press **⌘/Ctrl ,** to open settings.
 2. Navigate **Cascade → MCP servers → View raw config**.
@@ -163,6 +230,13 @@ Click [here](goose://extension?cmd=npx&arg=-y&arg=mcp-remote&arg=https%3A%2F%2Fm
 4. On **Manage MCPs**, click **Refresh** to load Kernel MCP.
 
 ### Zed
+
+**Using Kernel CLI (recommended):**
+```bash
+kernel mcp install --target zed
+```
+
+**Manual setup:**
 
 1. Press **⌘/Ctrl ,** to open settings.
 2. Paste:
@@ -249,6 +323,7 @@ Configure these values wherever the tool expects MCP server settings.
 ## Prompts
 
 - `kernel-concepts` - Get explanations of Kernel's core concepts (browsers, apps, overview)
+- `debug-browser-session` - Get a comprehensive debugging guide for troubleshooting browser sessions (VM issues, network problems, Chrome errors)
 
 ## Troubleshooting
 
@@ -286,4 +361,15 @@ Assistant: I'll create a profile and guide you through the setup process.
 Human: I'm done setting up my accounts
 Assistant: Perfect! I'll close the browser session and save your profile.
 [Uses delete_browser tool to save profile]
+```
+
+### Debug a browser session
+
+<Note>Attach the `debug-browser-session` prompt to your conversation first, then ask for help debugging.</Note>
+
+```
+Human: [Attaches debug-browser-session prompt with session_id and issue_description]
+       Help me debug this browser session.
+Assistant: [Follows the debugging guide from the prompt: uses Kernel CLI to check session status, 
+            read VM logs, test network connectivity, and diagnose issues]
 ```
