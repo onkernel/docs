@@ -14,29 +14,19 @@ Auth Agents with `AUTHENTICATED` status are automatically checked hourly to veri
 3. Determines if the user is still logged in
 4. Updates the Auth Agent status if the session has expired
 
-```
-┌─────────────────────┐
-│   Auth Agent        │
-│   status: AUTH      │
-└─────────┬───────────┘
-          │ hourly check
-          ▼
-┌─────────────────────┐
-│   Check Session     │
-│   - Load profile    │
-│   - Navigate to site│
-│   - Detect login    │
-└─────────┬───────────┘
-          │
-    ┌─────┴─────┐
-    ▼           ▼
- Still      Session
- logged     expired
- in
-    │           │
-    ▼           ▼
- No change   Update status
-             → NEEDS_AUTH
+```mermaid
+flowchart TD
+    A[Auth Agent<br/>status: AUTHENTICATED] --> B[Hourly Check]
+    B --> C[Check Session]
+    C --> D{Still logged in?}
+    D -->|Yes| E[No change]
+    D -->|No| F[Update status<br/>→ NEEDS_AUTH]
+    
+    subgraph Check Session
+        C1[Load profile]
+        C2[Navigate to site]
+        C3[Detect login state]
+    end
 ```
 
 ## Detecting Expired Sessions
@@ -95,6 +85,10 @@ async def check_and_refresh_auth(agent_id: str):
 ## Triggering Re-authentication
 
 When a session expires, you have two options:
+
+<Tip>
+Check `agent.can_reauth` to determine which option is available. If `true`, automated re-auth is possible. If `false`, you'll need to redirect the user to complete login manually.
+</Tip>
 
 ### Option 1: Automated Re-auth (Requires Credentials)
 
@@ -374,21 +368,29 @@ try {
 
 ## Best Practices
 
-1. **Check before automation** - Always verify auth status before starting long-running automations
-
-2. **Enable auto-reauth** - Store credentials to enable automated re-authentication
-
-3. **Handle failures gracefully** - Have a fallback to manual login when auto-reauth fails
-
-4. **Monitor auth status** - Periodically check auth agents to proactively handle expirations
-
-5. **Log auth events** - Track when re-auth happens for debugging and auditing
+<AccordionGroup>
+  <Accordion title="Check before automation">
+    Always verify auth status before starting long-running automations. This prevents failures mid-workflow and allows you to handle re-authentication before it becomes blocking.
+  </Accordion>
+  <Accordion title="Enable auto-reauth">
+    Store credentials to enable automated re-authentication. When sessions expire, the system can automatically log back in without user intervention.
+  </Accordion>
+  <Accordion title="Handle failures gracefully">
+    Have a fallback to manual login when auto-reauth fails. Some sites may require CAPTCHA or additional verification that can't be automated.
+  </Accordion>
+  <Accordion title="Monitor auth status">
+    Periodically check auth agents to proactively handle expirations. Don't wait for automations to fail—check status and refresh sessions ahead of time.
+  </Accordion>
+  <Accordion title="Log auth events">
+    Track when re-auth happens for debugging and auditing. This helps identify patterns like which sites expire frequently or which users need attention.
+  </Accordion>
+</AccordionGroup>
 
 ## Session Check Frequency
 
-- Auth checks run approximately **every hour** for authenticated agents
-- Checks are passive and don't modify the saved profile
-- The `last_auth_check_at` field shows when the last check occurred
+<Info>
+Auth checks run approximately **every hour** for authenticated agents. Checks are passive and don't modify the saved profile. Use the `last_auth_check_at` field to see when the last check occurred.
+</Info>
 
 ## Next Steps
 
