@@ -22,7 +22,7 @@ Use the Programmatic flow when:
   <Step title="Create Auth Agent and Invocation">
     ```typescript
     const agent = await kernel.agents.auth.create({
-      target_domain: 'example.com',
+      domain: 'example.com',
       profile_name: 'my-profile',
     });
     const invocation = await kernel.agents.auth.invocations.create({
@@ -70,7 +70,7 @@ const kernel = new Kernel();
 
 // Step 1: Create Auth Agent and Invocation
 const agent = await kernel.agents.auth.create({
-  target_domain: 'example.com',
+  domain: 'example.com',
   profile_name: 'my-profile',
 });
 
@@ -164,7 +164,7 @@ kernel = Kernel()
 
 # Step 1: Create Auth Agent and Invocation
 agent = await kernel.agents.auth.create(
-    target_domain="example.com",
+    domain="example.com",
     profile_name="my-profile",
 )
 
@@ -340,7 +340,7 @@ const submitResponse = await kernel.agents.auth.invocations.submit(
   "success": true,
   "logged_in": true,
   "app_name": "My App",
-  "target_domain": "example.com"
+  "domain": "example.com"
 }
 ```
 

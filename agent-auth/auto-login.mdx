@@ -31,7 +31,7 @@ If you need users to enter their own credentials, use the [Hosted UI](/agent-aut
   <Step title="Create Auth Agent with Credential Linked">
     ```typescript
     const agent = await kernel.agents.auth.create({
-      target_domain: 'netflix.com',
+      domain: 'netflix.com',
       profile_name: 'netflix-user-123',
       credential_name: credential.name,
     });
@@ -81,7 +81,7 @@ const credential = await kernel.credentials.create({
 
 // Step 2: Create auth agent with credential linked
 const agent = await kernel.agents.auth.create({
-  target_domain: 'netflix.com',
+  domain: 'netflix.com',
   profile_name: 'netflix-user-123',
   credential_name: credential.name,
   login_url: 'https://netflix.com/login', // Optional: speeds up discovery
@@ -134,7 +134,7 @@ credential = await kernel.credentials.create(
 
 # Step 2: Create auth agent with credential linked
 agent = await kernel.agents.auth.create(
-    target_domain="netflix.com",
+    domain="netflix.com",
     profile_name="netflix-user-123",
     credential_name=credential.name,
     login_url="https://netflix.com/login",  # Optional: speeds up discovery
@@ -340,7 +340,7 @@ If the target site requires a specific IP or region, configure a proxy:
 <CodeGroup>
 ```typescript TypeScript
 const agent = await kernel.agents.auth.create({
-  target_domain: 'region-locked-site.com',
+  domain: 'region-locked-site.com',
   profile_name: 'my-profile',
   credential_name: 'my-credential',
   proxy: { proxy_id: 'proxy_abc123' },
@@ -356,7 +356,7 @@ const browser = await kernel.browsers.create({
 
 ```python Python
 agent = await kernel.agents.auth.create(
-    target_domain="region-locked-site.com",
+    domain="region-locked-site.com",
     profile_name="my-profile",
     credential_name="my-credential",
     proxy={"proxy_id": "proxy_abc123"},

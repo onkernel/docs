@@ -19,7 +19,7 @@ Use the Hosted UI when:
   <Step title="Create Auth Agent and Invocation">
     ```typescript
     const agent = await kernel.agents.auth.create({
-      target_domain: 'example.com',
+      domain: 'example.com',
       profile_name: 'my-profile',
     });
     const invocation = await kernel.agents.auth.invocations.create({
@@ -60,7 +60,7 @@ const kernel = new Kernel();
 
 // Step 1: Create or get existing Auth Agent
 const agent = await kernel.agents.auth.create({
-  target_domain: 'doordash.com',
+  domain: 'doordash.com',
   profile_name: 'doordash-user-123',
   login_url: 'https://identity.doordash.com/auth', // Optional: speeds up discovery
 });
@@ -131,7 +131,7 @@ kernel = Kernel()
 
 # Step 1: Create or get existing Auth Agent
 agent = await kernel.agents.auth.create(
-    target_domain="doordash.com",
+    domain="doordash.com",
     profile_name="doordash-user-123",
     login_url="https://identity.doordash.com/auth",  # Optional
 )
@@ -192,7 +192,7 @@ An Auth Agent represents a (domain, profile) pair. Creating one is idempotent—
 
 ```typescript
 const agent = await kernel.agents.auth.create({
-  target_domain: 'example.com',      // Required: domain to authenticate
+  domain: 'example.com',      // Required: domain to authenticate
   profile_name: 'my-profile',        // Required: profile to store session
   login_url: 'https://example.com/login', // Optional: speeds up discovery
 });
@@ -201,7 +201,7 @@ const agent = await kernel.agents.auth.create({
 **Parameters:**
 | Parameter | Required | Description |
 |-----------|----------|-------------|
-| `target_domain` | Yes | The domain to authenticate (e.g., `netflix.com`) |
+| `domain` | Yes | The domain to authenticate (e.g., `netflix.com`) |
 | `profile_name` | Yes | Name of the profile to store the authenticated session |
 | `login_url` | No | Direct URL to the login page. Providing this speeds up discovery. |
 | `proxy` | No | Proxy configuration (see [Proxies](/proxies/overview)) |
@@ -303,7 +303,7 @@ If the target site requires a specific IP or region, configure a proxy:
 ```typescript
 // Create auth agent with proxy
 const agent = await kernel.agents.auth.create({
-  target_domain: 'region-locked-site.com',
+  domain: 'region-locked-site.com',
   profile_name: 'my-profile',
   proxy: { proxy_id: 'proxy_abc123' },
 });
@@ -357,7 +357,7 @@ Handle common error scenarios:
 ```typescript
 try {
   const agent = await kernel.agents.auth.create({
-    target_domain: 'example.com',
+    domain: 'example.com',
     profile_name: 'my-profile',
   });
 
