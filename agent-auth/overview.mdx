@@ -1,20 +1,20 @@
 ---
 title: "Overview"
-description: "Secure authentication for AI agents - log users into any website and save authenticated browser sessions"
+description: "Secure authentication system - log users into any website and save authenticated browser sessions"
 ---
 
-Agent Auth is an AI-powered authentication system that helps you log users into any website and save their authenticated browser session (profile) for future automations. It uses web agents to intelligently discover login forms, dynamically generate credential inputs, and handle multi-step authentication flows like 2FA/OTP.
+Agent Auth is an authentication system that helps you log users into any website and save their authenticated browser session (profile) for future automations. It automatically discovers login forms, maps credential inputs, and handles multi-step authentication flows like 2FA/OTP.
 
 ## Why Agent Auth?
 
-AI agents can navigate the open web with ease, but the most valuable workflows live behind logins. To perform tasks on behalf of real users, agents need a secure way to access authenticated sessions.
+The most valuable workflows live behind logins. To perform tasks on behalf of real users, your applications need a secure way to access authenticated sessions.
 
 Agent Auth solves this by providing:
 
-- **Unified access to logged-in websites** - One API to log agents into any site with user consent
+- **Unified access to logged-in websites** - One API to log into any site with user consent
 - **Automatic form discovery** - Detects login form fields on any website
 - **Multi-step auth handling** - Handles 2FA, OTP, magic links, and CAPTCHAs
-- **Credential security** - Credentials are encrypted and submitted programmatically—never stored in plaintext or shared with LLMs
+- **Credential security** - Credentials are encrypted at rest and submitted programmatically—never stored in plaintext
 - **Session persistence** - Saves authenticated browser profiles for reuse
 - **Automatic session monitoring** - Hourly checks detect when re-authentication is needed
 
@@ -81,7 +81,7 @@ A **Profile** stores browser session state (cookies, localStorage) that persists
 
 ### Credentials
 
-**Credentials** are securely stored login credentials that enable automated re-authentication when sessions expire. Values are encrypted at rest and never exposed to LLMs or API responses. See [Credentials](/agent-auth/credentials) for more.
+**Credentials** are securely stored login credentials that enable automated re-authentication when sessions expire. Values are encrypted at rest and never exposed in API responses. See [Credentials](/agent-auth/credentials) for more.
 
 ## Choose Your Integration
 
@@ -110,7 +110,7 @@ Agent Auth is designed with security as a first principle:
 | Security Feature | Description |
 |-----------------|-------------|
 | **Credentials never stored in plaintext** | All credential values are encrypted at rest using per-organization encryption keys |
-| **Credentials never shared with LLMs** | Credentials are submitted programmatically to target sites, never passed through AI models |
+| **Credentials never exposed** | Credentials are submitted programmatically to target sites, never returned in API responses |
 | **Profile encryption** | Browser profiles are encrypted end-to-end |
 | **Isolated execution** | Each auth flow runs in an isolated browser environment |
 
