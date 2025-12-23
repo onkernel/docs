@@ -3,85 +3,61 @@ title: "Overview"
 description: "Secure authentication system - log users into any website and save authenticated browser sessions"
 ---
 
-Agent Auth is an authentication system that helps you log users into any website and save their authenticated browser session (profile) for future automations. It automatically discovers login forms, maps credential inputs, and handles multi-step authentication flows like 2FA/OTP.
-
-## Why Agent Auth?
-
-The most valuable workflows live behind logins. To perform tasks on behalf of real users, your applications need a secure way to access authenticated sessions.
-
-Agent Auth solves this by providing:
-
-- **Unified access to logged-in websites** - One API to log into any site with user consent
-- **Automatic form discovery** - Detects login form fields on any website
-- **Multi-step auth handling** - Handles 2FA, OTP, magic links, and CAPTCHAs
-- **Credential security** - Credentials are encrypted at rest and submitted programmatically—never stored in plaintext
-- **Session persistence** - Saves authenticated browser profiles for reuse
-- **Automatic session monitoring** - Hourly checks detect when re-authentication is needed
+Agent Auth logs users into any website and saves their authenticated browser session for future automations—handling form discovery, 2FA/OTP, and session persistence automatically.
 
 ## How It Works
 
 <Steps>
   <Step title="Create an Auth Agent">
+    An **Auth Agent** manages authentication for a specific domain + profile combination. It tracks the target site, login URL, and auth status. Agents are idempotent—creating one for an existing domain/profile returns the existing agent.
+
     ```typescript
     const agent = await kernel.agents.auth.create({
-      domain: 'example.com',
-      profile_name: 'my-profile',
+      domain: 'netflix.com',
+      profile_name: 'netflix-user-123',
     });
     ```
   </Step>
-  <Step title="Start an Authentication Flow">
+  <Step title="Start an Invocation">
+    An **Invocation** is a single authentication attempt. Each invocation returns a `hosted_url` where users complete login, or you can use the [programmatic API](/agent-auth/programmatic) to build your own UI.
+
     ```typescript
     const invocation = await kernel.agents.auth.invocations.create({
       auth_agent_id: agent.id,
     });
-    // Returns hosted_url for user login, or use programmatic API
+    
+    // If already logged in, skip the flow
+    if (invocation.status === 'ALREADY_AUTHENTICATED') {
+      console.log('Session still valid!');
+    } else {
+      // Redirect user to complete login
+      console.log('Login URL:', invocation.hosted_url);
+    }
     ```
+
+    Invocation statuses: `IN_PROGRESS` → `SUCCESS` | `EXPIRED` | `CANCELED`
   </Step>
   <Step title="User Completes Login">
-    Redirect the user to `invocation.hosted_url` where they enter credentials and handle 2FA. The profile is saved on success.
+    {/* TODO: Add image showing the hosted UI login flow */}
+    
+    The user enters credentials, handles 2FA/OTP if needed, and the authenticated session is saved to a **Profile**—encrypted browser state (cookies, localStorage) that persists across sessions.
+
+    For fully automated flows, link [Credentials](/agent-auth/credentials) to enable re-authentication without user intervention.
   </Step>
   <Step title="Use the Authenticated Profile">
+    Launch a browser with the saved profile—it's already logged in. Profiles work with any Kernel browser operation.
+
     ```typescript
     const browser = await kernel.browsers.create({
-      profile: { name: 'my-profile' },
+      profile: { name: 'netflix-user-123' },
       stealth: true,
     });
-    // Browser is already logged in!
+    // Browser is logged into Netflix!
     ```
+
+    See [Profiles](/browsers/profiles) to learn more about session persistence.
   </Step>
 </Steps>
-
-## Key Concepts
-
-### Auth Agent
-
-An **Auth Agent** is a persistent entity that manages authentication for a specific domain + profile combination. It stores:
-
-- The target domain (e.g., `netflix.com`)
-- The linked browser profile
-- The login URL (learned during discovery)
-- Current authentication status (`AUTHENTICATED` or `NEEDS_AUTH`)
-- Optional linked credentials for automated re-auth
-
-Auth Agents are **idempotent**—if an agent already exists for the domain and profile, `kernel.agents.auth.create()` returns the existing one.
-
-### Invocation
-
-An **Invocation** is a single authentication attempt. You start one by calling `kernel.agents.auth.invocations.create()`. Over time, an Auth Agent accumulates multiple invocations as sessions need to be established or refreshed.
-
-**Invocation statuses:**
-- `IN_PROGRESS` - User is completing the auth flow
-- `SUCCESS` - Authentication completed, profile saved
-- `EXPIRED` - Invocation timed out (5 minutes)
-- `CANCELED` - Invocation was explicitly canceled
-
-### Profile
-
-A **Profile** stores browser session state (cookies, localStorage) that persists across browser sessions. Once authenticated via Agent Auth, use the profile with `kernel.browsers.create()` to get an already-logged-in browser. See [Profiles](/browsers/profiles) for more.
-
-### Credentials
-
-**Credentials** are securely stored login credentials that enable automated re-authentication when sessions expire. Values are encrypted at rest and never exposed in API responses. See [Credentials](/agent-auth/credentials) for more.
 
 ## Choose Your Integration
 
@@ -103,99 +79,20 @@ A **Profile** stores browser session state (cookies, localStorage) that persists
   </Card>
 </CardGroup>
 
+## Why Agent Auth?
+
+The most valuable workflows live behind logins. Agent Auth provides:
+
+- **One API for any login flow** - Automatic form discovery works on any website
+- **2FA/OTP handling** - Supports TOTP, magic links, SMS codes, and CAPTCHAs
+- **Session monitoring** - Hourly checks detect when re-authentication is needed
+- **Security-first design** - Credentials encrypted at rest, never exposed in API responses
+
 ## Security
 
-Agent Auth is designed with security as a first principle:
-
-| Security Feature | Description |
-|-----------------|-------------|
-| **Credentials never stored in plaintext** | All credential values are encrypted at rest using per-organization encryption keys |
-| **Credentials never exposed** | Credentials are submitted programmatically to target sites, never returned in API responses |
-| **Profile encryption** | Browser profiles are encrypted end-to-end |
+| Feature | Description |
+|---------|-------------|
+| **Encrypted credentials** | Values encrypted at rest with per-organization keys, never stored in plaintext |
+| **No credential exposure** | Credentials submitted programmatically to target sites, never returned in responses |
+| **Encrypted profiles** | Browser session state encrypted end-to-end |
 | **Isolated execution** | Each auth flow runs in an isolated browser environment |
-
-## Quick Example
-
-Here's a complete example using the Hosted UI flow:
-
-<CodeGroup>
-```typescript TypeScript
-import Kernel from '@onkernel/sdk';
-
-const kernel = new Kernel();
-
-// 1. Create or get existing Auth Agent
-const agent = await kernel.agents.auth.create({
-  domain: 'netflix.com',
-  profile_name: 'netflix-user-123',
-});
-
-// 2. Start the auth flow
-const invocation = await kernel.agents.auth.invocations.create({
-  auth_agent_id: agent.id,
-});
-
-// 3. Check if already logged in
-if (invocation.status === 'ALREADY_AUTHENTICATED') {
-  console.log('Already authenticated!');
-} else {
-  // Redirect user to hosted UI
-  console.log('Redirect to:', invocation.hosted_url);
-}
-
-// 4. Poll for completion
-let status = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id);
-while (status.status === 'IN_PROGRESS') {
-  await new Promise(r => setTimeout(r, 2000));
-  status = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id);
-}
-
-if (status.status === 'SUCCESS') {
-  // 5. Use the authenticated profile
-  const browser = await kernel.browsers.create({
-    profile: { name: 'netflix-user-123' },
-    stealth: true,
-  });
-  console.log('Browser ready:', browser.cdp_ws_url);
-}
-```
-
-```python Python
-from kernel import Kernel
-import asyncio
-
-kernel = Kernel()
-
-# 1. Create or get existing Auth Agent
-agent = await kernel.agents.auth.create(
-    domain="netflix.com",
-    profile_name="netflix-user-123",
-)
-
-# 2. Start the auth flow
-invocation = await kernel.agents.auth.invocations.create(
-    auth_agent_id=agent.id,
-)
-
-# 3. Check if already logged in
-if invocation.status == "ALREADY_AUTHENTICATED":
-    print("Already authenticated!")
-else:
-    # Redirect user to hosted UI
-    print(f"Redirect to: {invocation.hosted_url}")
-
-# 4. Poll for completion
-status = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id)
-while status.status == "IN_PROGRESS":
-    await asyncio.sleep(2)
-    status = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id)
-
-if status.status == "SUCCESS":
-    # 5. Use the authenticated profile
-    browser = await kernel.browsers.create(
-        profile={"name": "netflix-user-123"},
-        stealth=True,
-    )
-    print(f"Browser ready: {browser.cdp_ws_url}")
-```
-</CodeGroup>
