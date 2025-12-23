@@ -94,7 +94,7 @@ kernel invoke ts-anthropic-cua cua-task --payload '{"query": "Return the first u
 kernel invoke ts-openai-cua cua-task --payload '{"task": "Go to https://news.ycombinator.com and get the top 5 articles"}'
 
 # Gemini Computer Use
-kernel invoke ts-gemini-cua gemini-cua-task
+kernel invoke ts-gemini-cua gemini-cua-task --payload '{"startingUrl": "https://www.magnitasks.com/", "instruction": "Click the Tasks option in the left-side bar, and move the 5 items in the To Do and In Progress items to the Done section of the Kanban board"}'
 ```
 
 ```bash Python
