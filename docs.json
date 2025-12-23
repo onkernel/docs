@@ -73,17 +73,6 @@
               "browsers/profiles",
               "browsers/termination",
               {
-                "group": "Agent Auth",
-                "pages": [
-                  "agent-auth/overview",
-                  "agent-auth/auto-login",
-                  "agent-auth/hosted-ui",
-                  "agent-auth/programmatic",
-                  "agent-auth/credentials",
-                  "agent-auth/session-monitoring"
-                ]
-              },
-              {
                 "group": "Bot Anti-Detection",
                 "pages": [
                   "browsers/bot-detection/overview",
@@ -107,6 +96,22 @@
               "browsers/computer-controls",
               "browsers/playwright-execution",
               "browsers/faq"
+            ]
+          },
+          {
+            "group": "Agents",
+            "pages": [
+              {
+                "group": "Auth",
+                "pages": [
+                  "agents/auth/overview",
+                  "agents/auth/auto-login",
+                  "agents/auth/hosted-ui",
+                  "agents/auth/programmatic",
+                  "agents/auth/credentials",
+                  "agents/auth/session-monitoring"
+                ]
+              }
             ]
           },
           {
