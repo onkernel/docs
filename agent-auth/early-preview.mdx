@@ -1,0 +1,62 @@
+---
+title: "Early Preview"
+description: "Agent Auth early preview documentation"
+---
+
+<Info>
+Agent Auth is now documented in the main docs. See the pages below for current documentation.
+</Info>
+
+<CardGroup cols={2}>
+  <Card title="Overview" icon="book" href="/agent-auth/overview">
+    Introduction to Agent Auth and key concepts
+  </Card>
+  <Card title="Auto-Login" icon="bolt" href="/agent-auth/auto-login">
+    Fully automated login with pre-linked credentials
+  </Card>
+  <Card title="Hosted UI" icon="browser" href="/agent-auth/hosted-ui">
+    Redirect users to complete login themselves
+  </Card>
+  <Card title="Programmatic" icon="code" href="/agent-auth/programmatic">
+    Build custom auth flows with full control
+  </Card>
+  <Card title="Credentials" icon="key" href="/agent-auth/credentials">
+    Store credentials for automated re-auth
+  </Card>
+  <Card title="Session Monitoring" icon="clock" href="/agent-auth/session-monitoring">
+    Keep sessions alive automatically
+  </Card>
+</CardGroup>
+
+## Early Preview SDK Installation
+
+For early preview testers, install the preview SDK:
+
+**TypeScript/Node.js:**
+
+```json
+{
+  "dependencies": {
+    "@onkernel/sdk": "https://pkg.stainless.com/s/kernel-typescript/5ace6e2da99e73ad2d863be786213bb9fd28ce53/dist.tar.gz"
+  }
+}
+```
+
+**Python (requirements.txt):**
+
+```
+kernel @ https://pkg.stainless.com/s/kernel-python/e7cab450cadd635e0d94db9618e4d729f5d97bcf/kernel-0.23.0-py3-none-any.whl
+```
+
+Or in pyproject.toml:
+
+```toml
+[project]
+dependencies = [
+    "kernel @ https://pkg.stainless.com/s/kernel-python/e7cab450cadd635e0d94db9618e4d729f5d97bcf/kernel-0.23.0-py3-none-any.whl"
+]
+```
+
+## Support
+
+Questions or issues? Reach out to us on Slack!
