@@ -30,7 +30,7 @@ An **Invocation** is a single authentication attempt. You start one by calling `
 
 A **Profile** stores browser session state (cookies, localStorage) that persists across browser sessions. Once authenticated via Agent Auth, use the profile with `kernel.browsers.create()` to get an already-logged-in browser.
 
-See [Profiles](/browsers/profiles) for more details on working with profiles.
+See [Profiles](/browsers/profiles) for more details on working with browser profiles.
 
 ### Credentials
 
@@ -39,7 +39,7 @@ See [Profiles](/browsers/profiles) for more details on working with profiles.
 See [Credentials](/agent-auth/credentials) for details on storing and using credentials.
 
 
-## Using Proxies
+## Using Proxies with Agent Auth
 
 If the target site requires a specific IP or region, configure the same proxy when initializing the Auth Agent and subsequent browsers:
 
@@ -63,61 +63,57 @@ const browser = await kernel.browsers.create({
 Use the same proxy configuration for both the Auth Agent and subsequent browser sessions. Different IPs may trigger security measures on the target site.
 </Warning>
 
-## Saving Credentials for Re-auth
+## Automatic Re-Auth
 
-You can save credentials during the hosted flow to enable automatic re-authentication when sessions expire:
+Auth Agents with `AUTHENTICATED` status are automatically checked hourly to verify each profile session is still valid. The check:
 
-```typescript
-const invocation = await kernel.agents.auth.invocations.create({
-  auth_agent_id: agent.id,
-  save_credential_as: 'my-saved-creds', // Save credentials for future re-auth
-});
-```
+1. Opens a Kernel browser with the authenticated profile
+2. Navigates to the auth check URL (usually the main site)
+3. Determines if the user is still logged in
+4. Updates the Auth Agent status if the session has expired
 
-When credentials are saved, the Auth Agent can automatically re-authenticate without user interaction. See [Session Monitoring](/agent-auth/session-monitoring) for details.
+If you've set `save_credential_as` when you created the Agent Auth invocation, you don't need to do anything for your browsers to stay logged in. We'll automatically refresh the associated profiles whenever we detect that the authentication stored has expired.
 
-## Handling Callback URLs
+If you chose not to opt into `save_credentials_as`, you'll need to implement polling logic to detect when your profile has expired. Then, re-auth:
 
-For web applications, you may want to redirect users back to your app after authentication completes. Use the invocation's `hosted_url` as a starting point and implement webhook or polling patterns:
+<CodeGroup>
+```typescript TypeScript
+import Kernel from '@onkernel/sdk';
 
-```typescript
-// Backend: Start auth flow
-const invocation = await kernel.agents.auth.invocations.create({
-  auth_agent_id: agent.id,
-});
+const kernel = new Kernel();
 
-// Frontend: Redirect to hosted UI
-window.location.href = invocation.hosted_url;
+async function checkAndRefreshAuth(agentId: string) {
+  const agent = await kernel.agents.auth.retrieve(agentId);
 
-// Backend: Poll for completion and notify frontend via WebSocket or SSE
-// OR: Use a webhook URL (coming soon)
-```
+  console.log('Status:', agent.status);
+  console.log('Last check:', agent.last_auth_check_at);
 
-## Error Handling
-
-Handle common error scenarios:
-
-```typescript
-try {
-  const agent = await kernel.agents.auth.create({
-    target_domain: 'example.com',
-    profile_name: 'my-profile',
-  });
-
-  const invocation = await kernel.agents.auth.invocations.create({
-    auth_agent_id: agent.id,
-  });
-
-  // ... polling logic ...
-} catch (error) {
-  if (error.status === 401) {
-    console.error('Invalid API key');
-  } else if (error.status === 404) {
-    console.error('Auth agent not found');
-  } else if (error.status === 409) {
-    console.error('Conflict - invocation already in progress');
-  } else {
-    console.error('Unexpected error:', error.message);
+  if (agent.status === 'NEEDS_AUTH') {
+    console.log('Session expired - re-authentication needed');
+    return await triggerReauth(agent);
   }
+
+  console.log('Session is valid');
+  return agent;
 }
 ```
+
+```python Python
+from kernel import Kernel
+
+kernel = Kernel()
+
+async def check_and_refresh_auth(agent_id: str):
+    agent = await kernel.agents.auth.retrieve(agent_id)
+
+    print(f"Status: {agent.status}")
+    print(f"Last check: {agent.last_auth_check_at}")
+
+    if agent.status == "NEEDS_AUTH":
+        print("Session expired - re-authentication needed")
+        return await trigger_reauth(agent)
+
+    print("Session is valid")
+    return agent
+```
+</CodeGroup>

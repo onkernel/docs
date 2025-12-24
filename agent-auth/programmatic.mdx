@@ -55,6 +55,15 @@ const invocation = await kernel.agents.auth.invocations.create({
 });
 ```
 
+Optionally, enable automatic re-authentication when sessions expire. When credentials are saved, the Auth Agent automatically re-authenticates without user interaction (see [FAQ](/agent-auth/faq)). 
+
+```typescript
+const invocation = await kernel.agents.auth.invocations.create({
+  auth_agent_id: agent.id,
+  save_credential_as: 'my-saved-creds', // Save credentials for automatic re-auth
+});
+```
+
 <Info>
 If the response returns `logged_in` as `true`, the profile is already authenticated. Skip the redirect and go straight to using the profile.
 </Info>
@@ -160,13 +169,6 @@ while (submitResponse.needs_additional_auth && submitResponse.additional_fields)
   );
 }
 ```
-
-## Security Considerations
-
-- The JWT is scoped to the specific invocation and cannot access other resources
-- Credentials submitted via `submit()` are sent directly to the target site
-- Credentials are never logged, stored in plaintext, or passed to LLMs
-- The browser session is isolated and destroyed after the invocation completes
 
 ## Complete Example
 
@@ -367,3 +369,10 @@ def map_credentials_to_fields(fields, credentials):
     return field_values
 ```
 </CodeGroup>
+
+## Notes
+
+- The JWT is scoped to the specific invocation and cannot access other resources
+- Credentials submitted via `submit()` are sent directly to the target site
+- Credentials are never logged, stored in plaintext, or passed to LLMs
+- The browser session is isolated and destroyed after the invocation completes

@@ -105,8 +105,6 @@
               "agent-auth/hosted-ui",
               "agent-auth/programmatic",
               "agent-auth/credentials",
-              "agent-auth/session-monitoring",
-              "agent-auth/early-preview",
               "agent-auth/faq"
             ]
           },

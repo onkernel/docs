@@ -35,6 +35,15 @@ const invocation = await kernel.agents.auth.invocations.create({
 });
 ```
 
+Optionally, enable automatic re-authentication when sessions expire. When credentials are saved, the Auth Agent automatically re-authenticates without user interaction (see [FAQ](/agent-auth/faq)). 
+
+```typescript
+const invocation = await kernel.agents.auth.invocations.create({
+  auth_agent_id: agent.id,
+  save_credential_as: 'my-saved-creds', // Save credentials for automatic re-auth
+});
+```
+
 <Info>
 If the response returns `logged_in` as `true`, the profile is already authenticated. Skip the redirect and go straight to using the profile.
 </Info>
@@ -86,7 +95,7 @@ Poll every 2 seconds with a maximum timeout of 5 minutes. The invocation expires
 
 ### 5. Use the Authenticated Profile
 
-Once authentication succeeds, create browsers with the profile to get an already-logged-in session:
+Once authentication succeeds, create browsers with the profile to get an already logged-in session:
 
 ```typescript
 const browser = await kernel.browsers.create({
@@ -106,6 +115,7 @@ await page.goto('https://example.com/dashboard');
 <Info>
 Use `stealth: true` when creating browsers for authenticated sessions. Agent Auth runs authentication with stealth mode enabled, and mismatched settings may cause issues with bot detection.
 </Info>
+
 
 ## Complete Example
 
@@ -240,3 +250,7 @@ print(f"Browser ready: {browser.cdp_ws_url}")
 await kernel.browsers.delete_by_id(browser.session_id)
 ```
 </CodeGroup>
+
+## Notes
+
+- For web applications, you may want to redirect users back to your app after authentication completes. Use the invocation's `hosted_url` as a starting point and implement polling patterns on your backend to check for when the Agent Auth completed.
