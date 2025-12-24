@@ -40,7 +40,7 @@ An Auth Agent represents a (domain, [profile](/browsers/profiles)) pair. Creatin
 ```typescript
 const agent = await kernel.agents.auth.create({
   target_domain: 'example.com',      // Required: domain to authenticate
-  profile_name: 'my-profile',        // Required: profile to store session
+  profile_name: 'my-profile',        // Required: name a profile to store the auth session
   login_url: 'https://example.com/login', // Optional: speeds up discovery
 });
 ```
@@ -55,12 +55,12 @@ const invocation = await kernel.agents.auth.invocations.create({
 });
 ```
 
-Optionally, enable automatic re-authentication when sessions expire. When credentials are saved, the Auth Agent automatically re-authenticates without user interaction (see [FAQ](/agent-auth/faq)). 
+Enable automatic re-authentication when sessions expire with the `save_credential_as` field. When set, the Auth Agent automatically re-authenticates without additional user interaction (see [FAQ](/agent-auth/faq)). 
 
 ```typescript
 const invocation = await kernel.agents.auth.invocations.create({
   auth_agent_id: agent.id,
-  save_credential_as: 'my-saved-creds', // Save credentials for automatic re-auth
+  save_credential_as: 'my-saved-creds', // Set identifier to enable automatic re-auth
 });
 ```
 
