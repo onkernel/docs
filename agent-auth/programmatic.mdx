@@ -1,22 +1,28 @@
 ---
 title: "Programmatic Flow"
-description: "Build custom authentication UIs with full control using discover and submit APIs"
+description: "Build custom authentication UIs with full control using polling and submit APIs"
 ---
 
-The Programmatic flow gives you complete control over the authentication process. Instead of redirecting users to the hosted UI, you build your own UI and use the discover/submit APIs to drive the authentication.
+The Programmatic flow gives you complete control over the authentication process. Instead of redirecting users to the hosted UI, you build your own UI and use polling + submit APIs to drive the authentication.
 
 ## When to Use Programmatic Flow
 
 Use the Programmatic flow when:
 - You need a custom authentication UI that matches your app's design
-- You need fine-grained control over the discover/submit flow
+- You need fine-grained control over each step of the flow
 - You want to build your own credential mapping logic
 
 <Tip>
-**Have credentials stored?** If you just want automated login with pre-linked credentials, [Auto-Login](/agent-auth/auto-login) is simpler—it handles discover/submit automatically. Use Programmatic when you need custom control over each step.
+**Have credentials stored?** If you just want automated login with pre-linked credentials, [Auto-Login](/agent-auth/auto-login) is simpler—it handles everything automatically. Use Programmatic when you need custom control over each step.
 </Tip>
 
 ## How It Works
+
+The programmatic flow uses a **polling-based state machine**. After creating an invocation, you poll for state changes and respond accordingly:
+
+```
+initialized → discovering → awaiting_input ⇄ submitting → completed
+```
 
 <Steps>
   <Step title="Create Auth Agent and Invocation">
@@ -30,35 +36,56 @@ Use the Programmatic flow when:
     });
     ```
   </Step>
-  <Step title="Discover Login Fields">
+  <Step title="Poll Until Fields Are Discovered">
     ```typescript
-    const discover = await kernel.agents.auth.invocations.discover(
-      invocation.invocation_id,
-      {}
-    );
-    // discover.fields contains the form fields
+    let state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id);
+    while (state.step === 'initialized' || state.step === 'discovering') {
+      await sleep(2000);
+      state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id);
+    }
+    // state.pending_fields contains the form fields
     ```
   </Step>
   <Step title="Submit Credentials">
     ```typescript
-    const submit = await kernel.agents.auth.invocations.submit(
+    // Submit is async - returns immediately
+    await kernel.agents.auth.invocations.submit(
       invocation.invocation_id,
       { field_values: { email: 'user@example.com', password: 'secret' } }
     );
     ```
   </Step>
-  <Step title="Handle Multi-Step Auth">
+  <Step title="Poll for Result">
     ```typescript
-    // If submit.needs_additional_auth, collect the new fields and submit again
-    if (submit.needs_additional_auth) {
-      await kernel.agents.auth.invocations.submit(
-        invocation.invocation_id,
-        { field_values: { code: '123456' } }
-      );
+    // Poll until step changes from 'submitting'
+    while (state.step === 'submitting' || state.step === 'awaiting_input') {
+      state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id);
+      
+      if (state.step === 'awaiting_input' && state.pending_fields?.length) {
+        // New fields needed (e.g., 2FA) - submit again
+      }
+      if (state.step === 'completed') {
+        // Success!
+      }
     }
     ```
   </Step>
 </Steps>
+
+## Invocation State Machine
+
+The `step` field tracks where you are in the authentication flow:
+
+| Step | Description | What to Do |
+|------|-------------|------------|
+| `initialized` | Invocation just created | Wait for discovery |
+| `discovering` | Navigating to login page, finding fields | Poll and wait |
+| `awaiting_input` | Fields discovered, waiting for credentials | Read `pending_fields`, call submit |
+| `submitting` | Processing submitted credentials | Poll and wait |
+| `completed` | Authentication finished | Check `status` for SUCCESS/FAILED |
+| `expired` | Invocation expired before completion | Create a new invocation |
+
+The `pending_fields` array shows which fields are currently needed. The `submitted_fields` array shows which fields have been successfully submitted.
 
 ## Complete Example
 
@@ -67,6 +94,9 @@ Use the Programmatic flow when:
 import Kernel from '@onkernel/sdk';
 
 const kernel = new Kernel();
+
+// Helper function
+const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
 
 // Step 1: Create Auth Agent and Invocation
 const agent = await kernel.agents.auth.create({
@@ -78,55 +108,51 @@ const invocation = await kernel.agents.auth.invocations.create({
   auth_agent_id: agent.id,
 });
 
-if (invocation.status === 'ALREADY_AUTHENTICATED') {
+// Poll to check current state
+let state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id);
+
+// If already authenticated, status will immediately be SUCCESS
+if (state.status === 'SUCCESS') {
   console.log('Already authenticated!');
 } else {
-  // Step 2: Discover login fields
-  const discoverResponse = await kernel.agents.auth.invocations.discover(
-    invocation.invocation_id,
-    {}
-  );
-
-  if (discoverResponse.logged_in) {
-    console.log('Already logged in during discovery!');
-  } else if (discoverResponse.success && discoverResponse.fields) {
-    console.log('Discovered fields:', discoverResponse.fields);
-
-    // Step 3: Map credentials to discovered fields
-    const fieldValues = mapCredentialsToFields(discoverResponse.fields, {
-      email: 'user@example.com',
-      password: 'secretpassword',
-    });
-
-    // Step 4: Submit credentials
-    let submitResponse = await kernel.agents.auth.invocations.submit(
-      invocation.invocation_id,
-      { field_values: fieldValues }
-    );
-
-    // Step 5: Handle multi-step auth
-    while (submitResponse.needs_additional_auth && submitResponse.additional_fields) {
-      console.log('Additional auth required:', submitResponse.additional_fields);
-
-      // Collect 2FA code from user
-      const otpCode = await promptUserForOTP();
-
-      const additionalValues = mapCredentialsToFields(
-        submitResponse.additional_fields,
-        { code: otpCode }
-      );
-
-      submitResponse = await kernel.agents.auth.invocations.submit(
+  // Step 2: Poll until fields are discovered
+  let state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id);
+  
+  while (state.status === 'IN_PROGRESS') {
+    console.log(`Step: ${state.step}`);
+    
+    // Handle awaiting_input - submit credentials
+    if (state.step === 'awaiting_input' && state.pending_fields?.length) {
+      console.log('Fields needed:', state.pending_fields.map(f => f.name));
+      console.log('Already submitted:', state.submitted_fields || []);
+      
+      // Map credentials to the pending fields
+      const fieldValues = mapCredentialsToFields(state.pending_fields, {
+        email: 'user@example.com',
+        password: 'secretpassword',
+        code: await promptUserForOTP(), // For 2FA fields
+      });
+      
+      // Submit is async - returns immediately
+      await kernel.agents.auth.invocations.submit(
         invocation.invocation_id,
-        { field_values: additionalValues }
+        { field_values: fieldValues }
       );
+      
+      console.log('Submitted, waiting for result...');
     }
-
-    if (submitResponse.logged_in) {
-      console.log('Authentication successful!');
-    } else if (submitResponse.error_message) {
-      console.error('Login failed:', submitResponse.error_message);
-    }
+    
+    // Poll every 2 seconds
+    await sleep(2000);
+    state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id);
+  }
+  
+  // Check final result
+  if (state.status === 'SUCCESS') {
+    console.log('Authentication successful!');
+    console.log('Submitted fields:', state.submitted_fields);
+  } else if (state.status === 'FAILED') {
+    console.error('Login failed:', state.error_message);
   }
 }
 
@@ -146,7 +172,7 @@ function mapCredentialsToFields(
       fieldValues[field.name] = credentials.email || '';
     } else if (type === 'password' || name.includes('password')) {
       fieldValues[field.name] = credentials.password || '';
-    } else if (type === 'code' || name.includes('code') || name.includes('otp')) {
+    } else if (type === 'totp' || type === 'code' || name.includes('code') || name.includes('otp')) {
       fieldValues[field.name] = credentials.code || '';
     } else if (name.includes('username')) {
       fieldValues[field.name] = credentials.email || credentials.username || '';
@@ -159,6 +185,7 @@ function mapCredentialsToFields(
 
 ```python Python
 from kernel import Kernel
+import asyncio
 
 kernel = Kernel()
 
@@ -172,53 +199,51 @@ invocation = await kernel.agents.auth.invocations.create(
     auth_agent_id=agent.id,
 )
 
-if invocation.status == "ALREADY_AUTHENTICATED":
+# Poll to check current state
+state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id)
+
+if state.status == "SUCCESS":
     print("Already authenticated!")
 else:
-    # Step 2: Discover login fields
-    discover_response = await kernel.agents.auth.invocations.discover(
-        invocation.invocation_id,
-    )
-
-    if discover_response.logged_in:
-        print("Already logged in during discovery!")
-    elif discover_response.success and discover_response.fields:
-        print(f"Discovered fields: {discover_response.fields}")
-
-        # Step 3: Map credentials to discovered fields
-        field_values = map_credentials_to_fields(
-            discover_response.fields,
-            {"email": "user@example.com", "password": "secretpassword"},
-        )
-
-        # Step 4: Submit credentials
-        submit_response = await kernel.agents.auth.invocations.submit(
-            invocation.invocation_id,
-            field_values=field_values,
-        )
-
-        # Step 5: Handle multi-step auth
-        while (
-            submit_response.needs_additional_auth
-            and submit_response.additional_fields
-        ):
-            print(f"Additional auth required: {submit_response.additional_fields}")
-            otp_code = input("Enter 2FA code: ")
-
-            additional_values = map_credentials_to_fields(
-                submit_response.additional_fields,
-                {"code": otp_code},
+    # Step 2: Poll until complete
+    state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id)
+    
+    while state.status == "IN_PROGRESS":
+        print(f"Step: {state.step}")
+        
+        # Handle awaiting_input - submit credentials
+        if state.step == "awaiting_input" and state.pending_fields:
+            print(f"Fields needed: {[f.name for f in state.pending_fields]}")
+            print(f"Already submitted: {state.submitted_fields or []}")
+            
+            # Map credentials to the pending fields
+            field_values = map_credentials_to_fields(
+                state.pending_fields,
+                {
+                    "email": "user@example.com",
+                    "password": "secretpassword",
+                    "code": input("Enter 2FA code: ") if any(f.type == "totp" for f in state.pending_fields) else "",
+                },
             )
-
-            submit_response = await kernel.agents.auth.invocations.submit(
+            
+            # Submit is async - returns immediately
+            await kernel.agents.auth.invocations.submit(
                 invocation.invocation_id,
-                field_values=additional_values,
+                field_values=field_values,
             )
-
-        if submit_response.logged_in:
-            print("Authentication successful!")
-        elif submit_response.error_message:
-            print(f"Login failed: {submit_response.error_message}")
+            
+            print("Submitted, waiting for result...")
+        
+        # Poll every 2 seconds
+        await asyncio.sleep(2)
+        state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id)
+    
+    # Check final result
+    if state.status == "SUCCESS":
+        print("Authentication successful!")
+        print(f"Submitted fields: {state.submitted_fields}")
+    elif state.status == "FAILED":
+        print(f"Login failed: {state.error_message}")
 
 
 def map_credentials_to_fields(fields, credentials):
@@ -232,7 +257,7 @@ def map_credentials_to_fields(fields, credentials):
             field_values[field.name] = credentials.get("email", "")
         elif field_type == "password" or "password" in name:
             field_values[field.name] = credentials.get("password", "")
-        elif field_type == "code" or "code" in name or "otp" in name:
+        elif field_type == "totp" or field_type == "code" or "code" in name or "otp" in name:
             field_values[field.name] = credentials.get("code", "")
         elif "username" in name:
             field_values[field.name] = credentials.get("email") or credentials.get("username", "")
@@ -243,26 +268,28 @@ def map_credentials_to_fields(fields, credentials):
 
 ## Step-by-Step Breakdown
 
-### 1. Discover Login Fields
+### 1. Poll for Login Fields
 
-Call `discover()` to navigate to the login page and extract form fields:
+After creating an invocation, poll until `step` becomes `awaiting_input`:
 
 ```typescript
-const discoverResponse = await kernel.agents.auth.invocations.discover(
-  invocation.invocation_id,
-  { login_url: 'https://example.com/login' } // Optional: override login URL
-);
+let state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id);
+
+while (state.step === 'initialized' || state.step === 'discovering') {
+  await sleep(2000);
+  state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id);
+}
+
+console.log('Pending fields:', state.pending_fields);
 ```
 
-**Discover response:**
+**Response when `step === 'awaiting_input'`:**
 
 ```json
 {
-  "success": true,
-  "logged_in": false,
-  "login_url": "https://identity.example.com/login",
-  "page_title": "Sign In - Example",
-  "fields": [
+  "status": "IN_PROGRESS",
+  "step": "awaiting_input",
+  "pending_fields": [
     {
       "name": "email",
       "type": "email",
@@ -278,35 +305,19 @@ const discoverResponse = await kernel.agents.auth.invocations.discover(
       "required": true,
       "selector": "//input[@id='password']"
     }
-  ]
+  ],
+  "submitted_fields": null
 }
 ```
 
-<Tip>
-If `discover()` returns `logged_in: true`, the profile is already authenticated from a previous session. No credentials are needed—proceed to using the profile.
-</Tip>
-
 ### 2. Map Credentials to Fields
 
-The discover response returns an array of fields with `name`, `type`, and `label` properties. Use the `name` as the key when submitting credentials:
+Use the `name` from each pending field as the key when submitting:
 
 ```typescript
-// Discovered fields
-const fields = [
-  { name: 'email', type: 'email', label: 'Email Address' },
-  { name: 'password', type: 'password', label: 'Password' }
-];
-
-// Your stored credentials
-const credentials = {
-  email: 'user@example.com',
-  password: 'secretpassword'
-};
-
-// Map to field_values using field.name as key
 const fieldValues = {
-  'email': credentials.email,      // field.name → credential value
-  'password': credentials.password
+  'email': 'user@example.com',     // field.name → value
+  'password': 'secretpassword'
 };
 ```
 
@@ -319,89 +330,57 @@ const fieldValues = {
 | `password` | Password (masked) | ••••••••• |
 | `tel` | Phone number | +1-555-0123 |
 | `number` | Numeric input | 12345 |
-| `code` | Verification code (OTP/2FA) | 123456 |
+| `url` | URL input | https://example.com |
+| `code` | Verification code | 123456 |
+| `totp` | TOTP/Authenticator code | 123456 |
 
 ### 3. Submit Credentials
 
-Submit the mapped field values to attempt login:
+Submit is **async** - it returns immediately with `{ accepted: true }`. Poll to see the result:
 
 ```typescript
-const submitResponse = await kernel.agents.auth.invocations.submit(
+// Submit returns immediately
+await kernel.agents.auth.invocations.submit(
   invocation.invocation_id,
   { field_values: fieldValues }
 );
+
+// Poll to see the result
+let state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id);
+console.log('Step after submit:', state.step); // 'submitting' → 'awaiting_input' or 'completed'
 ```
 
-**Possible submit responses:**
+### 4. Handle Multi-Step Auth (2FA)
 
-**Success:**
-```json
-{
-  "success": true,
-  "logged_in": true,
-  "app_name": "My App",
-  "domain": "example.com"
-}
-```
-
-**Needs additional auth (2FA):**
-```json
-{
-  "success": true,
-  "logged_in": false,
-  "needs_additional_auth": true,
-  "additional_fields": [
-    {
-      "name": "code",
-      "type": "code",
-      "label": "Verification Code",
-      "required": true,
-      "selector": "//input[@name='code']"
-    }
-  ]
-}
-```
-
-**Error:**
-```json
-{
-  "success": false,
-  "logged_in": false,
-  "error_message": "Incorrect email or password"
-}
-```
-
-### 4. Handle Multi-Step Auth
-
-When `needs_additional_auth` is `true`, the page is showing new fields (typically 2FA/OTP). Collect the additional values and submit again:
+When additional authentication is needed (e.g., 2FA), the step goes back to `awaiting_input` with new `pending_fields`:
 
 ```typescript
-while (submitResponse.needs_additional_auth && submitResponse.additional_fields) {
-  // Show the additional fields to the user
-  console.log('Additional fields needed:', submitResponse.additional_fields);
+// After submitting email/password...
+state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id);
 
-  // Collect values (e.g., prompt user for 2FA code)
-  const additionalValues: Record<string, string> = {};
-  for (const field of submitResponse.additional_fields) {
-    if (field.type === 'code' || field.name.includes('code')) {
-      additionalValues[field.name] = await promptUserForOTP();
-    }
-  }
-
-  // Submit again
-  submitResponse = await kernel.agents.auth.invocations.submit(
+if (state.step === 'awaiting_input' && state.pending_fields?.length) {
+  console.log('Additional auth needed:', state.pending_fields);
+  // pending_fields might contain: [{ name: 'totp', type: 'totp', label: 'Verification Code' }]
+  
+  console.log('Already submitted:', state.submitted_fields);
+  // submitted_fields: ['email', 'password']
+  
+  // Submit the 2FA code
+  await kernel.agents.auth.invocations.submit(
     invocation.invocation_id,
-    { field_values: additionalValues }
+    { field_values: { totp: '123456' } }
   );
 }
 ```
 
+The `submitted_fields` array tracks what's been successfully submitted across all steps.
+
 ## Building a Custom Login UI
 
-Here's an example of rendering discovered fields in a React component:
+Here's an example of rendering pending fields in a React component:
 
 ```tsx
-function LoginForm({ fields, onSubmit }) {
+function LoginForm({ pendingFields, submittedFields, onSubmit }) {
   const [values, setValues] = useState<Record<string, string>>({});
 
   return (
@@ -409,14 +388,19 @@ function LoginForm({ fields, onSubmit }) {
       e.preventDefault();
       onSubmit(values);
     }}>
-      {fields.map((field) => (
+      {submittedFields?.length > 0 && (
+        <p>✓ Submitted: {submittedFields.join(', ')}</p>
+      )}
+      
+      {pendingFields.map((field) => (
         <div key={field.name}>
           <label>{field.label || field.name}</label>
           <input
-            type={field.type}
+            type={field.type === 'totp' ? 'text' : field.type}
             name={field.name}
             placeholder={field.placeholder}
             required={field.required}
+            autoComplete={field.type === 'totp' ? 'one-time-code' : undefined}
             value={values[field.name] || ''}
             onChange={(e) => setValues({
               ...values,
@@ -425,7 +409,9 @@ function LoginForm({ fields, onSubmit }) {
           />
         </div>
       ))}
-      <button type="submit">Sign In</button>
+      <button type="submit">
+        {pendingFields.some(f => f.type === 'totp') ? 'Verify' : 'Sign In'}
+      </button>
     </form>
   );
 }
@@ -445,33 +431,34 @@ const invocation = await kernel.agents.auth.invocations.create({
 // Credentials are automatically saved when login succeeds
 ```
 
+<Note>
+TOTP/2FA codes are **not saved** to credentials since they're one-time codes. Only persistent credentials (email, password, etc.) are saved.
+</Note>
+
 See [Credentials](/agent-auth/credentials) for details on pre-storing credentials.
 
 ## Error Handling
 
 ```typescript
 try {
-  const discoverResponse = await kernel.agents.auth.invocations.discover(
-    invocation.invocation_id,
-    {}
-  );
-
-  if (!discoverResponse.success) {
-    console.error('Discovery failed:', discoverResponse.error_message);
-    return;
+  const state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id);
+  
+  // Check for terminal states
+  if (state.status === 'FAILED') {
+    console.error('Login failed:', state.error_message);
+  } else if (state.status === 'EXPIRED') {
+    console.error('Invocation expired');
+  } else if (state.status === 'CANCELED') {
+    console.error('Invocation was canceled');
   }
-
-  const submitResponse = await kernel.agents.auth.invocations.submit(
-    invocation.invocation_id,
-    { field_values: fieldValues }
-  );
-
-  if (!submitResponse.success) {
-    console.error('Login failed:', submitResponse.error_message);
-    // Show error to user, let them retry
-  }
+  
+  // Submit errors
+  await kernel.agents.auth.invocations.submit(invocation.invocation_id, { field_values });
 } catch (error) {
-  if (error.status === 404) {
+  if (error.status === 400 && error.code === 'submit_in_progress') {
+    // A submit is already being processed - just keep polling
+    console.log('Submit already in progress, waiting...');
+  } else if (error.status === 404) {
     console.error('Invocation not found or expired');
   } else {
     console.error('Unexpected error:', error.message);
@@ -483,6 +470,7 @@ try {
 
 - Credentials submitted via `submit()` are sent directly to the target site
 - Credentials are never logged or stored in plaintext
+- TOTP codes are not saved to credentials (they're one-time)
 - The browser session is isolated and destroyed after the invocation completes
 
 ## Next Steps

@@ -26,16 +26,20 @@ Agent Auth logs users into any website and saves their authenticated browser ses
       auth_agent_id: agent.id,
     });
     
-    // If already logged in, skip the flow
-    if (invocation.status === 'ALREADY_AUTHENTICATED') {
-      console.log('Session still valid!');
+    // Poll to check if already authenticated
+    const state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id);
+    
+    if (state.status === 'SUCCESS') {
+      console.log('Already authenticated!');
     } else {
       // Redirect user to complete login
       console.log('Login URL:', invocation.hosted_url);
     }
     ```
 
-    Invocation statuses: `IN_PROGRESS` → `SUCCESS` | `EXPIRED` | `CANCELED`
+    **Invocation states:**
+    - `status`: `IN_PROGRESS` → `SUCCESS` | `EXPIRED` | `CANCELED` | `FAILED`
+    - `step`: `initialized` → `discovering` → `awaiting_input` ⇄ `submitting` → `completed`
   </Step>
   <Step title="User Completes Login">
     {/* TODO: Add image showing the hosted UI login flow */}

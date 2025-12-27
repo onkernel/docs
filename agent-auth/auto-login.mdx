@@ -92,18 +92,12 @@ const invocation = await kernel.agents.auth.invocations.create({
   auth_agent_id: agent.id,
 });
 
-// Check if already authenticated
-if (invocation.status === 'ALREADY_AUTHENTICATED') {
-  console.log('Already logged in! Profile ready.');
-} else {
-  // Step 4: Poll for completion
-  console.log(`Invocation type: ${invocation.type}`); // "auto_login"
+// Step 4: Poll for completion
+const result = await pollForCompletion(invocation.invocation_id);
 
-  const result = await pollForCompletion(invocation.invocation_id);
-
-  if (result.success) {
-    console.log('Auto-login successful!');
-  }
+// If already authenticated, status will immediately be SUCCESS
+if (result.success) {
+  console.log('Auto-login successful!');
 }
 
 // Step 5: Use the profile
@@ -145,17 +139,12 @@ invocation = await kernel.agents.auth.invocations.create(
     auth_agent_id=agent.id,
 )
 
-# Check if already authenticated
-if invocation.status == "ALREADY_AUTHENTICATED":
-    print("Already logged in! Profile ready.")
-else:
-    # Step 4: Poll for completion
-    print(f"Invocation type: {invocation.type}")  # "auto_login"
+# Step 4: Poll for completion
+result = await poll_for_completion(invocation.invocation_id)
 
-    result = await poll_for_completion(invocation.invocation_id)
-
-    if result["success"]:
-        print("Auto-login successful!")
+# If already authenticated, status will immediately be SUCCESS
+if result["success"]:
+    print("Auto-login successful!")
 
 # Step 5: Use the profile
 browser = await kernel.browsers.create(
@@ -240,6 +229,7 @@ async def poll_for_completion(invocation_id: str):
 | `awaiting_input` | Waiting for input (manual intervention needed) |
 | `submitting` | Currently submitting credentials |
 | `completed` | Login flow finished |
+| `expired` | Invocation expired before completion |
 
 ## Credential Field Mapping
 
@@ -288,19 +278,21 @@ if (result.reason === 'MANUAL_INPUT_REQUIRED') {
   // Get the 2FA code from user or TOTP generator
   const otpCode = await getOTPCode();
 
-  // Call discover to see current fields
-  const discover = await kernel.agents.auth.invocations.discover(
-    invocation.invocation_id,
-    {}
+  // Retrieve to see current pending fields
+  const state = await kernel.agents.auth.invocations.retrieve(
+    invocation.invocation_id
   );
+  console.log('Pending fields:', state.pending_fields);
 
-  // Submit the missing value
-  const submit = await kernel.agents.auth.invocations.submit(
+  // Submit the missing value (async - returns immediately)
+  await kernel.agents.auth.invocations.submit(
     invocation.invocation_id,
     { field_values: { code: otpCode } }
   );
 
-  if (submit.logged_in) {
+  // Poll for completion
+  const finalResult = await pollForCompletion(invocation.invocation_id);
+  if (finalResult.success) {
     console.log('Login completed!');
   }
 }
@@ -313,18 +305,21 @@ if result["reason"] == "MANUAL_INPUT_REQUIRED":
     # Get the 2FA code from user or TOTP generator
     otp_code = await get_otp_code()
 
-    # Call discover to see current fields
-    discover = await kernel.agents.auth.invocations.discover(
-        invocation.invocation_id,
+    # Retrieve to see current pending fields
+    state = await kernel.agents.auth.invocations.retrieve(
+        invocation.invocation_id
     )
+    print(f"Pending fields: {state.pending_fields}")
 
-    # Submit the missing value
-    submit = await kernel.agents.auth.invocations.submit(
+    # Submit the missing value (async - returns immediately)
+    await kernel.agents.auth.invocations.submit(
         invocation.invocation_id,
         field_values={"code": otp_code},
     )
 
-    if submit.logged_in:
+    # Poll for completion
+    final_result = await poll_for_completion(invocation.invocation_id)
+    if final_result["success"]:
         print("Login completed!")
 ```
 </CodeGroup>
