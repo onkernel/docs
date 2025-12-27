@@ -92,7 +92,7 @@ Check `agent.can_reauth` to determine which option is available. If `true`, auto
 
 ### Option 1: Automated Re-auth (Requires Credentials)
 
-If the Auth Agent has linked credentials and saved selectors, trigger automated re-auth:
+If the Auth Agent has linked credentials and saved selectors, create a new invocation to trigger automated re-auth:
 
 ```typescript
 async function triggerReauth(agent) {
@@ -102,22 +102,15 @@ async function triggerReauth(agent) {
     return await manualReauth(agent.id);
   }
 
-  const reauth = await kernel.agents.auth.reauth(agent.id);
+  // Create invocation - credentials will be used automatically
+  const invocation = await kernel.agents.auth.invocations.create({
+    auth_agent_id: agent.id,
+  });
 
-  switch (reauth.status) {
-    case 'REAUTH_STARTED':
-      console.log('Re-auth started:', reauth.invocation_id);
-      // Poll for completion
-      return await pollForCompletion(reauth.invocation_id);
-
-    case 'ALREADY_AUTHENTICATED':
-      console.log('Already authenticated');
-      return { success: true };
-
-    case 'CANNOT_REAUTH':
-      console.log('Cannot reauth:', reauth.message);
-      return await manualReauth(agent.id);
-  }
+  console.log('Re-auth started:', invocation.invocation_id);
+  
+  // Poll for completion
+  return await pollForCompletion(invocation.invocation_id);
 }
 ```
 
@@ -156,6 +149,11 @@ async function pollForCompletion(invocationId: string) {
       return { success: true };
     }
 
+    if (status.status === 'FAILED') {
+      console.log('Re-auth failed:', status.error_message);
+      return { success: false, reason: 'FAILED', error: status.error_message };
+    }
+
     if (status.status === 'EXPIRED' || status.status === 'CANCELED') {
       console.log('Re-auth failed:', status.status);
       return { success: false, reason: status.status };
@@ -183,10 +181,10 @@ async function ensureAuthenticated(agentId: string) {
 
   // Need to re-auth
   if (agent.can_reauth) {
-    const reauth = await kernel.agents.auth.reauth(agentId);
-    if (reauth.status === 'REAUTH_STARTED') {
-      await pollForCompletion(reauth.invocation_id);
-    }
+    const invocation = await kernel.agents.auth.invocations.create({
+      auth_agent_id: agentId,
+    });
+    await pollForCompletion(invocation.invocation_id);
   } else {
     throw new Error('Session expired and cannot auto-reauth');
   }
@@ -239,7 +237,10 @@ async function checkAllSessions() {
 
   // Auto-reauth those that can be automated
   for (const agent of canAutoReauth) {
-    await kernel.agents.auth.reauth(agent.id);
+    const invocation = await kernel.agents.auth.invocations.create({
+      auth_agent_id: agent.id,
+    });
+    // Optionally poll for completion
   }
 
   return { needsManualReauth };
@@ -296,13 +297,12 @@ class AuthSessionManager {
   }
 
   private async triggerReauth(agent: AuthAgent) {
-    const reauth = await kernel.agents.auth.reauth(agent.id);
+    // Create invocation - credentials will be used automatically
+    const invocation = await kernel.agents.auth.invocations.create({
+      auth_agent_id: agent.id,
+    });
 
-    if (reauth.status === 'REAUTH_STARTED' && reauth.invocation_id) {
-      await this.pollForCompletion(reauth.invocation_id);
-    } else if (reauth.status === 'CANNOT_REAUTH') {
-      throw new CannotReauthError(reauth.message, agent.id);
-    }
+    await this.pollForCompletion(invocation.invocation_id);
   }
 
   private async pollForCompletion(invocationId: string, timeoutMs = 300000) {
@@ -312,6 +312,7 @@ class AuthSessionManager {
       const status = await kernel.agents.auth.invocations.retrieve(invocationId);
 
       if (status.status === 'SUCCESS') return;
+      if (status.status === 'FAILED') throw new Error(`Re-auth failed: ${status.error_message}`);
       if (status.status === 'EXPIRED') throw new Error('Re-auth expired');
       if (status.status === 'CANCELED') throw new Error('Re-auth canceled');
 
@@ -334,13 +335,6 @@ class AuthFailedError extends Error {
   constructor(message: string, public agentId: string) {
     super(message);
     this.name = 'AuthFailedError';
-  }
-}
-
-class CannotReauthError extends Error {
-  constructor(message: string, public agentId: string) {
-    super(message);
-    this.name = 'CannotReauthError';
   }
 }
 
