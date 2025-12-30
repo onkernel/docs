@@ -27,9 +27,10 @@ Use the Hosted UI when:
     });
     ```
   </Step>
-  <Step title="Redirect User to Hosted UI">
+  <Step title="Check State and Redirect">
     ```typescript
-    if (invocation.status !== 'ALREADY_AUTHENTICATED') {
+    const state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id);
+    if (state.status !== 'SUCCESS') {
       window.location.href = invocation.hosted_url;
     }
     ```
@@ -71,7 +72,9 @@ const invocation = await kernel.agents.auth.invocations.create({
 });
 
 // Step 3: Check if already logged in
-if (invocation.status === 'ALREADY_AUTHENTICATED') {
+let state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id);
+
+if (state.status === 'SUCCESS') {
   console.log('Already authenticated! Profile is ready to use.');
   // Skip to Step 6: Use the Profile
 } else {
@@ -90,6 +93,9 @@ const pollForCompletion = async (invocationId: string) => {
 
     if (status.status === 'SUCCESS') {
       return { success: true };
+    }
+    if (status.status === 'FAILED') {
+      return { success: false, reason: 'FAILED', error: status.error_message };
     }
     if (status.status === 'EXPIRED' || status.status === 'CANCELED') {
       return { success: false, reason: status.status };
@@ -142,7 +148,9 @@ invocation = await kernel.agents.auth.invocations.create(
 )
 
 # Step 3: Check if already logged in
-if invocation.status == "ALREADY_AUTHENTICATED":
+state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id)
+
+if state.status == "SUCCESS":
     print("Already authenticated! Profile is ready to use.")
 else:
     print(f"Redirect user to: {invocation.hosted_url}")
@@ -157,6 +165,8 @@ async def poll_for_completion(invocation_id: str):
 
         if status.status == "SUCCESS":
             return {"success": True}
+        if status.status == "FAILED":
+            return {"success": False, "reason": "FAILED", "error": status.error_message}
         if status.status in ("EXPIRED", "CANCELED"):
             return {"success": False, "reason": status.status}
 
@@ -222,11 +232,11 @@ const invocation = await kernel.agents.auth.invocations.create({
 | `invocation_id` | Unique ID for this auth attempt |
 | `hosted_url` | URL to redirect the user to |
 | `expires_at` | When the invocation expires (5 minutes) |
-| `status` | If `ALREADY_AUTHENTICATED`, profile is already logged in—no redirect needed |
 
-<Warning>
-If `status` is `ALREADY_AUTHENTICATED`, the profile is already logged in. Skip the redirect and go straight to using the profile.
-</Warning>
+
+<Note>
+Poll the invocation immediately after creation. If `status` is already `SUCCESS`, the profile is already logged in—skip the redirect.
+</Note>
 
 ### 3. Redirect the User
 
@@ -249,22 +259,26 @@ The hosted UI will:
 On your backend, poll the invocation status until it completes:
 
 ```typescript
-let status = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id);
+let state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id);
 
-while (status.status === 'IN_PROGRESS') {
+while (state.status === 'IN_PROGRESS') {
+  console.log(`Step: ${state.step}`); // discovering, awaiting_input, submitting, etc.
   await new Promise(r => setTimeout(r, 2000)); // Poll every 2 seconds
-  status = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id);
+  state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id);
 }
 
-switch (status.status) {
+switch (state.status) {
   case 'SUCCESS':
     console.log('Authentication successful!');
     break;
+  case 'FAILED':
+    console.error('Login failed:', state.error_message);
+    break;
   case 'EXPIRED':
-    console.log('User did not complete login in time');
+    console.error('Invocation expired - user did not complete login in time');
     break;
   case 'CANCELED':
-    console.log('Authentication was canceled');
+    console.error('Authentication was canceled');
     break;
 }
 ```
