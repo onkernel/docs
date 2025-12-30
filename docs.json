@@ -116,7 +116,7 @@
             ]
           },
           {
-            "group": "Deploying your app",
+            "group": "Working with your app",
             "pages": [
               "apps/develop",
               "apps/deploy",
