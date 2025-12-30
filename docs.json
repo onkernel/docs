@@ -72,7 +72,9 @@
                   "browsers/create-a-browser",
                   "browsers/live-view",
                   "browsers/termination",
-                  "browsers/standby"
+                  "browsers/standby",
+                  "browsers/headless",
+                  "browsers/faq"
                 ]
               },
               {
