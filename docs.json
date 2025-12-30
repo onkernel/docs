@@ -1,11 +1,5 @@
 {
   "$schema": "https://mintlify.com/docs.json",
-  "ignore": [
-    "README.md",
-    "CODE_OF_CONDUCT.md",
-    "CONTRIBUTING.md",
-    ".docs/**"
-  ],
   "redirects": [
     { "source": "/careers/intro", "destination": "https://jobs.ashbyhq.com/usekernel" },
     { "source": "/careers/infra-engineer", "destination": "https://jobs.ashbyhq.com/usekernel" },
