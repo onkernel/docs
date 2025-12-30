@@ -84,14 +84,14 @@
                   "browsers/viewport",
                   "browsers/profiles",
                   "browsers/pools",
-                  "browsers/file-io",
-                  "browsers/playwright-execution"
+                  "browsers/file-io"
                 ]
               },
               {
                 "group": "Advanced",
                 "expanded": true,
                 "pages": [
+                  "browsers/playwright-execution",
                   "browsers/computer-controls",
                   {
                     "group": "Bot Anti-Detection",
