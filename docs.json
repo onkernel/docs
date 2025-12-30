@@ -84,8 +84,8 @@
                   "browsers/replays",
                   "browsers/viewport",
                   "browsers/profiles",
-                  "browsers/file-io",
                   "browsers/pools",
+                  "browsers/file-io",
                   "browsers/playwright-execution"
                 ]
               },
