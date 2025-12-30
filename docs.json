@@ -73,8 +73,7 @@
                   "browsers/live-view",
                   "browsers/termination",
                   "browsers/standby",
-                  "browsers/headless",
-                  "browsers/faq"
+                  "browsers/headless"
                 ]
               },
               {
@@ -173,6 +172,7 @@
           {
             "group": "Info",
             "pages": [
+              "browsers/faq",
               "info/concepts",
               "info/pricing",
               "info/unikernels"
