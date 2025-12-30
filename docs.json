@@ -1,5 +1,11 @@
 {
   "$schema": "https://mintlify.com/docs.json",
+  "ignore": [
+    "README.md",
+    "CODE_OF_CONDUCT.md",
+    "CONTRIBUTING.md",
+    ".docs/**"
+  ],
   "redirects": [
     { "source": "/careers/intro", "destination": "https://jobs.ashbyhq.com/usekernel" },
     { "source": "/careers/infra-engineer", "destination": "https://jobs.ashbyhq.com/usekernel" },
@@ -63,43 +69,59 @@
             ]
           },
           {
-            "group": "Browsers",
+            "group": "Working with your browser",
             "pages": [
-              "browsers/create-a-browser",
-              "browsers/headless",
-              "browsers/viewport",
-              "browsers/live-view",
-              "browsers/standby",
-              "browsers/profiles",
-              "browsers/termination",
               {
-                "group": "Bot Anti-Detection",
+                "group": "Basics",
+                "expanded": true,
                 "pages": [
-                  "browsers/bot-detection/overview",
-                  "browsers/bot-detection/stealth",
-                  {
-                    "group": "Proxies",
-                    "pages": [
-                      "proxies/overview",
-                      "proxies/custom",
-                      "proxies/residential",
-                      "proxies/isp",
-                      "proxies/datacenter"
-                    ]
-                  }
+                  "browsers/create-a-browser",
+                  "browsers/live-view",
+                  "browsers/termination",
+                  "browsers/standby"
                 ]
               },
-              "browsers/file-io",
-              "browsers/replays",
-              "browsers/pools",
-              "browsers/extensions",
-              "browsers/computer-controls",
-              "browsers/playwright-execution",
-              "browsers/faq"
+              {
+                "group": "Intermediate",
+                "expanded": true,
+                "pages": [
+                  "browsers/replays",
+                  "browsers/viewport",
+                  "browsers/profiles",
+                  "browsers/file-io",
+                  "browsers/pools",
+                  "browsers/playwright-execution"
+                ]
+              },
+              {
+                "group": "Advanced",
+                "expanded": true,
+                "pages": [
+                  "browsers/computer-controls",
+                  {
+                    "group": "Bot Anti-Detection",
+                    "pages": [
+                      "browsers/bot-detection/overview",
+                      "browsers/bot-detection/stealth",
+                      {
+                        "group": "Proxies",
+                        "pages": [
+                          "proxies/overview",
+                          "proxies/custom",
+                          "proxies/residential",
+                          "proxies/isp",
+                          "proxies/datacenter"
+                        ]
+                      }
+                    ]
+                  },
+                  "browsers/extensions"
+                ]
+              }
             ]
           },
           {
-            "group": "App Platform",
+            "group": "Deploying your app",
             "pages": [
               "apps/develop",
               "apps/deploy",
