@@ -94,6 +94,9 @@ const pollForCompletion = async (invocationId: string) => {
     if (status.status === 'SUCCESS') {
       return { success: true };
     }
+    if (status.status === 'FAILED') {
+      return { success: false, reason: 'FAILED', error: status.error_message };
+    }
     if (status.status === 'EXPIRED' || status.status === 'CANCELED') {
       return { success: false, reason: status.status };
     }
@@ -162,6 +165,8 @@ async def poll_for_completion(invocation_id: str):
 
         if status.status == "SUCCESS":
             return {"success": True}
+        if status.status == "FAILED":
+            return {"success": False, "reason": "FAILED", "error": status.error_message}
         if status.status in ("EXPIRED", "CANCELED"):
             return {"success": False, "reason": status.status}
 
@@ -267,13 +272,13 @@ switch (state.status) {
     console.log('Authentication successful!');
     break;
   case 'FAILED':
-    console.log('Login failed:', state.error_message);
+    console.error('Login failed:', state.error_message);
     break;
   case 'EXPIRED':
-    console.log('Invocation expired - user did not complete login in time');
+    console.error('Invocation expired - user did not complete login in time');
     break;
   case 'CANCELED':
-    console.log('Authentication was canceled');
+    console.error('Authentication was canceled');
     break;
 }
 ```

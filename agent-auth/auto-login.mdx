@@ -176,6 +176,9 @@ async function pollForCompletion(invocationId: string) {
     if (status.status === 'SUCCESS') {
       return { success: true, status };
     }
+    if (status.status === 'FAILED') {
+      return { success: false, reason: 'FAILED', error: status.error_message };
+    }
     if (status.status === 'EXPIRED' || status.status === 'CANCELED') {
       return { success: false, reason: status.status };
     }
@@ -206,6 +209,8 @@ async def poll_for_completion(invocation_id: str):
 
         if status.status == "SUCCESS":
             return {"success": True, "status": status}
+        if status.status == "FAILED":
+            return {"success": False, "reason": "FAILED", "error": status.error_message}
         if status.status in ("EXPIRED", "CANCELED"):
             return {"success": False, "reason": status.status}
 
