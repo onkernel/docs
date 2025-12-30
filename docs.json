@@ -56,7 +56,7 @@
         "icon": "book-open",
         "groups": [
           {
-            "group": "Get started",
+            "group": "Getting started",
             "pages": [
               "introduction",
               "quickstart"
