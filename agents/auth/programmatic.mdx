@@ -13,7 +13,7 @@ Use the Programmatic flow when:
 - You want to build your own credential mapping logic
 
 <Tip>
-**Have credentials stored?** If you just want automated login with pre-linked credentials, [Auto-Login](/agent-auth/auto-login) is simpler—it handles everything automatically. Use Programmatic when you need custom control over each step.
+**Have credentials stored?** If you just want automated login with pre-linked credentials, [Auto-Login](/agents/auth/auto-login) is simpler—it handles everything automatically. Use Programmatic when you need custom control over each step.
 </Tip>
 
 ## How It Works
@@ -39,7 +39,7 @@ initialized → discovering → awaiting_input ⇄ submitting → completed
   <Step title="Poll Until Fields Are Discovered">
     ```typescript
     let state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id);
-    while (state.step === 'initialized' || state.step === 'discovering') {
+    while (state.status === 'IN_PROGRESS' && state.step !== 'awaiting_input') {
       await sleep(2000);
       state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id);
     }
@@ -57,17 +57,16 @@ initialized → discovering → awaiting_input ⇄ submitting → completed
   </Step>
   <Step title="Poll for Result">
     ```typescript
-    // Poll until step changes from 'submitting'
-    while (state.step === 'submitting' || state.step === 'awaiting_input') {
+    // Poll until complete
+    while (state.status === 'IN_PROGRESS') {
+      await sleep(2000);
       state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id);
       
       if (state.step === 'awaiting_input' && state.pending_fields?.length) {
         // New fields needed (e.g., 2FA) - submit again
       }
-      if (state.step === 'completed') {
-        // Success!
-      }
     }
+    // state.status is now SUCCESS, FAILED, EXPIRED, or CANCELED
     ```
   </Step>
 </Steps>
@@ -108,52 +107,44 @@ const invocation = await kernel.agents.auth.invocations.create({
   auth_agent_id: agent.id,
 });
 
-// Poll to check current state
+// Step 2: Poll until complete
 let state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id);
 
-// If already authenticated, status will immediately be SUCCESS
+while (state.status === 'IN_PROGRESS') {
+  console.log(`Step: ${state.step}`);
+  
+  // Handle awaiting_input - submit credentials
+  if (state.step === 'awaiting_input' && state.pending_fields?.length) {
+    console.log('Fields needed:', state.pending_fields.map(f => f.name));
+    console.log('Already submitted:', state.submitted_fields || []);
+    
+    // Map credentials to the pending fields
+    const fieldValues = mapCredentialsToFields(state.pending_fields, {
+      email: 'user@example.com',
+      password: 'secretpassword',
+      code: await promptUserForOTP(), // For 2FA fields
+    });
+    
+    // Submit is async - returns immediately
+    await kernel.agents.auth.invocations.submit(
+      invocation.invocation_id,
+      { field_values: fieldValues }
+    );
+    
+    console.log('Submitted, waiting for result...');
+  }
+  
+  // Poll every 2 seconds
+  await sleep(2000);
+  state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id);
+}
+
+// Check final result
 if (state.status === 'SUCCESS') {
-  console.log('Already authenticated!');
-} else {
-  // Step 2: Poll until fields are discovered
-  let state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id);
-  
-  while (state.status === 'IN_PROGRESS') {
-    console.log(`Step: ${state.step}`);
-    
-    // Handle awaiting_input - submit credentials
-    if (state.step === 'awaiting_input' && state.pending_fields?.length) {
-      console.log('Fields needed:', state.pending_fields.map(f => f.name));
-      console.log('Already submitted:', state.submitted_fields || []);
-      
-      // Map credentials to the pending fields
-      const fieldValues = mapCredentialsToFields(state.pending_fields, {
-        email: 'user@example.com',
-        password: 'secretpassword',
-        code: await promptUserForOTP(), // For 2FA fields
-      });
-      
-      // Submit is async - returns immediately
-      await kernel.agents.auth.invocations.submit(
-        invocation.invocation_id,
-        { field_values: fieldValues }
-      );
-      
-      console.log('Submitted, waiting for result...');
-    }
-    
-    // Poll every 2 seconds
-    await sleep(2000);
-    state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id);
-  }
-  
-  // Check final result
-  if (state.status === 'SUCCESS') {
-    console.log('Authentication successful!');
-    console.log('Submitted fields:', state.submitted_fields);
-  } else if (state.status === 'FAILED') {
-    console.error('Login failed:', state.error_message);
-  }
+  console.log('Authentication successful!');
+  console.log('Submitted fields:', state.submitted_fields);
+} else if (state.status === 'FAILED') {
+  console.error('Login failed:', state.error_message);
 }
 
 // Helper function to map credentials to discovered fields
@@ -199,51 +190,45 @@ invocation = await kernel.agents.auth.invocations.create(
     auth_agent_id=agent.id,
 )
 
-# Poll to check current state
+# Step 2: Poll until complete
 state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id)
 
-if state.status == "SUCCESS":
-    print("Already authenticated!")
-else:
-    # Step 2: Poll until complete
+while state.status == "IN_PROGRESS":
+    print(f"Step: {state.step}")
+    
+    # Handle awaiting_input - submit credentials
+    if state.step == "awaiting_input" and state.pending_fields:
+        print(f"Fields needed: {[f.name for f in state.pending_fields]}")
+        print(f"Already submitted: {state.submitted_fields or []}")
+        
+        # Map credentials to the pending fields
+        field_values = map_credentials_to_fields(
+            state.pending_fields,
+            {
+                "email": "user@example.com",
+                "password": "secretpassword",
+                "code": input("Enter 2FA code: ") if any(f.type == "totp" for f in state.pending_fields) else "",
+            },
+        )
+        
+        # Submit is async - returns immediately
+        await kernel.agents.auth.invocations.submit(
+            invocation.invocation_id,
+            field_values=field_values,
+        )
+        
+        print("Submitted, waiting for result...")
+    
+    # Poll every 2 seconds
+    await asyncio.sleep(2)
     state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id)
-    
-    while state.status == "IN_PROGRESS":
-        print(f"Step: {state.step}")
-        
-        # Handle awaiting_input - submit credentials
-        if state.step == "awaiting_input" and state.pending_fields:
-            print(f"Fields needed: {[f.name for f in state.pending_fields]}")
-            print(f"Already submitted: {state.submitted_fields or []}")
-            
-            # Map credentials to the pending fields
-            field_values = map_credentials_to_fields(
-                state.pending_fields,
-                {
-                    "email": "user@example.com",
-                    "password": "secretpassword",
-                    "code": input("Enter 2FA code: ") if any(f.type == "totp" for f in state.pending_fields) else "",
-                },
-            )
-            
-            # Submit is async - returns immediately
-            await kernel.agents.auth.invocations.submit(
-                invocation.invocation_id,
-                field_values=field_values,
-            )
-            
-            print("Submitted, waiting for result...")
-        
-        # Poll every 2 seconds
-        await asyncio.sleep(2)
-        state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id)
-    
-    # Check final result
-    if state.status == "SUCCESS":
-        print("Authentication successful!")
-        print(f"Submitted fields: {state.submitted_fields}")
-    elif state.status == "FAILED":
-        print(f"Login failed: {state.error_message}")
+
+# Check final result
+if state.status == "SUCCESS":
+    print("Authentication successful!")
+    print(f"Submitted fields: {state.submitted_fields}")
+elif state.status == "FAILED":
+    print(f"Login failed: {state.error_message}")
 
 
 def map_credentials_to_fields(fields, credentials):
@@ -275,7 +260,7 @@ After creating an invocation, poll until `step` becomes `awaiting_input`:
 ```typescript
 let state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id);
 
-while (state.step === 'initialized' || state.step === 'discovering') {
+while (state.status === 'IN_PROGRESS' && state.step !== 'awaiting_input') {
   await sleep(2000);
   state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id);
 }
@@ -394,13 +379,12 @@ function LoginForm({ pendingFields, submittedFields, onSubmit }) {
       
       {pendingFields.map((field) => (
         <div key={field.name}>
-          <label>{field.label || field.name}</label>
+          <label>{field.label}</label>
           <input
-            type={field.type === 'totp' ? 'text' : field.type}
+            type={field.type}
             name={field.name}
             placeholder={field.placeholder}
             required={field.required}
-            autoComplete={field.type === 'totp' ? 'one-time-code' : undefined}
             value={values[field.name] || ''}
             onChange={(e) => setValues({
               ...values,
@@ -435,7 +419,7 @@ const invocation = await kernel.agents.auth.invocations.create({
 TOTP/2FA codes are **not saved** to credentials since they're one-time codes. Only persistent credentials (email, password, etc.) are saved.
 </Note>
 
-See [Credentials](/agent-auth/credentials) for details on pre-storing credentials.
+See [Credentials](/agents/auth/credentials) for details on pre-storing credentials.
 
 ## Error Handling
 
@@ -476,10 +460,10 @@ try {
 ## Next Steps
 
 <CardGroup cols={2}>
-  <Card title="Credentials" icon="key" href="/agent-auth/credentials">
+  <Card title="Credentials" icon="key" href="/agents/auth/credentials">
     Pre-store credentials for fully automated auth
   </Card>
-  <Card title="Session Monitoring" icon="clock" href="/agent-auth/session-monitoring">
+  <Card title="Session Monitoring" icon="clock" href="/agents/auth/session-monitoring">
     Keep sessions alive automatically
   </Card>
 </CardGroup>

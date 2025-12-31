@@ -19,7 +19,7 @@ Agent Auth logs users into any website and saves their authenticated browser ses
     ```
   </Step>
   <Step title="Start an Invocation">
-    An **Invocation** is a single authentication attempt. Each invocation returns a `hosted_url` where users complete login, or you can use the [programmatic API](/agent-auth/programmatic) to build your own UI.
+    An **Invocation** is a single authentication attempt. Each invocation returns a `hosted_url` where users complete login, or you can use the [programmatic API](/agents/auth/programmatic) to build your own UI.
 
     ```typescript
     const invocation = await kernel.agents.auth.invocations.create({
@@ -46,7 +46,7 @@ Agent Auth logs users into any website and saves their authenticated browser ses
     
     The user enters credentials, handles 2FA/OTP if needed, and the authenticated session is saved to a **Profile**—encrypted browser state (cookies, localStorage) that persists across sessions.
 
-    For fully automated flows, link [Credentials](/agent-auth/credentials) to enable re-authentication without user intervention.
+    For fully automated flows, link [Credentials](/agents/auth/credentials) to enable re-authentication without user intervention.
   </Step>
   <Step title="Use the Authenticated Profile">
     Launch a browser with the saved profile—it's already logged in. Profiles work with any Kernel browser operation.
@@ -66,20 +66,20 @@ Agent Auth logs users into any website and saves their authenticated browser ses
 ## Choose Your Integration
 
 <CardGroup cols={3}>
-  <Card title="Auto-Login" icon="bolt" href="/agent-auth/auto-login">
+  <Card title="Auto-Login" icon="bolt" href="/agents/auth/auto-login">
     **Best for:** Fully automated flows
 
     Credentials are pre-linked. System handles everything automatically.
   </Card>
-  <Card title="Hosted UI" icon="browser" href="/agent-auth/hosted-ui">
+  <Card title="Hosted UI" icon="browser" href="/agents/auth/hosted-ui">
     **Best for:** User-facing apps
 
     Redirect users to Kernel's hosted login page.
   </Card>
-  <Card title="Programmatic" icon="code" href="/agent-auth/programmatic">
+  <Card title="Programmatic" icon="code" href="/agents/auth/programmatic">
     **Best for:** Custom UI or headless
 
-    Build your own UI with discover/submit APIs.
+    Build your own UI with polling and submit APIs.
   </Card>
 </CardGroup>
 
@@ -88,7 +88,7 @@ Agent Auth logs users into any website and saves their authenticated browser ses
 The most valuable workflows live behind logins. Agent Auth provides:
 
 - **One API for any login flow** - Automatic form discovery works on any website
-- **2FA/OTP handling** - Supports TOTP, magic links, SMS codes, and CAPTCHAs
+- **2FA/OTP handling** - TOTP automated; SMS/email OTP via Hosted UI or custom UI
 - **Session monitoring** - Hourly checks detect when re-authentication is needed
 - **Security-first design** - Credentials encrypted at rest, never exposed in API responses
 
@@ -97,6 +97,6 @@ The most valuable workflows live behind logins. Agent Auth provides:
 | Feature | Description |
 |---------|-------------|
 | **Encrypted credentials** | Values encrypted at rest with per-organization keys, never stored in plaintext |
-| **No credential exposure** | Credentials submitted programmatically to target sites, never returned in responses |
+| **No credential exposure** | Credentials submitted programmatically to target sites, never passed to LLMs |
 | **Encrypted profiles** | Browser session state encrypted end-to-end |
 | **Isolated execution** | Each auth flow runs in an isolated browser environment |

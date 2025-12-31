@@ -13,7 +13,7 @@ Use Auto-Login when:
 - You're building headless/bot workflows that don't require user interaction
 
 <Tip>
-If you need users to enter their own credentials, use the [Hosted UI](/agent-auth/hosted-ui) or [Programmatic](/agent-auth/programmatic) flows instead.
+If you need users to enter their own credentials, use the [Hosted UI](/agents/auth/hosted-ui) or [Programmatic](/agents/auth/programmatic) flows instead.
 </Tip>
 
 ## How It Works
@@ -47,8 +47,8 @@ If you need users to enter their own credentials, use the [Hosted UI](/agent-aut
   </Step>
   <Step title="Poll for Completion">
     ```typescript
-    const status = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id);
-    // Poll until status.status === 'SUCCESS'
+    const state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id);
+    // Poll until state.status === 'SUCCESS'
     ```
   </Step>
   <Step title="Use the Authenticated Profile">
@@ -169,23 +169,23 @@ async function pollForCompletion(invocationId: string) {
   let delay = 3000;
 
   while (Date.now() - start < maxWaitMs) {
-    const status = await kernel.agents.auth.invocations.retrieve(invocationId);
+    const state = await kernel.agents.auth.invocations.retrieve(invocationId);
 
-    console.log(`Status: ${status.status}, Step: ${status.step}`);
+    console.log(`Status: ${state.status}, Step: ${state.step}`);
 
-    if (status.status === 'SUCCESS') {
-      return { success: true, status };
+    if (state.status === 'SUCCESS') {
+      return { success: true, state };
     }
-    if (status.status === 'FAILED') {
-      return { success: false, reason: 'FAILED', error: status.error_message };
+    if (state.status === 'FAILED') {
+      return { success: false, reason: 'FAILED', error: state.error_message };
     }
-    if (status.status === 'EXPIRED' || status.status === 'CANCELED') {
-      return { success: false, reason: status.status };
+    if (state.status === 'EXPIRED' || state.status === 'CANCELED') {
+      return { success: false, reason: state.status };
     }
 
     // Check if manual input needed (e.g., MFA code not in credentials)
-    if (status.step === 'awaiting_input') {
-      return { success: false, reason: 'MANUAL_INPUT_REQUIRED', status };
+    if (state.step === 'awaiting_input') {
+      return { success: false, reason: 'MANUAL_INPUT_REQUIRED', state };
     }
 
     await new Promise(r => setTimeout(r, delay));
@@ -203,20 +203,20 @@ async def poll_for_completion(invocation_id: str):
     delay = 3
 
     while asyncio.get_event_loop().time() - start_time < max_wait_seconds:
-        status = await kernel.agents.auth.invocations.retrieve(invocation_id)
+        state = await kernel.agents.auth.invocations.retrieve(invocation_id)
 
-        print(f"Status: {status.status}, Step: {status.step}")
+        print(f"Status: {state.status}, Step: {state.step}")
 
-        if status.status == "SUCCESS":
-            return {"success": True, "status": status}
-        if status.status == "FAILED":
-            return {"success": False, "reason": "FAILED", "error": status.error_message}
-        if status.status in ("EXPIRED", "CANCELED"):
-            return {"success": False, "reason": status.status}
+        if state.status == "SUCCESS":
+            return {"success": True, "state": state}
+        if state.status == "FAILED":
+            return {"success": False, "reason": "FAILED", "error": state.error_message}
+        if state.status in ("EXPIRED", "CANCELED"):
+            return {"success": False, "reason": state.status}
 
         # Check if manual input needed (e.g., MFA code not in credentials)
-        if status.step == "awaiting_input":
-            return {"success": False, "reason": "MANUAL_INPUT_REQUIRED", "status": status}
+        if state.step == "awaiting_input":
+            return {"success": False, "reason": "MANUAL_INPUT_REQUIRED", "state": state}
 
         await asyncio.sleep(delay)
         delay = min(delay * 1.5, 5)
@@ -254,10 +254,9 @@ Auto-login maps your credential values to discovered form fields:
   values: {
     username: 'user@example.com',  // Works for email and text fields
     password: 'secretpassword',
-    // Optional for sites that need them:
-    phone: '+1234567890',
-    code: '123456',  // For TOTP if you have a generator
-  }
+    phone: '+1234567890',           // Optional, for sites that need it
+  },
+  totp_secret: 'JBSWY3DPEHPK3PXP', // Optional, for 2FA sites
 }
 ```
 
@@ -269,107 +268,61 @@ Auto-login automatically handles multi-step login forms:
 - **Step 2**: New password field appears → maps and submits
 - **Step 3**: 2FA code field appears → maps if `code` is in credentials, otherwise pauses
 
-If the system encounters fields it can't map from your credentials (like a 2FA code field without a `code` value), it sets `step: 'awaiting_input'` and pauses.
+If the system encounters fields it can't satisfy from your credentials (like a TOTP field without a `totp_secret`), it sets `step: 'awaiting_input'` and pauses.
 
 ### Handling Paused Flows
 
-When auto-login pauses, you can continue manually:
+When auto-login pauses, check `pending_fields` and submit the missing values:
 
 <CodeGroup>
 ```typescript TypeScript
-const result = await pollForCompletion(invocation.invocation_id);
+while (state.status === 'IN_PROGRESS') {
+  state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id);
 
-if (result.reason === 'MANUAL_INPUT_REQUIRED') {
-  // Get the 2FA code from user or TOTP generator
-  const otpCode = await getOTPCode();
+  if (state.step === 'awaiting_input' && state.pending_fields?.length) {
+    // Build values for the pending fields
+    const fieldValues: Record<string, string> = {};
+    for (const field of state.pending_fields) {
+      fieldValues[field.name] = await getValueFromUser(field);
+    }
 
-  // Retrieve to see current pending fields
-  const state = await kernel.agents.auth.invocations.retrieve(
-    invocation.invocation_id
-  );
-  console.log('Pending fields:', state.pending_fields);
-
-  // Submit the missing value (async - returns immediately)
-  await kernel.agents.auth.invocations.submit(
-    invocation.invocation_id,
-    { field_values: { code: otpCode } }
-  );
-
-  // Poll for completion
-  const finalResult = await pollForCompletion(invocation.invocation_id);
-  if (finalResult.success) {
-    console.log('Login completed!');
+    await kernel.agents.auth.invocations.submit(invocation.invocation_id, {
+      field_values: fieldValues,
+    });
   }
+
+  await sleep(2000);
 }
 ```
 
 ```python Python
-result = await poll_for_completion(invocation.invocation_id)
+while state.status == "IN_PROGRESS":
+    state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id)
 
-if result["reason"] == "MANUAL_INPUT_REQUIRED":
-    # Get the 2FA code from user or TOTP generator
-    otp_code = await get_otp_code()
+    if state.step == "awaiting_input" and len(state.pending_fields or []):
+        # Build values for the pending fields
+        field_values = {}
+        for field in state.pending_fields:
+            field_values[field.name] = await get_value_from_user(field)
 
-    # Retrieve to see current pending fields
-    state = await kernel.agents.auth.invocations.retrieve(
-        invocation.invocation_id
-    )
-    print(f"Pending fields: {state.pending_fields}")
+        await kernel.agents.auth.invocations.submit(
+            invocation.invocation_id,
+            field_values=field_values,
+        )
 
-    # Submit the missing value (async - returns immediately)
-    await kernel.agents.auth.invocations.submit(
-        invocation.invocation_id,
-        field_values={"code": otp_code},
-    )
-
-    # Poll for completion
-    final_result = await poll_for_completion(invocation.invocation_id)
-    if final_result["success"]:
-        print("Login completed!")
+    await asyncio.sleep(2)
 ```
 </CodeGroup>
 
 <Warning>
-**2FA handling:** If the site requires 2FA, include a `code` value in your credentials using a TOTP generator library. If you can't provide the code upfront, auto-login will pause at `step: 'awaiting_input'` and you can continue manually.
+**2FA handling:** For TOTP-based 2FA, include a `totp_secret` on your credential to enable fully automated code generation. For SMS or email OTP, the flow will pause at `step: 'awaiting_input'` with the OTP field in `pending_fields`, allowing the user to enter the code via your UI.
 </Warning>
 
 ## Using Proxies
 
-If the target site requires a specific IP or region, configure a proxy:
+If the target site requires a specific IP or region, configure a proxy on the Auth Agent using `proxy: { proxy_id: 'your_proxy_id' }`. Use the same proxy when creating browsers afterward.
 
-<CodeGroup>
-```typescript TypeScript
-const agent = await kernel.agents.auth.create({
-  domain: 'region-locked-site.com',
-  profile_name: 'my-profile',
-  credential_name: 'my-credential',
-  proxy: { proxy_id: 'proxy_abc123' },
-});
-
-// Use the same proxy when creating browsers
-const browser = await kernel.browsers.create({
-  profile: { name: 'my-profile' },
-  proxy_id: 'proxy_abc123',
-  stealth: true,
-});
-```
-
-```python Python
-agent = await kernel.agents.auth.create(
-    domain="region-locked-site.com",
-    profile_name="my-profile",
-    credential_name="my-credential",
-    proxy={"proxy_id": "proxy_abc123"},
-)
-
-# Use the same proxy when creating browsers
-browser = await kernel.browsers.create(
-    profile={"name": "my-profile"},
-    proxy_id="proxy_abc123",
-    stealth=True,
-)
-```
-</CodeGroup>
+See [Proxies](/proxies/overview) for setup details.
 
 <Warning>
 Use the same proxy configuration for both the Auth Agent and subsequent browser sessions. Different IPs may trigger security measures on the target site.
@@ -378,10 +331,10 @@ Use the same proxy configuration for both the Auth Agent and subsequent browser 
 ## Next Steps
 
 <CardGroup cols={2}>
-  <Card title="Credentials" icon="key" href="/agent-auth/credentials">
+  <Card title="Credentials" icon="key" href="/agents/auth/credentials">
     Store and manage login credentials
   </Card>
-  <Card title="Session Monitoring" icon="clock" href="/agent-auth/session-monitoring">
+  <Card title="Session Monitoring" icon="clock" href="/agents/auth/session-monitoring">
     Automatic session health checks and re-auth
   </Card>
 </CardGroup>

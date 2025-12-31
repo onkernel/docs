@@ -227,12 +227,12 @@ const invocation = await kernel.agents.auth.invocations.create({
 ```
 
 **Response fields:**
+
 | Field | Description |
 |-------|-------------|
 | `invocation_id` | Unique ID for this auth attempt |
 | `hosted_url` | URL to redirect the user to |
 | `expires_at` | When the invocation expires (5 minutes) |
-
 
 <Note>
 Poll the invocation immediately after creation. If `status` is already `SUCCESS`, the profile is already logged in—skip the redirect.
@@ -297,13 +297,18 @@ const browser = await kernel.browsers.create({
   stealth: true,
 });
 
-// Connect with Playwright
-import { chromium } from 'playwright';
-const playwrightBrowser = await chromium.connectOverCDP(browser.cdp_ws_url);
-const page = playwrightBrowser.contexts()[0].pages()[0];
+// Execute Playwright code - you're already logged in!
+const response = await kernel.browsers.playwright.execute(
+  browser.session_id,
+  {
+    code: `
+      await page.goto('https://example.com/dashboard');
+      return await page.title();
+    `
+  }
+);
 
-// Navigate - you're already logged in!
-await page.goto('https://example.com/dashboard');
+console.log(response.result); // "Dashboard"
 ```
 
 <Warning>
@@ -312,23 +317,9 @@ Use `stealth: true` when creating browsers for authenticated sessions. Agent Aut
 
 ## Using Proxies
 
-If the target site requires a specific IP or region, configure a proxy:
+If the target site requires a specific IP or region, configure a proxy on the Auth Agent using `proxy: { proxy_id: 'your_proxy_id' }`. Use the same proxy when creating browsers afterward.
 
-```typescript
-// Create auth agent with proxy
-const agent = await kernel.agents.auth.create({
-  domain: 'region-locked-site.com',
-  profile_name: 'my-profile',
-  proxy: { proxy_id: 'proxy_abc123' },
-});
-
-// Use the same proxy when creating browsers
-const browser = await kernel.browsers.create({
-  profile: { name: 'my-profile' },
-  proxy_id: 'proxy_abc123',
-  stealth: true,
-});
-```
+See [Proxies](/proxies/overview) for setup details.
 
 <Warning>
 Use the same proxy configuration for both the Auth Agent and subsequent browser sessions. Different IPs may trigger security measures on the target site.
@@ -345,7 +336,7 @@ const invocation = await kernel.agents.auth.invocations.create({
 });
 ```
 
-When credentials are saved, the Auth Agent can automatically re-authenticate without user interaction. See [Session Monitoring](/agent-auth/session-monitoring) for details.
+When credentials are saved, the Auth Agent can automatically re-authenticate without user interaction. See [Session Monitoring](/agents/auth/session-monitoring) for details.
 
 ## Handling Callback URLs
 
@@ -361,7 +352,6 @@ const invocation = await kernel.agents.auth.invocations.create({
 window.location.href = invocation.hosted_url;
 
 // Backend: Poll for completion and notify frontend via WebSocket or SSE
-// OR: Use a webhook URL (coming soon)
 ```
 
 ## Error Handling
@@ -396,10 +386,10 @@ try {
 ## Next Steps
 
 <CardGroup cols={2}>
-  <Card title="Programmatic Guide" icon="code" href="/agent-auth/programmatic">
+  <Card title="Programmatic Guide" icon="code" href="/agents/auth/programmatic">
     Build custom auth flows with full control
   </Card>
-  <Card title="Credentials" icon="key" href="/agent-auth/credentials">
+  <Card title="Credentials" icon="key" href="/agents/auth/credentials">
     Store credentials for automated re-auth
   </Card>
 </CardGroup>

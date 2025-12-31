@@ -5,394 +5,94 @@ description: "Automatic session health checks and re-authentication"
 
 Agent Auth automatically monitors authenticated sessions to detect when they expire. This enables proactive re-authentication before your workflows fail.
 
-## How Session Monitoring Works
+## How It Works
 
 Auth Agents with `AUTHENTICATED` status are automatically checked hourly to verify the session is still valid. The check:
 
 1. Opens a browser with the authenticated profile
 2. Navigates to the auth check URL (usually the main site)
 3. Determines if the user is still logged in
-4. Updates the Auth Agent status if the session has expired
+4. If expired, attempts auto re-auth (if credentials are configured)
 
 ```mermaid
 flowchart TD
     A[Auth Agent<br/>status: AUTHENTICATED] --> B[Hourly Check]
-    B --> C[Check Session]
-    C --> D{Still logged in?}
-    D -->|Yes| E[No change]
-    D -->|No| F[Update status<br/>→ NEEDS_AUTH]
-    
-    subgraph Check Session
-        C1[Load profile]
-        C2[Navigate to site]
-        C3[Detect login state]
-    end
+    B --> C[Load profile]
+    C --> D[Navigate to site]
+    D --> E[Detect login state]
+    E --> F{Still logged in?}
+    F -->|Yes| G[No change]
+    F -->|No| H[Attempt re-auth]
 ```
 
-## Detecting Expired Sessions
+## What Happens When Sessions Expire
 
-Check the Auth Agent status to determine if re-authentication is needed:
+When a session expires, Agent Auth checks if the Auth Agent can automatically re-authenticate:
+
+| Scenario | Outcome |
+|----------|---------|
+| Has credentials + saved selectors | Auto re-auth attempted. If successful, stays `AUTHENTICATED`. |
+| Auto re-auth fails | Status changes to `NEEDS_AUTH` |
+| No credentials or selectors | Status changes to `NEEDS_AUTH` |
+
+### Enabling Auto Re-auth
+
+To enable automatic re-authentication, you need:
+
+1. **Linked credentials** - Stored login values for the target site
+2. **Saved selectors** - Form selectors captured from a previous successful login
+
+See [Credentials](/agents/auth/credentials) for setup details.
+
+### Handling NEEDS_AUTH
+
+When status is `NEEDS_AUTH`, auto re-auth either isn't configured or failed. You'll need to trigger a new login—this is the same flow as initial authentication:
+
+- **[Hosted UI](/agents/auth/hosted-ui)** - Redirect user to complete login
+- **[Auto-Login](/agents/auth/auto-login)** - Fully automated with pre-linked credentials
+
+<Tip>
+Use `save_credential_as` during login to store credentials. This enables automatic re-authentication for future session expirations.
+</Tip>
+
+## Checking Auth Status
+
+Check the `status` and `last_auth_check_at` fields to see current state:
 
 <CodeGroup>
 ```typescript TypeScript
-import Kernel from '@onkernel/sdk';
+const agent = await kernel.agents.auth.retrieve(agentId);
 
-const kernel = new Kernel();
-
-async function checkAndRefreshAuth(agentId: string) {
-  const agent = await kernel.agents.auth.retrieve(agentId);
-
-  console.log('Status:', agent.status);
-  console.log('Last check:', agent.last_auth_check_at);
-
-  if (agent.status === 'NEEDS_AUTH') {
-    console.log('Session expired - re-authentication needed');
-    return await triggerReauth(agent);
-  }
-
-  console.log('Session is valid');
-  return agent;
-}
+console.log('Status:', agent.status);           // AUTHENTICATED or NEEDS_AUTH
+console.log('Last check:', agent.last_auth_check_at);
 ```
 
 ```python Python
-from kernel import Kernel
+agent = await kernel.agents.auth.retrieve(agent_id)
 
-kernel = Kernel()
-
-async def check_and_refresh_auth(agent_id: str):
-    agent = await kernel.agents.auth.retrieve(agent_id)
-
-    print(f"Status: {agent.status}")
-    print(f"Last check: {agent.last_auth_check_at}")
-
-    if agent.status == "NEEDS_AUTH":
-        print("Session expired - re-authentication needed")
-        return await trigger_reauth(agent)
-
-    print("Session is valid")
-    return agent
+print(f"Status: {agent.status}")                # AUTHENTICATED or NEEDS_AUTH
+print(f"Last check: {agent.last_auth_check_at}")
 ```
 </CodeGroup>
-
-**Auth Agent status values:**
 
 | Status | Description |
 |--------|-------------|
 | `AUTHENTICATED` | Session is valid and ready to use |
-| `NEEDS_AUTH` | Session has expired, re-authentication required |
+| `NEEDS_AUTH` | Session expired and auto re-auth failed or isn't configured |
 
-## Triggering Re-authentication
-
-When a session expires, you have two options:
-
-<Tip>
-Check `agent.can_reauth` to determine which option is available. If `true`, automated re-auth is possible. If `false`, you'll need to redirect the user to complete login manually.
-</Tip>
-
-### Option 1: Automated Re-auth (Requires Credentials)
-
-If the Auth Agent has linked credentials and saved selectors, create a new invocation to trigger automated re-auth:
-
-```typescript
-async function triggerReauth(agent) {
-  if (!agent.can_reauth) {
-    console.log('Cannot auto-reauth - manual login required');
-    // Fall back to hosted UI flow
-    return await manualReauth(agent.id);
-  }
-
-  // Create invocation - credentials will be used automatically
-  const invocation = await kernel.agents.auth.invocations.create({
-    auth_agent_id: agent.id,
-  });
-
-  console.log('Re-auth started:', invocation.invocation_id);
-  
-  // Poll for completion
-  return await pollForCompletion(invocation.invocation_id);
-}
-```
-
-### Option 2: Manual Re-auth (Hosted UI)
-
-If credentials aren't stored, redirect the user to complete login:
-
-```typescript
-async function manualReauth(agentId: string) {
-  const invocation = await kernel.agents.auth.invocations.create({
-    auth_agent_id: agentId,
-    save_credential_as: 'my-saved-creds', // Save for future auto-reauth
-  });
-
-  console.log('Redirect user to:', invocation.hosted_url);
-  // User completes login...
-
-  return await pollForCompletion(invocation.invocation_id);
-}
-```
-
-## Polling for Re-auth Completion
-
-After triggering re-auth, poll for completion:
-
-```typescript
-async function pollForCompletion(invocationId: string) {
-  const maxWaitMs = 5 * 60 * 1000; // 5 minutes
-  const startTime = Date.now();
-
-  while (Date.now() - startTime < maxWaitMs) {
-    const status = await kernel.agents.auth.invocations.retrieve(invocationId);
-
-    if (status.status === 'SUCCESS') {
-      console.log('Re-authentication successful!');
-      return { success: true };
-    }
-
-    if (status.status === 'FAILED') {
-      console.log('Re-auth failed:', status.error_message);
-      return { success: false, reason: 'FAILED', error: status.error_message };
-    }
-
-    if (status.status === 'EXPIRED' || status.status === 'CANCELED') {
-      console.log('Re-auth failed:', status.status);
-      return { success: false, reason: status.status };
-    }
-
-    await new Promise(r => setTimeout(r, 2000));
-  }
-
-  return { success: false, reason: 'TIMEOUT' };
-}
-```
-
-## Proactive Session Management
-
-Instead of waiting for automations to fail, proactively check and refresh sessions:
-
-```typescript
-async function ensureAuthenticated(agentId: string) {
-  const agent = await kernel.agents.auth.retrieve(agentId);
-
-  // Already authenticated
-  if (agent.status === 'AUTHENTICATED') {
-    return agent;
-  }
-
-  // Need to re-auth
-  if (agent.can_reauth) {
-    const invocation = await kernel.agents.auth.invocations.create({
-      auth_agent_id: agentId,
-    });
-    await pollForCompletion(invocation.invocation_id);
-  } else {
-    throw new Error('Session expired and cannot auto-reauth');
-  }
-
-  // Return refreshed agent
-  return await kernel.agents.auth.retrieve(agentId);
-}
-
-// Use before running automations
-async function runAutomation(agentId: string, profileName: string) {
-  // Ensure authenticated before starting
-  await ensureAuthenticated(agentId);
-
-  // Create browser with authenticated profile
-  const browser = await kernel.browsers.create({
-    profile: { name: profileName },
-    stealth: true,
-  });
-
-  // Run your automation...
-}
-```
-
-## Monitoring Multiple Auth Agents
-
-For applications with many authenticated sessions, batch-check auth status:
-
-```typescript
-async function checkAllSessions() {
-  const agents = await kernel.agents.auth.list();
-  const needsReauth = [];
-  const canAutoReauth = [];
-  const needsManualReauth = [];
-
-  for (const agent of agents.items) {
-    if (agent.status === 'NEEDS_AUTH') {
-      needsReauth.push(agent);
-      if (agent.can_reauth) {
-        canAutoReauth.push(agent);
-      } else {
-        needsManualReauth.push(agent);
-      }
-    }
-  }
-
-  console.log(`Total agents: ${agents.items.length}`);
-  console.log(`Needs re-auth: ${needsReauth.length}`);
-  console.log(`Can auto-reauth: ${canAutoReauth.length}`);
-  console.log(`Needs manual login: ${needsManualReauth.length}`);
-
-  // Auto-reauth those that can be automated
-  for (const agent of canAutoReauth) {
-    const invocation = await kernel.agents.auth.invocations.create({
-      auth_agent_id: agent.id,
-    });
-    // Optionally poll for completion
-  }
-
-  return { needsManualReauth };
-}
-```
-
-## Complete Example: Robust Session Management
-
-Here's a complete pattern for robust session handling:
-
-```typescript
-import Kernel from '@onkernel/sdk';
-
-const kernel = new Kernel();
-
-class AuthSessionManager {
-  async getAuthenticatedBrowser(
-    agentId: string,
-    profileName: string,
-    options?: { forceRefresh?: boolean }
-  ) {
-    // Check current status
-    let agent = await kernel.agents.auth.retrieve(agentId);
-
-    // Force refresh if requested
-    if (options?.forceRefresh && agent.can_reauth) {
-      await this.triggerReauth(agent);
-      agent = await kernel.agents.auth.retrieve(agentId);
-    }
-
-    // Handle expired sessions
-    if (agent.status === 'NEEDS_AUTH') {
-      if (agent.can_reauth) {
-        await this.triggerReauth(agent);
-        agent = await kernel.agents.auth.retrieve(agentId);
-      } else {
-        throw new AuthRequiredError(
-          'Session expired - manual login required',
-          agentId
-        );
-      }
-    }
-
-    // Verify authentication succeeded
-    if (agent.status !== 'AUTHENTICATED') {
-      throw new AuthFailedError('Authentication failed', agentId);
-    }
-
-    // Create and return authenticated browser
-    return await kernel.browsers.create({
-      profile: { name: profileName },
-      stealth: true,
-    });
-  }
-
-  private async triggerReauth(agent: AuthAgent) {
-    // Create invocation - credentials will be used automatically
-    const invocation = await kernel.agents.auth.invocations.create({
-      auth_agent_id: agent.id,
-    });
-
-    await this.pollForCompletion(invocation.invocation_id);
-  }
-
-  private async pollForCompletion(invocationId: string, timeoutMs = 300000) {
-    const startTime = Date.now();
-
-    while (Date.now() - startTime < timeoutMs) {
-      const status = await kernel.agents.auth.invocations.retrieve(invocationId);
-
-      if (status.status === 'SUCCESS') return;
-      if (status.status === 'FAILED') throw new Error(`Re-auth failed: ${status.error_message}`);
-      if (status.status === 'EXPIRED') throw new Error('Re-auth expired');
-      if (status.status === 'CANCELED') throw new Error('Re-auth canceled');
-
-      await new Promise(r => setTimeout(r, 2000));
-    }
-
-    throw new Error('Re-auth timeout');
-  }
-}
-
-// Custom error types
-class AuthRequiredError extends Error {
-  constructor(message: string, public agentId: string) {
-    super(message);
-    this.name = 'AuthRequiredError';
-  }
-}
-
-class AuthFailedError extends Error {
-  constructor(message: string, public agentId: string) {
-    super(message);
-    this.name = 'AuthFailedError';
-  }
-}
-
-// Usage
-const sessionManager = new AuthSessionManager();
-
-try {
-  const browser = await sessionManager.getAuthenticatedBrowser(
-    'agent_abc123',
-    'my-profile'
-  );
-  // Use the browser...
-} catch (error) {
-  if (error instanceof AuthRequiredError) {
-    // Redirect user to complete login
-    const invocation = await kernel.agents.auth.invocations.create({
-      auth_agent_id: error.agentId,
-    });
-    console.log('Login required:', invocation.hosted_url);
-  } else {
-    throw error;
-  }
-}
-```
-
-## Best Practices
-
-<AccordionGroup>
-  <Accordion title="Check before automation">
-    Always verify auth status before starting long-running automations. This prevents failures mid-workflow and allows you to handle re-authentication before it becomes blocking.
-  </Accordion>
-  <Accordion title="Enable auto-reauth">
-    Store credentials to enable automated re-authentication. When sessions expire, the system can automatically log back in without user intervention.
-  </Accordion>
-  <Accordion title="Handle failures gracefully">
-    Have a fallback to manual login when auto-reauth fails. Some sites may require CAPTCHA or additional verification that can't be automated.
-  </Accordion>
-  <Accordion title="Monitor auth status">
-    Periodically check auth agents to proactively handle expirations. Don't wait for automations to fail—check status and refresh sessions ahead of time.
-  </Accordion>
-  <Accordion title="Log auth events">
-    Track when re-auth happens for debugging and auditing. This helps identify patterns like which sites expire frequently or which users need attention.
-  </Accordion>
-</AccordionGroup>
-
-## Session Check Frequency
+## Check Frequency
 
 <Info>
-Auth checks run approximately **every hour** for authenticated agents. Checks are passive and don't modify the saved profile. Use the `last_auth_check_at` field to see when the last check occurred.
+Auth checks run approximately **every hour** for authenticated agents. Checks are passive and don't modify the saved profile unless re-authentication occurs.
 </Info>
 
 ## Next Steps
 
 <CardGroup cols={2}>
-  <Card title="Credentials" icon="key" href="/agent-auth/credentials">
-    Store credentials to enable auto-reauth
+  <Card title="Credentials" icon="key" href="/agents/auth/credentials">
+    Store credentials to enable auto re-auth
   </Card>
-  <Card title="Overview" icon="book" href="/agent-auth/overview">
-    Review Agent Auth concepts
+  <Card title="Hosted UI" icon="browser" href="/agents/auth/hosted-ui">
+    Handle manual re-authentication
   </Card>
 </CardGroup>
