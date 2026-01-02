@@ -99,6 +99,22 @@
             ]
           },
           {
+            "group": "Agents",
+            "pages": [
+              {
+                "group": "Auth",
+                "pages": [
+                  "agents/auth/overview",
+                  "agents/auth/auto-login",
+                  "agents/auth/hosted-ui",
+                  "agents/auth/programmatic",
+                  "agents/auth/credentials",
+                  "agents/auth/session-monitoring"
+                ]
+              }
+            ]
+          },
+          {
             "group": "App Platform",
             "pages": [
               "apps/develop",
@@ -182,7 +198,8 @@
           "reference/cli/create",
           "reference/cli/auth",
           "reference/cli/browsers",
-          "reference/cli/apps"
+          "reference/cli/apps",
+          "reference/cli/mcp"
         ]
       },
       {

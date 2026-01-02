@@ -29,7 +29,7 @@ table {
   overflow: hidden !important;
   border: 1px solid rgb(var(--gray-950) / 0.1) !important;
   background-color: rgb(249, 250, 251) !important;
-  margin: 1.25rem 0 !important;
+  margin: 0 !important;
   display: table !important;
 }
 
