@@ -214,6 +214,7 @@ const agent = await kernel.agents.auth.create({
 | `domain` | Yes | The domain to authenticate (e.g., `netflix.com`) |
 | `profile_name` | Yes | Name of the profile to store the authenticated session |
 | `login_url` | No | Direct URL to the login page. Providing this speeds up discovery. |
+| `allowed_domains` | No | Additional domains allowed during auth flow (e.g., `['accounts.google.com']` for SSO) |
 | `proxy` | No | Proxy configuration (see [Proxies](/proxies/overview)) |
 
 ### 2. Start an Invocation
@@ -249,10 +250,14 @@ window.location.href = invocation.hosted_url;
 
 The hosted UI will:
 1. Navigate to the target domain
-2. Find and display the login form
-3. Let the user enter credentials
+2. Find and display the login form (including SSO buttons like "Sign in with Google")
+3. Let the user enter credentials or click an SSO button
 4. Handle multi-step auth (2FA, OTP, etc.)
 5. Save the authenticated session to the profile
+
+<Note>
+If the login page has SSO buttons, users can click them directly. For SSO flows that redirect to external domains (e.g., Google, GitHub), include those domains in `allowed_domains` when creating the auth agent.
+</Note>
 
 ### 4. Poll for Completion
 

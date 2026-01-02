@@ -81,6 +81,7 @@ The `step` field tracks where you are in the authentication flow:
 | `discovering` | Navigating to login page, finding fields | Poll and wait |
 | `awaiting_input` | Fields discovered, waiting for credentials | Read `pending_fields`, call submit |
 | `submitting` | Processing submitted credentials | Poll and wait |
+| `awaiting_external_action` | External action required (push notification, security key) | Display `external_action_message` to user, poll until step changes |
 | `completed` | Authentication finished | Check `status` for SUCCESS/FAILED |
 | `expired` | Invocation expired before completion | Create a new invocation |
 
@@ -113,25 +114,39 @@ let state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_
 while (state.status === 'IN_PROGRESS') {
   console.log(`Step: ${state.step}`);
   
-  // Handle awaiting_input - submit credentials
-  if (state.step === 'awaiting_input' && state.pending_fields?.length) {
-    console.log('Fields needed:', state.pending_fields.map(f => f.name));
-    console.log('Already submitted:', state.submitted_fields || []);
+  // Handle awaiting_input - submit credentials or click SSO
+  if (state.step === 'awaiting_input') {
+    // Check for SSO buttons
+    if (state.pending_sso_buttons?.length) {
+      console.log('SSO options:', state.pending_sso_buttons.map(b => b.provider));
+      // User can choose SSO or enter credentials manually
+    }
     
-    // Map credentials to the pending fields
-    const fieldValues = mapCredentialsToFields(state.pending_fields, {
-      email: 'user@example.com',
-      password: 'secretpassword',
-      code: await promptUserForOTP(), // For 2FA fields
-    });
-    
-    // Submit is async - returns immediately
-    await kernel.agents.auth.invocations.submit(
-      invocation.invocation_id,
-      { field_values: fieldValues }
-    );
-    
-    console.log('Submitted, waiting for result...');
+    if (state.pending_fields?.length) {
+      console.log('Fields needed:', state.pending_fields.map(f => f.name));
+      console.log('Already submitted:', state.submitted_fields || []);
+      
+      // Map credentials to the pending fields
+      const fieldValues = mapCredentialsToFields(state.pending_fields, {
+        email: 'user@example.com',
+        password: 'secretpassword',
+        code: await promptUserForOTP(), // For 2FA fields
+      });
+      
+      // Submit is async - returns immediately
+      await kernel.agents.auth.invocations.submit(
+        invocation.invocation_id,
+        { field_values: fieldValues }
+      );
+      
+      console.log('Submitted, waiting for result...');
+    }
+  }
+  
+  // Handle external action (push notification, security key, etc.)
+  if (state.step === 'awaiting_external_action') {
+    console.log('External action required:', state.external_action_message);
+    // Keep polling - user completes action externally
   }
   
   // Poll every 2 seconds
@@ -359,6 +374,91 @@ if (state.step === 'awaiting_input' && state.pending_fields?.length) {
 ```
 
 The `submitted_fields` array tracks what's been successfully submitted across all steps.
+
+### 5. Handle SSO Buttons
+
+When the login page has SSO buttons (e.g., "Continue with Google"), they appear in `pending_sso_buttons`:
+
+```typescript
+state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id);
+
+if (state.step === 'awaiting_input' && state.pending_sso_buttons?.length) {
+  console.log('SSO options available:');
+  for (const button of state.pending_sso_buttons) {
+    console.log(`- ${button.provider}: ${button.label}`);
+    // e.g., "google: Continue with Google"
+  }
+}
+```
+
+**SSO button structure:**
+
+```json
+{
+  "pending_sso_buttons": [
+    {
+      "selector": "xpath=//button[contains(text(), 'Continue with Google')]",
+      "provider": "google",
+      "label": "Continue with Google"
+    },
+    {
+      "selector": "xpath=//button[contains(text(), 'Sign in with GitHub')]",
+      "provider": "github",
+      "label": "Sign in with GitHub"
+    }
+  ]
+}
+```
+
+**Submit an SSO button click** using `sso_button` instead of `field_values`:
+
+```typescript
+// User chose to sign in with Google
+await kernel.agents.auth.invocations.submit(
+  invocation.invocation_id,
+  { sso_button: state.pending_sso_buttons[0].selector }
+);
+```
+
+After clicking the SSO button, the browser redirects to the identity provider. New fields will be discovered on the IdP's login page—continue polling and submit credentials for the IdP.
+
+<Note>
+When using SSO, ensure the IdP domain is in `allowed_domains` on the auth agent (e.g., `allowed_domains: ['accounts.google.com']`).
+</Note>
+
+### 6. Handle External Actions
+
+Some login flows require external user action—like approving a push notification or inserting a security key. When this happens, the step becomes `awaiting_external_action`:
+
+```typescript
+while (state.status === 'IN_PROGRESS') {
+  state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id);
+  
+  if (state.step === 'awaiting_external_action') {
+    // Display the message to your user
+    console.log('External action required:', state.external_action_message);
+    // e.g., "Tap 'Yes' on the Google prompt on your phone"
+    // e.g., "Insert your security key and tap the button"
+    
+    // Keep polling - the step will change when the user completes the action
+  }
+  
+  await sleep(2000);
+}
+```
+
+**Common external action scenarios:**
+
+| Scenario | Example Message |
+|----------|-----------------|
+| Google push notification | "Tap 'Yes' on the Google prompt on your phone" |
+| Security key (FIDO/U2F) | "Insert your security key and tap the button" |
+| Authenticator app approval | "Approve the login request in your authenticator app" |
+| Phone call verification | "Answer the phone call and follow the instructions" |
+
+<Warning>
+External actions require user involvement and cannot be fully automated. For headless flows, prefer TOTP-based 2FA with a stored `totp_secret`.
+</Warning>
 
 ## Building a Custom Login UI
 

@@ -39,7 +39,7 @@ Agent Auth logs users into any website and saves their authenticated browser ses
 
     **Invocation states:**
     - `status`: `IN_PROGRESS` → `SUCCESS` | `EXPIRED` | `CANCELED` | `FAILED`
-    - `step`: `initialized` → `discovering` → `awaiting_input` ⇄ `submitting` → `completed`
+    - `step`: `initialized` → `discovering` → `awaiting_input` ⇄ `submitting` | `awaiting_external_action` → `completed`
   </Step>
   <Step title="User Completes Login">
     {/* TODO: Add image showing the hosted UI login flow */}
@@ -88,6 +88,7 @@ Agent Auth logs users into any website and saves their authenticated browser ses
 The most valuable workflows live behind logins. Agent Auth provides:
 
 - **One API for any login flow** - Automatic form discovery works on any website
+- **SSO/OAuth support** - Automatic handling of "Sign in with Google/GitHub/Microsoft" buttons
 - **2FA/OTP handling** - TOTP automated; SMS/email OTP via Hosted UI or custom UI
 - **Session monitoring** - Hourly checks detect when re-authentication is needed
 - **Security-first design** - Credentials encrypted at rest, never exposed in API responses

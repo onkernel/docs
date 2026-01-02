@@ -233,6 +233,7 @@ async def poll_for_completion(invocation_id: str):
 | `discovering` | Currently discovering login fields |
 | `awaiting_input` | Waiting for input (manual intervention needed) |
 | `submitting` | Currently submitting credentials |
+| `awaiting_external_action` | Waiting for external action (push notification, security key) |
 | `completed` | Login flow finished |
 | `expired` | Invocation expired before completion |
 
@@ -317,6 +318,142 @@ while state.status == "IN_PROGRESS":
 <Warning>
 **2FA handling:** For TOTP-based 2FA, include a `totp_secret` on your credential to enable fully automated code generation. For SMS or email OTP, the flow will pause at `step: 'awaiting_input'` with the OTP field in `pending_fields`, allowing the user to enter the code via your UI.
 </Warning>
+
+## SSO Auto-Login
+
+For sites that support "Sign in with Google/GitHub/Microsoft" buttons, you can automate the entire OAuth flow using the `sso_provider` field on credentials.
+
+### How SSO Auto-Login Works
+
+1. Create a credential with `sso_provider` set to the provider name (e.g., `google`)
+2. The credential `values` should contain the IdP's login fields (email/password for the Google account)
+3. Create an auth agent with `allowed_domains` including the IdP domain
+4. Start an invocation—the workflow automatically clicks the SSO button and completes the OAuth flow
+
+### SSO Example
+
+<CodeGroup>
+```typescript TypeScript
+import Kernel from '@onkernel/sdk';
+
+const kernel = new Kernel();
+
+// 1. Create credential for GitHub SSO
+const credential = await kernel.credentials.create({
+  name: 'my-github-sso',
+  domain: 'example.com',  // The site you're logging into
+  values: {
+    username: 'github-username',
+    password: 'github-password',
+  },
+  sso_provider: 'github',  // Clicks "Continue with GitHub" button
+});
+
+// 2. Create auth agent with GitHub in allowed_domains
+const agent = await kernel.agents.auth.create({
+  domain: 'example.com',
+  profile_name: 'my-profile',
+  credential_name: credential.name,
+  allowed_domains: ['github.com'],  // Required for GitHub SSO
+});
+
+// 3. Start invocation - fully automated
+const invocation = await kernel.agents.auth.invocations.create({
+  auth_agent_id: agent.id,
+});
+
+// 4. Poll for completion
+const result = await pollForCompletion(invocation.invocation_id);
+```
+
+```python Python
+from kernel import Kernel
+
+kernel = Kernel()
+
+# 1. Create credential for GitHub SSO
+credential = await kernel.credentials.create(
+    name="my-github-sso",
+    domain="example.com",
+    values={
+        "username": "github-username",
+        "password": "github-password",
+    },
+    sso_provider="github",
+)
+
+# 2. Create auth agent with GitHub in allowed_domains
+agent = await kernel.agents.auth.create(
+    domain="example.com",
+    profile_name="my-profile",
+    credential_name=credential.name,
+    allowed_domains=["github.com"],
+)
+
+# 3. Start invocation - fully automated
+invocation = await kernel.agents.auth.invocations.create(
+    auth_agent_id=agent.id,
+)
+
+# 4. Poll for completion
+result = await poll_for_completion(invocation.invocation_id)
+```
+</CodeGroup>
+
+<Note>
+The `sso_provider` value should match the provider name in the SSO button (e.g., `google`, `github`, `microsoft`, `okta`). The matching is case-insensitive.
+</Note>
+
+### allowed_domains Requirement
+
+When using SSO, the login redirects to a different domain (e.g., `accounts.google.com`). You must include this domain in `allowed_domains` on the auth agent:
+
+| SSO Provider | Required allowed_domains |
+|--------------|--------------------------|
+| Google | `accounts.google.com`, `google.com` |
+| GitHub | `github.com` |
+| Microsoft | `login.microsoftonline.com`, `microsoft.com` |
+
+## Handling External Actions
+
+Some login flows require external user action—like approving a push notification or inserting a security key. When this happens, the step becomes `awaiting_external_action` and `external_action_message` contains instructions for the user.
+
+<CodeGroup>
+```typescript TypeScript
+while (state.status === 'IN_PROGRESS') {
+  state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id);
+  
+  if (state.step === 'awaiting_external_action') {
+    // Display message to user (e.g., "Tap 'Yes' on the Google prompt on your phone")
+    console.log('Action required:', state.external_action_message);
+    // Keep polling - user completes action externally
+  }
+  
+  await sleep(2000);
+}
+```
+
+```python Python
+while state.status == "IN_PROGRESS":
+    state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id)
+    
+    if state.step == "awaiting_external_action":
+        # Display message to user
+        print(f"Action required: {state.external_action_message}")
+        # Keep polling - user completes action externally
+    
+    await asyncio.sleep(2)
+```
+</CodeGroup>
+
+Common external action scenarios:
+- **Google push notification** - "Tap 'Yes' on the Google prompt on your phone"
+- **Security key** - "Insert your security key and tap the button"
+- **Authenticator app approval** - "Approve the login request in your authenticator app"
+
+<Tip>
+For fully automated flows, prefer TOTP-based 2FA (with `totp_secret`) over push notifications or security keys, as these require no user interaction.
+</Tip>
 
 ## Using Proxies
 
