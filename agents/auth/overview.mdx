@@ -1,15 +1,15 @@
 ---
 title: "Overview"
-description: "Secure authentication system - log users into any website and save authenticated browser sessions"
+description: "Get authenticated browser sessions for your automations"
 ---
 
-Agent Auth logs users into any website and saves their authenticated browser session for future automations—handling form discovery, 2FA/OTP, and session persistence automatically.
+Agent Auth gets authenticated browser sessions for your automations—handling login flows, 2FA/OTP, and session persistence automatically.
 
 ## How It Works
 
 <Steps>
   <Step title="Create an Auth Agent">
-    An **Auth Agent** manages authentication for a specific domain + profile combination. It tracks the target site, login URL, and auth status. Agents are idempotent—creating one for an existing domain/profile returns the existing agent.
+    An **Auth Agent** represents a login session for a specific website and profile. Create one for each domain + profile combination.
 
     ```typescript
     const agent = await kernel.agents.auth.create({
@@ -18,38 +18,31 @@ Agent Auth logs users into any website and saves their authenticated browser ses
     });
     ```
   </Step>
-  <Step title="Start an Invocation">
-    An **Invocation** is a single authentication attempt. Each invocation returns a `hosted_url` where users complete login, or you can use the [programmatic API](/agents/auth/programmatic) to build your own UI.
+  <Step title="Start Authentication">
+    Start the login flow. Users provide credentials via the hosted page (or your own UI).
 
     ```typescript
     const invocation = await kernel.agents.auth.invocations.create({
       auth_agent_id: agent.id,
     });
     
-    // Poll to check if already authenticated
-    const state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id);
+    // Send user to login page
+    console.log('Login URL:', invocation.hosted_url);
+    
+    // Poll until complete
+    let state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id);
+    while (state.status === 'IN_PROGRESS') {
+      await new Promise(r => setTimeout(r, 2000));
+      state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id);
+    }
     
     if (state.status === 'SUCCESS') {
-      console.log('Already authenticated!');
-    } else {
-      // Redirect user to complete login
-      console.log('Login URL:', invocation.hosted_url);
+      console.log('Authenticated!');
     }
     ```
-
-    **Invocation states:**
-    - `status`: `IN_PROGRESS` → `SUCCESS` | `EXPIRED` | `CANCELED` | `FAILED`
-    - `step`: `initialized` → `discovering` → `awaiting_input` ⇄ `submitting` | `awaiting_external_action` → `completed`
   </Step>
-  <Step title="User Completes Login">
-    {/* TODO: Add image showing the hosted UI login flow */}
-    
-    The user enters credentials, handles 2FA/OTP if needed, and the authenticated session is saved to a **Profile**—encrypted browser state (cookies, localStorage) that persists across sessions.
-
-    For fully automated flows, link [Credentials](/agents/auth/credentials) to enable re-authentication without user intervention.
-  </Step>
-  <Step title="Use the Authenticated Profile">
-    Launch a browser with the saved profile—it's already logged in. Profiles work with any Kernel browser operation.
+  <Step title="Use the Profile">
+    Create browsers with the saved profile—they're already logged in.
 
     ```typescript
     const browser = await kernel.browsers.create({
@@ -59,27 +52,22 @@ Agent Auth logs users into any website and saves their authenticated browser ses
     // Browser is logged into Netflix!
     ```
 
-    See [Profiles](/browsers/profiles) to learn more about session persistence.
+    For fully automated flows, link [Credentials](/agents/auth/credentials) to enable re-authentication without user input.
   </Step>
 </Steps>
 
 ## Choose Your Integration
 
-<CardGroup cols={3}>
-  <Card title="Auto-Login" icon="bolt" href="/agents/auth/auto-login">
-    **Best for:** Fully automated flows
+<CardGroup cols={2}>
+  <Card title="Hosted UI (Recommended)" icon="browser" href="/agents/auth/hosted-ui">
+    **Best for:** Most applications
 
-    Credentials are pre-linked. System handles everything automatically.
-  </Card>
-  <Card title="Hosted UI" icon="browser" href="/agents/auth/hosted-ui">
-    **Best for:** User-facing apps
-
-    Redirect users to Kernel's hosted login page.
+    Collect credentials via Kernel's hosted page. Simplest integration.
   </Card>
   <Card title="Programmatic" icon="code" href="/agents/auth/programmatic">
     **Best for:** Custom UI or headless
 
-    Build your own UI with polling and submit APIs.
+    Build your own credential collection with polling and submit APIs.
   </Card>
 </CardGroup>
 
@@ -87,17 +75,17 @@ Agent Auth logs users into any website and saves their authenticated browser ses
 
 The most valuable workflows live behind logins. Agent Auth provides:
 
-- **One API for any login flow** - Automatic form discovery works on any website
-- **SSO/OAuth support** - Automatic handling of "Sign in with Google/GitHub/Microsoft" buttons
-- **2FA/OTP handling** - TOTP automated; SMS/email OTP via Hosted UI or custom UI
-- **Session monitoring** - Hourly checks detect when re-authentication is needed
-- **Security-first design** - Credentials encrypted at rest, never exposed in API responses
+- **Works on any website** - Login pages are handled automatically
+- **SSO/OAuth support** - "Sign in with Google/GitHub/Microsoft" buttons work out of the box
+- **2FA/OTP handling** - TOTP codes automated, SMS/email OTP via the UI
+- **Session monitoring** - Automatic re-authentication when sessions expire
+- **Secure by default** - Credentials encrypted at rest, never exposed in API responses
 
 ## Security
 
 | Feature | Description |
 |---------|-------------|
-| **Encrypted credentials** | Values encrypted at rest with per-organization keys, never stored in plaintext |
-| **No credential exposure** | Credentials submitted programmatically to target sites, never passed to LLMs |
+| **Encrypted credentials** | Values encrypted with per-organization keys |
+| **No credential exposure** | Never returned in API responses or passed to LLMs |
 | **Encrypted profiles** | Browser session state encrypted end-to-end |
-| **Isolated execution** | Each auth flow runs in an isolated browser environment |
+| **Isolated execution** | Each login runs in an isolated browser environment |

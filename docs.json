@@ -99,19 +99,12 @@
             ]
           },
           {
-            "group": "Agents",
+            "group": "Agent Auth",
             "pages": [
-              {
-                "group": "Auth",
-                "pages": [
-                  "agents/auth/overview",
-                  "agents/auth/auto-login",
-                  "agents/auth/hosted-ui",
-                  "agents/auth/programmatic",
-                  "agents/auth/credentials",
-                  "agents/auth/session-monitoring"
-                ]
-              }
+              "agents/auth/overview",
+              "agents/auth/hosted-ui",
+              "agents/auth/programmatic",
+              "agents/auth/credentials"
             ]
           },
           {

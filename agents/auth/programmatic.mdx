@@ -1,91 +1,120 @@
 ---
 title: "Programmatic Flow"
-description: "Build custom authentication UIs with full control using polling and submit APIs"
+description: "Build your own credential collection UI with full control"
 ---
 
-The Programmatic flow gives you complete control over the authentication process. Instead of redirecting users to the hosted UI, you build your own UI and use polling + submit APIs to drive the authentication.
-
-## When to Use Programmatic Flow
+Build your own credential collection UI instead of using the hosted page. Poll for login fields, then submit credentials via the API.
 
 Use the Programmatic flow when:
-- You need a custom authentication UI that matches your app's design
-- You need fine-grained control over each step of the flow
-- You want to build your own credential mapping logic
-
-<Tip>
-**Have credentials stored?** If you just want automated login with pre-linked credentials, [Auto-Login](/agents/auth/auto-login) is simpler—it handles everything automatically. Use Programmatic when you need custom control over each step.
-</Tip>
+- You need a custom credential collection UI that matches your app's design
+- You're building headless/automated authentication
+- You have credentials stored and want to authenticate without user interaction
 
 ## How It Works
 
-The programmatic flow uses a **polling-based state machine**. After creating an invocation, you poll for state changes and respond accordingly:
-
-```
-initialized → discovering → awaiting_input ⇄ submitting → completed
-```
-
 <Steps>
-  <Step title="Create Auth Agent and Invocation">
-    ```typescript
-    const agent = await kernel.agents.auth.create({
-      domain: 'example.com',
-      profile_name: 'my-profile',
-    });
-    const invocation = await kernel.agents.auth.invocations.create({
-      auth_agent_id: agent.id,
-    });
-    ```
+  <Step title="Create Auth Agent and Start Authentication">
+    Same as [Hosted UI](/agents/auth/hosted-ui)
   </Step>
-  <Step title="Poll Until Fields Are Discovered">
-    ```typescript
-    let state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id);
-    while (state.status === 'IN_PROGRESS' && state.step !== 'awaiting_input') {
-      await sleep(2000);
-      state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id);
-    }
-    // state.pending_fields contains the form fields
-    ```
+  <Step title="Wait for Login Fields">
+    Poll until `step` becomes `awaiting_input`
   </Step>
   <Step title="Submit Credentials">
-    ```typescript
-    // Submit is async - returns immediately
-    await kernel.agents.auth.invocations.submit(
-      invocation.invocation_id,
-      { field_values: { email: 'user@example.com', password: 'secret' } }
-    );
-    ```
+    Call `submit()` with the field values
   </Step>
-  <Step title="Poll for Result">
-    ```typescript
-    // Poll until complete
-    while (state.status === 'IN_PROGRESS') {
-      await sleep(2000);
-      state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id);
-      
-      if (state.step === 'awaiting_input' && state.pending_fields?.length) {
-        // New fields needed (e.g., 2FA) - submit again
-      }
-    }
-    // state.status is now SUCCESS, FAILED, EXPIRED, or CANCELED
-    ```
+  <Step title="Handle 2FA">
+    If more fields appear (2FA code), submit again
   </Step>
 </Steps>
 
-## Invocation State Machine
+## Getting started
 
-The `step` field tracks where you are in the authentication flow:
+### 1. Create an Auth Agent
 
-| Step | Description | What to Do |
-|------|-------------|------------|
-| `initialized` | Invocation just created | Wait for discovery |
-| `discovering` | Navigating to login page, finding fields | Poll and wait |
-| `awaiting_input` | Fields discovered, waiting for credentials | Read `pending_fields`, call submit |
-| `submitting` | Processing submitted credentials | Poll and wait |
-| `awaiting_external_action` | External action required (push notification, security key) | Display `external_action_message` to user, poll until step changes |
-| `completed` | Authentication finished | Check `status` for SUCCESS/FAILED |
-| `expired` | Invocation expired before completion | Create a new invocation |
+```typescript
+const agent = await kernel.agents.auth.create({
+  domain: 'github.com',
+  profile_name: 'github-profile',
+});
+```
 
-The `pending_fields` array shows which fields are currently needed. The `submitted_fields` array shows which fields have been successfully submitted.
+### 2. Start Authentication
+
+```typescript
+const invocation = await kernel.agents.auth.invocations.create({
+  auth_agent_id: agent.id,
+});
+```
+
+To save credentials for automatic re-authentication:
+
+```typescript
+const invocation = await kernel.agents.auth.invocations.create({
+  auth_agent_id: agent.id,
+  save_credential_as: 'my-saved-creds',
+});
+```
+
+### 3. Wait for Login Fields
+
+Poll until the login fields are ready:
+
+```typescript
+let state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id);
+
+while (state.status === 'IN_PROGRESS' && state.step !== 'awaiting_input') {
+  await new Promise(r => setTimeout(r, 2000));
+  state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id);
+}
+
+// state.pending_fields contains the login form fields
+console.log('Fields:', state.pending_fields);
+```
+
+### 4. Submit Credentials
+
+Match your credentials to the field names and submit:
+
+```typescript
+// Example pending_fields: [{ name: 'username', type: 'text' }, { name: 'password', type: 'password' }]
+
+await kernel.agents.auth.invocations.submit(
+  invocation.invocation_id,
+  { 
+    field_values: { 
+      username: 'my-username', 
+      password: 'my-password' 
+    } 
+  }
+);
+```
+
+### 5. Handle 2FA
+
+If the site asks for a 2FA code, `step` returns to `awaiting_input` with new fields:
+
+```typescript
+state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id);
+
+while (state.status === 'IN_PROGRESS') {
+  if (state.step === 'awaiting_input' && state.pending_fields?.length) {
+    // New fields needed (e.g., 2FA code)
+    const code = await promptUserForCode();
+    
+    await kernel.agents.auth.invocations.submit(
+      invocation.invocation_id,
+      { field_values: { [state.pending_fields[0].name]: code } }
+    );
+  }
+  
+  await new Promise(r => setTimeout(r, 2000));
+  state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id);
+}
+
+if (state.status === 'SUCCESS') {
+  console.log('Authentication successful!');
+}
+```
 
 ## Complete Example
 
@@ -95,97 +124,56 @@ import Kernel from '@onkernel/sdk';
 
 const kernel = new Kernel();
 
-// Helper function
-const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
-
-// Step 1: Create Auth Agent and Invocation
+// Create auth agent
 const agent = await kernel.agents.auth.create({
-  domain: 'example.com',
-  profile_name: 'my-profile',
+  domain: 'github.com',
+  profile_name: 'github-profile',
 });
 
 const invocation = await kernel.agents.auth.invocations.create({
   auth_agent_id: agent.id,
 });
 
-// Step 2: Poll until complete
+// Wait for fields
 let state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id);
 
-while (state.status === 'IN_PROGRESS') {
-  console.log(`Step: ${state.step}`);
-  
-  // Handle awaiting_input - submit credentials or click SSO
-  if (state.step === 'awaiting_input') {
-    // Check for SSO buttons
-    if (state.pending_sso_buttons?.length) {
-      console.log('SSO options:', state.pending_sso_buttons.map(b => b.provider));
-      // User can choose SSO or enter credentials manually
-    }
-    
-    if (state.pending_fields?.length) {
-      console.log('Fields needed:', state.pending_fields.map(f => f.name));
-      console.log('Already submitted:', state.submitted_fields || []);
-      
-      // Map credentials to the pending fields
-      const fieldValues = mapCredentialsToFields(state.pending_fields, {
-        email: 'user@example.com',
-        password: 'secretpassword',
-        code: await promptUserForOTP(), // For 2FA fields
-      });
-      
-      // Submit is async - returns immediately
-      await kernel.agents.auth.invocations.submit(
-        invocation.invocation_id,
-        { field_values: fieldValues }
-      );
-      
-      console.log('Submitted, waiting for result...');
-    }
-  }
-  
-  // Handle external action (push notification, security key, etc.)
-  if (state.step === 'awaiting_external_action') {
-    console.log('External action required:', state.external_action_message);
-    // Keep polling - user completes action externally
-  }
-  
-  // Poll every 2 seconds
-  await sleep(2000);
+while (state.status === 'IN_PROGRESS' && state.step !== 'awaiting_input') {
+  await new Promise(r => setTimeout(r, 2000));
   state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id);
 }
 
-// Check final result
-if (state.status === 'SUCCESS') {
-  console.log('Authentication successful!');
-  console.log('Submitted fields:', state.submitted_fields);
-} else if (state.status === 'FAILED') {
-  console.error('Login failed:', state.error_message);
-}
-
-// Helper function to map credentials to discovered fields
-function mapCredentialsToFields(
-  fields: Array<{ name: string; type: string; label?: string }>,
-  credentials: Record<string, string>
-): Record<string, string> {
-  const fieldValues: Record<string, string> = {};
-
-  for (const field of fields) {
-    const name = field.name.toLowerCase();
-    const type = field.type.toLowerCase();
-    const label = (field.label || '').toLowerCase();
-
-    if (type === 'email' || name.includes('email') || label.includes('email')) {
-      fieldValues[field.name] = credentials.email || '';
-    } else if (type === 'password' || name.includes('password')) {
-      fieldValues[field.name] = credentials.password || '';
-    } else if (type === 'totp' || type === 'code' || name.includes('code') || name.includes('otp')) {
-      fieldValues[field.name] = credentials.code || '';
-    } else if (name.includes('username')) {
-      fieldValues[field.name] = credentials.email || credentials.username || '';
+if (state.step === 'awaiting_input' && state.pending_fields) {
+  // Submit credentials
+  await kernel.agents.auth.invocations.submit(
+    invocation.invocation_id,
+    { 
+      field_values: { 
+        username: 'my-username', 
+        password: 'secretpassword' 
+      } 
     }
+  );
+
+  // Poll for completion, handle 2FA if needed
+  state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id);
+  
+  while (state.status === 'IN_PROGRESS') {
+    if (state.step === 'awaiting_input' && state.pending_fields?.length) {
+      // 2FA required
+      const code = await promptUserForCode();
+      await kernel.agents.auth.invocations.submit(
+        invocation.invocation_id,
+        { field_values: { [state.pending_fields[0].name]: code } }
+      );
+    }
+
+    await new Promise(r => setTimeout(r, 2000));
+    state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id);
   }
 
-  return fieldValues;
+  if (state.status === 'SUCCESS') {
+    console.log('Authentication successful!');
+  }
 }
 ```
 
@@ -195,375 +183,49 @@ import asyncio
 
 kernel = Kernel()
 
-# Step 1: Create Auth Agent and Invocation
+# Create auth agent
 agent = await kernel.agents.auth.create(
-    domain="example.com",
-    profile_name="my-profile",
+    domain="github.com",
+    profile_name="github-profile",
 )
 
 invocation = await kernel.agents.auth.invocations.create(
     auth_agent_id=agent.id,
 )
 
-# Step 2: Poll until complete
+# Wait for fields
 state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id)
 
-while state.status == "IN_PROGRESS":
-    print(f"Step: {state.step}")
-    
-    # Handle awaiting_input - submit credentials
-    if state.step == "awaiting_input" and state.pending_fields:
-        print(f"Fields needed: {[f.name for f in state.pending_fields]}")
-        print(f"Already submitted: {state.submitted_fields or []}")
-        
-        # Map credentials to the pending fields
-        field_values = map_credentials_to_fields(
-            state.pending_fields,
-            {
-                "email": "user@example.com",
-                "password": "secretpassword",
-                "code": input("Enter 2FA code: ") if any(f.type == "totp" for f in state.pending_fields) else "",
-            },
-        )
-        
-        # Submit is async - returns immediately
-        await kernel.agents.auth.invocations.submit(
-            invocation.invocation_id,
-            field_values=field_values,
-        )
-        
-        print("Submitted, waiting for result...")
-    
-    # Poll every 2 seconds
+while state.status == "IN_PROGRESS" and state.step != "awaiting_input":
     await asyncio.sleep(2)
     state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id)
 
-# Check final result
-if state.status == "SUCCESS":
-    print("Authentication successful!")
-    print(f"Submitted fields: {state.submitted_fields}")
-elif state.status == "FAILED":
-    print(f"Login failed: {state.error_message}")
+if state.step == "awaiting_input" and state.pending_fields:
+    # Submit credentials
+    await kernel.agents.auth.invocations.submit(
+        invocation.invocation_id,
+        field_values={
+            "username": "my-username",
+            "password": "my-password",
+        },
+    )
 
+    # Poll for completion, handle 2FA if needed
+    state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id)
+    
+    while state.status == "IN_PROGRESS":
+        if state.step == "awaiting_input" and state.pending_fields:
+            # 2FA required
+            code = input("Enter 2FA code: ")
+            await kernel.agents.auth.invocations.submit(
+                invocation.invocation_id,
+                field_values={state.pending_fields[0].name: code},
+            )
 
-def map_credentials_to_fields(fields, credentials):
-    field_values = {}
-    for field in fields:
-        name = field.name.lower()
-        field_type = field.type.lower()
-        label = (field.label or "").lower()
+        await asyncio.sleep(2)
+        state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id)
 
-        if field_type == "email" or "email" in name or "email" in label:
-            field_values[field.name] = credentials.get("email", "")
-        elif field_type == "password" or "password" in name:
-            field_values[field.name] = credentials.get("password", "")
-        elif field_type == "totp" or field_type == "code" or "code" in name or "otp" in name:
-            field_values[field.name] = credentials.get("code", "")
-        elif "username" in name:
-            field_values[field.name] = credentials.get("email") or credentials.get("username", "")
-
-    return field_values
+    if state.status == "SUCCESS":
+        print("Authentication successful!")
 ```
 </CodeGroup>
-
-## Step-by-Step Breakdown
-
-### 1. Poll for Login Fields
-
-After creating an invocation, poll until `step` becomes `awaiting_input`:
-
-```typescript
-let state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id);
-
-while (state.status === 'IN_PROGRESS' && state.step !== 'awaiting_input') {
-  await sleep(2000);
-  state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id);
-}
-
-console.log('Pending fields:', state.pending_fields);
-```
-
-**Response when `step === 'awaiting_input'`:**
-
-```json
-{
-  "status": "IN_PROGRESS",
-  "step": "awaiting_input",
-  "pending_fields": [
-    {
-      "name": "email",
-      "type": "email",
-      "label": "Email Address",
-      "placeholder": "Enter your email",
-      "required": true,
-      "selector": "//input[@id='email']"
-    },
-    {
-      "name": "password",
-      "type": "password",
-      "label": "Password",
-      "required": true,
-      "selector": "//input[@id='password']"
-    }
-  ],
-  "submitted_fields": null
-}
-```
-
-### 2. Map Credentials to Fields
-
-Use the `name` from each pending field as the key when submitting:
-
-```typescript
-const fieldValues = {
-  'email': 'user@example.com',     // field.name → value
-  'password': 'secretpassword'
-};
-```
-
-**Field type reference:**
-
-| Type | Description | Example Values |
-|------|-------------|----------------|
-| `text` | Generic text input | Username, name |
-| `email` | Email address | user@example.com |
-| `password` | Password (masked) | ••••••••• |
-| `tel` | Phone number | +1-555-0123 |
-| `number` | Numeric input | 12345 |
-| `url` | URL input | https://example.com |
-| `code` | Verification code | 123456 |
-| `totp` | TOTP/Authenticator code | 123456 |
-
-### 3. Submit Credentials
-
-Submit is **async** - it returns immediately with `{ accepted: true }`. Poll to see the result:
-
-```typescript
-// Submit returns immediately
-await kernel.agents.auth.invocations.submit(
-  invocation.invocation_id,
-  { field_values: fieldValues }
-);
-
-// Poll to see the result
-let state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id);
-console.log('Step after submit:', state.step); // 'submitting' → 'awaiting_input' or 'completed'
-```
-
-### 4. Handle Multi-Step Auth (2FA)
-
-When additional authentication is needed (e.g., 2FA), the step goes back to `awaiting_input` with new `pending_fields`:
-
-```typescript
-// After submitting email/password...
-state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id);
-
-if (state.step === 'awaiting_input' && state.pending_fields?.length) {
-  console.log('Additional auth needed:', state.pending_fields);
-  // pending_fields might contain: [{ name: 'totp', type: 'totp', label: 'Verification Code' }]
-  
-  console.log('Already submitted:', state.submitted_fields);
-  // submitted_fields: ['email', 'password']
-  
-  // Submit the 2FA code
-  await kernel.agents.auth.invocations.submit(
-    invocation.invocation_id,
-    { field_values: { totp: '123456' } }
-  );
-}
-```
-
-The `submitted_fields` array tracks what's been successfully submitted across all steps.
-
-### 5. Handle SSO Buttons
-
-When the login page has SSO buttons (e.g., "Continue with Google"), they appear in `pending_sso_buttons`:
-
-```typescript
-state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id);
-
-if (state.step === 'awaiting_input' && state.pending_sso_buttons?.length) {
-  console.log('SSO options available:');
-  for (const button of state.pending_sso_buttons) {
-    console.log(`- ${button.provider}: ${button.label}`);
-    // e.g., "google: Continue with Google"
-  }
-}
-```
-
-**SSO button structure:**
-
-```json
-{
-  "pending_sso_buttons": [
-    {
-      "selector": "xpath=//button[contains(text(), 'Continue with Google')]",
-      "provider": "google",
-      "label": "Continue with Google"
-    },
-    {
-      "selector": "xpath=//button[contains(text(), 'Sign in with GitHub')]",
-      "provider": "github",
-      "label": "Sign in with GitHub"
-    }
-  ]
-}
-```
-
-**Submit an SSO button click** using `sso_button` instead of `field_values`:
-
-```typescript
-// User chose to sign in with Google
-await kernel.agents.auth.invocations.submit(
-  invocation.invocation_id,
-  { sso_button: state.pending_sso_buttons[0].selector }
-);
-```
-
-After clicking the SSO button, the browser redirects to the identity provider. New fields will be discovered on the IdP's login page—continue polling and submit credentials for the IdP.
-
-<Note>
-When using SSO, ensure the IdP domain is in `allowed_domains` on the auth agent (e.g., `allowed_domains: ['accounts.google.com']`).
-</Note>
-
-### 6. Handle External Actions
-
-Some login flows require external user action—like approving a push notification or inserting a security key. When this happens, the step becomes `awaiting_external_action`:
-
-```typescript
-while (state.status === 'IN_PROGRESS') {
-  state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id);
-  
-  if (state.step === 'awaiting_external_action') {
-    // Display the message to your user
-    console.log('External action required:', state.external_action_message);
-    // e.g., "Tap 'Yes' on the Google prompt on your phone"
-    // e.g., "Insert your security key and tap the button"
-    
-    // Keep polling - the step will change when the user completes the action
-  }
-  
-  await sleep(2000);
-}
-```
-
-**Common external action scenarios:**
-
-| Scenario | Example Message |
-|----------|-----------------|
-| Google push notification | "Tap 'Yes' on the Google prompt on your phone" |
-| Security key (FIDO/U2F) | "Insert your security key and tap the button" |
-| Authenticator app approval | "Approve the login request in your authenticator app" |
-| Phone call verification | "Answer the phone call and follow the instructions" |
-
-<Warning>
-External actions require user involvement and cannot be fully automated. For headless flows, prefer TOTP-based 2FA with a stored `totp_secret`.
-</Warning>
-
-## Building a Custom Login UI
-
-Here's an example of rendering pending fields in a React component:
-
-```tsx
-function LoginForm({ pendingFields, submittedFields, onSubmit }) {
-  const [values, setValues] = useState<Record<string, string>>({});
-
-  return (
-    <form onSubmit={(e) => {
-      e.preventDefault();
-      onSubmit(values);
-    }}>
-      {submittedFields?.length > 0 && (
-        <p>✓ Submitted: {submittedFields.join(', ')}</p>
-      )}
-      
-      {pendingFields.map((field) => (
-        <div key={field.name}>
-          <label>{field.label}</label>
-          <input
-            type={field.type}
-            name={field.name}
-            placeholder={field.placeholder}
-            required={field.required}
-            value={values[field.name] || ''}
-            onChange={(e) => setValues({
-              ...values,
-              [field.name]: e.target.value
-            })}
-          />
-        </div>
-      ))}
-      <button type="submit">
-        {pendingFields.some(f => f.type === 'totp') ? 'Verify' : 'Sign In'}
-      </button>
-    </form>
-  );
-}
-```
-
-## Saving Credentials During Programmatic Flow
-
-You can save credentials during the invocation for future automated re-auth:
-
-```typescript
-const invocation = await kernel.agents.auth.invocations.create({
-  auth_agent_id: agent.id,
-  save_credential_as: 'my-login-creds', // Credentials will be saved
-});
-
-// ... complete the programmatic flow ...
-// Credentials are automatically saved when login succeeds
-```
-
-<Note>
-TOTP/2FA codes are **not saved** to credentials since they're one-time codes. Only persistent credentials (email, password, etc.) are saved.
-</Note>
-
-See [Credentials](/agents/auth/credentials) for details on pre-storing credentials.
-
-## Error Handling
-
-```typescript
-try {
-  const state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id);
-  
-  // Check for terminal states
-  if (state.status === 'FAILED') {
-    console.error('Login failed:', state.error_message);
-  } else if (state.status === 'EXPIRED') {
-    console.error('Invocation expired');
-  } else if (state.status === 'CANCELED') {
-    console.error('Invocation was canceled');
-  }
-  
-  // Submit errors
-  await kernel.agents.auth.invocations.submit(invocation.invocation_id, { field_values });
-} catch (error) {
-  if (error.status === 400 && error.code === 'submit_in_progress') {
-    // A submit is already being processed - just keep polling
-    console.log('Submit already in progress, waiting...');
-  } else if (error.status === 404) {
-    console.error('Invocation not found or expired');
-  } else {
-    console.error('Unexpected error:', error.message);
-  }
-}
-```
-
-## Security Considerations
-
-- Credentials submitted via `submit()` are sent directly to the target site
-- Credentials are never logged or stored in plaintext
-- TOTP codes are not saved to credentials (they're one-time)
-- The browser session is isolated and destroyed after the invocation completes
-
-## Next Steps
-
-<CardGroup cols={2}>
-  <Card title="Credentials" icon="key" href="/agents/auth/credentials">
-    Pre-store credentials for fully automated auth
-  </Card>
-  <Card title="Session Monitoring" icon="clock" href="/agents/auth/session-monitoring">
-    Keep sessions alive automatically
-  </Card>
-</CardGroup>
