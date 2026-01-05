@@ -16,39 +16,72 @@ Use the Hosted UI when:
 
 An Auth Agent represents a login session for a specific website and profile.
 
-```typescript
+<CodeGroup>
+```typescript TypeScript
 const agent = await kernel.agents.auth.create({
   domain: 'linkedin.com',
   profile_name: 'linkedin-profile',
 });
 ```
 
+```python Python
+agent = await kernel.agents.auth.create(
+    domain="linkedin.com",
+    profile_name="linkedin-profile",
+)
+```
+</CodeGroup>
+
 ### 2. Start Authentication
 
 Create an invocation to get the hosted login URL.
 
-```typescript
+<CodeGroup>
+```typescript TypeScript
 const invocation = await kernel.agents.auth.invocations.create({
   auth_agent_id: agent.id,
 });
 ```
 
+```python Python
+invocation = await kernel.agents.auth.invocations.create(
+    auth_agent_id=agent.id,
+)
+```
+</CodeGroup>
+
 To enable automatic re-authentication when sessions expire, add `save_credential_as`:
 
-```typescript
+<CodeGroup>
+```typescript TypeScript
 const invocation = await kernel.agents.auth.invocations.create({
   auth_agent_id: agent.id,
   save_credential_as: 'my-saved-creds',
 });
 ```
 
+```python Python
+invocation = await kernel.agents.auth.invocations.create(
+    auth_agent_id=agent.id,
+    save_credential_as="my-saved-creds",
+)
+```
+</CodeGroup>
+
 ### 3. Collect Credentials
 
 Send the user to the hosted login page:
 
-```typescript
+<CodeGroup>
+```typescript TypeScript
 window.location.href = invocation.hosted_url;
 ```
+
+```python Python
+# Return the URL to your frontend
+print(f"Redirect to: {invocation.hosted_url}")
+```
+</CodeGroup>
 
 The user will:
 1. See the login page for the target website
@@ -59,7 +92,8 @@ The user will:
 
 On your backend, poll until authentication completes:
 
-```typescript
+<CodeGroup>
+```typescript TypeScript
 let state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id);
 
 while (state.status === 'IN_PROGRESS') {
@@ -72,6 +106,18 @@ if (state.status === 'SUCCESS') {
 }
 ```
 
+```python Python
+state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id)
+
+while state.status == "IN_PROGRESS":
+    await asyncio.sleep(2)
+    state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id)
+
+if state.status == "SUCCESS":
+    print("Authentication successful!")
+```
+</CodeGroup>
+
 <Info>
 Poll every 2 seconds. The session expires after 5 minutes if not completed.
 </Info>
@@ -80,20 +126,23 @@ Poll every 2 seconds. The session expires after 5 minutes if not completed.
 
 Create browsers with the profile—they're already logged in:
 
-```typescript
+<CodeGroup>
+```typescript TypeScript
 const browser = await kernel.browsers.create({
   profile: { name: 'linkedin-profile' },
   stealth: true,
 });
-
-// Connect with Playwright
-import { chromium } from 'playwright';
-const playwrightBrowser = await chromium.connectOverCDP(browser.cdp_ws_url);
-const page = playwrightBrowser.contexts()[0].pages()[0];
-
-// Navigate - already logged in!
-await page.goto('https://linkedin.com/feed');
+// Browser is logged into LinkedIn!
 ```
+
+```python Python
+browser = await kernel.browsers.create(
+    profile={"name": "linkedin-profile"},
+    stealth=True,
+)
+# Browser is logged into LinkedIn!
+```
+</CodeGroup>
 
 <Info>
 Use `stealth: true` when creating browsers for authenticated sessions.
@@ -135,8 +184,7 @@ if (state.status === 'SUCCESS') {
     profile: { name: 'doordash-user-123' },
     stealth: true,
   });
-
-  console.log('Browser ready:', browser.cdp_ws_url);
+  // Browser is logged into DoorDash!
 }
 ```
 
@@ -172,7 +220,6 @@ if state.status == "SUCCESS":
         profile={"name": "doordash-user-123"},
         stealth=True,
     )
-
-    print(f"Browser ready: {browser.cdp_ws_url}")
+    # Browser is logged into DoorDash!
 ```
 </CodeGroup>

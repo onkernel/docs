@@ -16,14 +16,11 @@ Use the Programmatic flow when:
   <Step title="Create Auth Agent and Start Authentication">
     Same as [Hosted UI](/agents/auth/hosted-ui)
   </Step>
-  <Step title="Wait for Login Fields">
-    Poll until `step` becomes `awaiting_input`
-  </Step>
-  <Step title="Submit Credentials">
-    Call `submit()` with the field values
+  <Step title="Poll and Submit">
+    Poll until `step` becomes `awaiting_input`, then submit credentials
   </Step>
   <Step title="Handle 2FA">
-    If more fields appear (2FA code), submit again
+    If more fields appear (2FA code), submit again—same loop handles it
   </Step>
 </Steps>
 
@@ -31,79 +28,71 @@ Use the Programmatic flow when:
 
 ### 1. Create an Auth Agent
 
-```typescript
+<CodeGroup>
+```typescript TypeScript
 const agent = await kernel.agents.auth.create({
   domain: 'github.com',
   profile_name: 'github-profile',
 });
 ```
 
+```python Python
+agent = await kernel.agents.auth.create(
+    domain="github.com",
+    profile_name="github-profile",
+)
+```
+</CodeGroup>
+
 ### 2. Start Authentication
 
-```typescript
+<CodeGroup>
+```typescript TypeScript
 const invocation = await kernel.agents.auth.invocations.create({
   auth_agent_id: agent.id,
 });
 ```
 
+```python Python
+invocation = await kernel.agents.auth.invocations.create(
+    auth_agent_id=agent.id,
+)
+```
+</CodeGroup>
+
 To save credentials for automatic re-authentication:
 
-```typescript
+<CodeGroup>
+```typescript TypeScript
 const invocation = await kernel.agents.auth.invocations.create({
   auth_agent_id: agent.id,
   save_credential_as: 'my-saved-creds',
 });
 ```
 
-### 3. Wait for Login Fields
+```python Python
+invocation = await kernel.agents.auth.invocations.create(
+    auth_agent_id=agent.id,
+    save_credential_as="my-saved-creds",
+)
+```
+</CodeGroup>
 
-Poll until the login fields are ready:
+### 3. Poll and Submit Credentials
 
-```typescript
+A single loop handles everything—initial login, 2FA, and completion:
+
+<CodeGroup>
+```typescript TypeScript
 let state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id);
 
-while (state.status === 'IN_PROGRESS' && state.step !== 'awaiting_input') {
-  await new Promise(r => setTimeout(r, 2000));
-  state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id);
-}
-
-// state.pending_fields contains the login form fields
-console.log('Fields:', state.pending_fields);
-```
-
-### 4. Submit Credentials
-
-Match your credentials to the field names and submit:
-
-```typescript
-// Example pending_fields: [{ name: 'username', type: 'text' }, { name: 'password', type: 'password' }]
-
-await kernel.agents.auth.invocations.submit(
-  invocation.invocation_id,
-  { 
-    field_values: { 
-      username: 'my-username', 
-      password: 'my-password' 
-    } 
-  }
-);
-```
-
-### 5. Handle 2FA
-
-If the site asks for a 2FA code, `step` returns to `awaiting_input` with new fields:
-
-```typescript
-state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id);
-
 while (state.status === 'IN_PROGRESS') {
+  // Submit when fields are ready (login or 2FA)
   if (state.step === 'awaiting_input' && state.pending_fields?.length) {
-    // New fields needed (e.g., 2FA code)
-    const code = await promptUserForCode();
-    
+    const fieldValues = getCredentialsForFields(state.pending_fields);
     await kernel.agents.auth.invocations.submit(
       invocation.invocation_id,
-      { field_values: { [state.pending_fields[0].name]: code } }
+      { field_values: fieldValues }
     );
   }
   
@@ -114,6 +103,36 @@ while (state.status === 'IN_PROGRESS') {
 if (state.status === 'SUCCESS') {
   console.log('Authentication successful!');
 }
+```
+
+```python Python
+state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id)
+
+while state.status == "IN_PROGRESS":
+    # Submit when fields are ready (login or 2FA)
+    if state.step == "awaiting_input" and state.pending_fields:
+        field_values = get_credentials_for_fields(state.pending_fields)
+        await kernel.agents.auth.invocations.submit(
+            invocation.invocation_id,
+            field_values=field_values,
+        )
+    
+    await asyncio.sleep(2)
+    state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id)
+
+if state.status == "SUCCESS":
+    print("Authentication successful!")
+```
+</CodeGroup>
+
+The `pending_fields` array tells you what the login form needs:
+
+```typescript
+// Example pending_fields for login
+[{ name: 'username', type: 'text' }, { name: 'password', type: 'password' }]
+
+// Example pending_fields for 2FA
+[{ name: 'otp', type: 'code' }]
 ```
 
 ## Complete Example
@@ -134,46 +153,42 @@ const invocation = await kernel.agents.auth.invocations.create({
   auth_agent_id: agent.id,
 });
 
-// Wait for fields
+// Single polling loop handles login + 2FA
 let state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id);
 
-while (state.status === 'IN_PROGRESS' && state.step !== 'awaiting_input') {
-  await new Promise(r => setTimeout(r, 2000));
-  state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id);
-}
-
-if (state.step === 'awaiting_input' && state.pending_fields) {
-  // Submit credentials
-  await kernel.agents.auth.invocations.submit(
-    invocation.invocation_id,
-    { 
-      field_values: { 
-        username: 'my-username', 
-        password: 'secretpassword' 
-      } 
-    }
-  );
-
-  // Poll for completion, handle 2FA if needed
-  state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id);
-  
-  while (state.status === 'IN_PROGRESS') {
-    if (state.step === 'awaiting_input' && state.pending_fields?.length) {
-      // 2FA required
+while (state.status === 'IN_PROGRESS') {
+  if (state.step === 'awaiting_input' && state.pending_fields?.length) {
+    // Check what fields are needed
+    const fieldNames = state.pending_fields.map(f => f.name);
+    
+    if (fieldNames.includes('username')) {
+      // Initial login
+      await kernel.agents.auth.invocations.submit(
+        invocation.invocation_id,
+        { field_values: { username: 'my-username', password: 'my-password' } }
+      );
+    } else {
+      // 2FA or additional fields
       const code = await promptUserForCode();
       await kernel.agents.auth.invocations.submit(
         invocation.invocation_id,
         { field_values: { [state.pending_fields[0].name]: code } }
       );
     }
-
-    await new Promise(r => setTimeout(r, 2000));
-    state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id);
   }
 
-  if (state.status === 'SUCCESS') {
-    console.log('Authentication successful!');
-  }
+  await new Promise(r => setTimeout(r, 2000));
+  state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id);
+}
+
+if (state.status === 'SUCCESS') {
+  console.log('Authentication successful!');
+  
+  const browser = await kernel.browsers.create({
+    profile: { name: 'github-profile' },
+    stealth: true,
+  });
+  // Browser is logged into GitHub!
 }
 ```
 
@@ -193,39 +208,38 @@ invocation = await kernel.agents.auth.invocations.create(
     auth_agent_id=agent.id,
 )
 
-# Wait for fields
+# Single polling loop handles login + 2FA
 state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id)
 
-while state.status == "IN_PROGRESS" and state.step != "awaiting_input":
+while state.status == "IN_PROGRESS":
+    if state.step == "awaiting_input" and state.pending_fields:
+        # Check what fields are needed
+        field_names = [f["name"] for f in state.pending_fields]
+        
+        if "username" in field_names:
+            # Initial login
+            await kernel.agents.auth.invocations.submit(
+                invocation.invocation_id,
+                field_values={"username": "my-username", "password": "my-password"},
+            )
+        else:
+            # 2FA or additional fields
+            code = input("Enter code: ")
+            await kernel.agents.auth.invocations.submit(
+                invocation.invocation_id,
+                field_values={state.pending_fields[0]["name"]: code},
+            )
+
     await asyncio.sleep(2)
     state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id)
 
-if state.step == "awaiting_input" and state.pending_fields:
-    # Submit credentials
-    await kernel.agents.auth.invocations.submit(
-        invocation.invocation_id,
-        field_values={
-            "username": "my-username",
-            "password": "my-password",
-        },
-    )
-
-    # Poll for completion, handle 2FA if needed
-    state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id)
+if state.status == "SUCCESS":
+    print("Authentication successful!")
     
-    while state.status == "IN_PROGRESS":
-        if state.step == "awaiting_input" and state.pending_fields:
-            # 2FA required
-            code = input("Enter 2FA code: ")
-            await kernel.agents.auth.invocations.submit(
-                invocation.invocation_id,
-                field_values={state.pending_fields[0].name: code},
-            )
-
-        await asyncio.sleep(2)
-        state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id)
-
-    if state.status == "SUCCESS":
-        print("Authentication successful!")
+    browser = await kernel.browsers.create(
+        profile={"name": "github-profile"},
+        stealth=True,
+    )
+    # Browser is logged into GitHub!
 ```
 </CodeGroup>

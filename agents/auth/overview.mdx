@@ -11,46 +11,85 @@ Agent Auth gets authenticated browser sessions for your automations—handling l
   <Step title="Create an Auth Agent">
     An **Auth Agent** represents a login session for a specific website and profile. Create one for each domain + profile combination.
 
-    ```typescript
-    const agent = await kernel.agents.auth.create({
-      domain: 'netflix.com',
-      profile_name: 'netflix-user-123',
-    });
-    ```
+<CodeGroup>
+```typescript TypeScript
+const agent = await kernel.agents.auth.create({
+  domain: 'netflix.com',
+  profile_name: 'netflix-user-123',
+});
+```
+
+```python Python
+agent = await kernel.agents.auth.create(
+    domain="netflix.com",
+    profile_name="netflix-user-123",
+)
+```
+</CodeGroup>
   </Step>
   <Step title="Start Authentication">
     Start the login flow. Users provide credentials via the hosted page (or your own UI).
 
-    ```typescript
-    const invocation = await kernel.agents.auth.invocations.create({
-      auth_agent_id: agent.id,
-    });
-    
-    // Send user to login page
-    console.log('Login URL:', invocation.hosted_url);
-    
-    // Poll until complete
-    let state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id);
-    while (state.status === 'IN_PROGRESS') {
-      await new Promise(r => setTimeout(r, 2000));
-      state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id);
-    }
-    
-    if (state.status === 'SUCCESS') {
-      console.log('Authenticated!');
-    }
-    ```
+<CodeGroup>
+```typescript TypeScript
+const invocation = await kernel.agents.auth.invocations.create({
+  auth_agent_id: agent.id,
+});
+
+// Send user to login page
+console.log('Login URL:', invocation.hosted_url);
+
+// Poll until complete
+let state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id);
+while (state.status === 'IN_PROGRESS') {
+  await new Promise(r => setTimeout(r, 2000));
+  state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id);
+}
+
+if (state.status === 'SUCCESS') {
+  console.log('Authenticated!');
+}
+```
+
+```python Python
+invocation = await kernel.agents.auth.invocations.create(
+    auth_agent_id=agent.id,
+)
+
+# Send user to login page
+print(f"Login URL: {invocation.hosted_url}")
+
+# Poll until complete
+state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id)
+while state.status == "IN_PROGRESS":
+    await asyncio.sleep(2)
+    state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id)
+
+if state.status == "SUCCESS":
+    print("Authenticated!")
+```
+</CodeGroup>
   </Step>
   <Step title="Use the Profile">
     Create browsers with the saved profile—they're already logged in.
 
-    ```typescript
-    const browser = await kernel.browsers.create({
-      profile: { name: 'netflix-user-123' },
-      stealth: true,
-    });
-    // Browser is logged into Netflix!
-    ```
+<CodeGroup>
+```typescript TypeScript
+const browser = await kernel.browsers.create({
+  profile: { name: 'netflix-user-123' },
+  stealth: true,
+});
+// Browser is logged into Netflix!
+```
+
+```python Python
+browser = await kernel.browsers.create(
+    profile={"name": "netflix-user-123"},
+    stealth=True,
+)
+# Browser is logged into Netflix!
+```
+</CodeGroup>
 
     For fully automated flows, link [Credentials](/agents/auth/credentials) to enable re-authentication without user input.
   </Step>
