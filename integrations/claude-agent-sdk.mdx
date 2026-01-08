@@ -2,98 +2,145 @@
 title: "Claude Agent SDK"
 ---
 
-The [Claude for Chrome extension](https://chromewebstore.google.com/detail/claude/hbhbdkfkmpfgjfegglflhflgjpojgnll) brings Claude's powerful AI capabilities directly into your browser. With Kernel's Claude Agent SDK integration, you can run the Claude extension in cloud-hosted browsers, enabling automated interactions with Claude without managing local browser infrastructure.
+The [Claude Agent SDK](https://platform.claude.com/docs/en/agent-sdk/overview) provides a powerful way to build AI agents that can autonomously perform tasks. By integrating the Claude Agent SDK with Kernel, you can create agents that browse the web and interact with websites using cloud-hosted browser infrastructure.
 
-By integrating the Claude Agent SDK with Kernel, you can programmatically send messages to Claude, receive responses, and build AI-powered automations that leverage Claude's capabilities in the browser.
+This integration combines Claude's agent capabilities with Kernel's Playwright Execution API to enable browser automation without managing local browser infrastructure.
 
 ## Quick setup with Claude Agent SDK
 
-Get started with the Claude Agent SDK using the Kernel CLI:
-
-### Step 1: Extract the extension from your local Chrome
-
-First, extract the Claude extension and authentication data from your local Chrome installation:
+Get started with Claude Agent SDK and Kernel using our pre-configured app template:
 
 ```bash
-# Extract extension + auth data to a bundle file
-kernel claude extract -o claude-bundle.zip
-
-# Extract without auth (will require login in browser)
-kernel claude extract -o claude-bundle.zip --no-auth
-
-# Use a specific Chrome profile
-kernel claude extract -o claude-bundle.zip --chrome-profile "Profile 1"
+kernel create --name my-claude-agent-app --template claude-agent-sdk
 ```
 
-### Step 2: Launch a Kernel browser with Claude pre-loaded
+Choose `TypeScript` or `Python` as the programming language.
 
-Launch a cloud browser with the Claude extension automatically loaded and authenticated:
+Then follow the [Quickstart guide](/quickstart/) to deploy and run your Claude Agent SDK automation on Kernel's infrastructure.
+
+## Prerequisites
+
+### Claude Code Installation
+
+The Claude Agent SDK requires Claude Code to be installed. Follow the [official installation guide](https://platform.claude.com/docs/en/agent-sdk/overview#get-started):
 
 ```bash
-# Launch browser with Claude extension
-kernel claude launch -b claude-bundle.zip
-
-# Launch with custom timeout
-kernel claude launch -b claude-bundle.zip -t 7200
-
-# Launch and navigate to a specific URL
-kernel claude launch -b claude-bundle.zip --url https://example.com
+# macOS/Linux/WSL
+curl -fsSL https://claude.ai/install.sh | bash
 ```
 
-### Step 3: Interact with Claude
+<Note>
+When deploying to Kernel, the app automatically installs Claude Code on the remote infrastructure.
+</Note>
 
-Once your browser is running, you can interact with Claude programmatically:
+### API Keys
+
+You'll need:
+- **ANTHROPIC_API_KEY**: Get from the [Anthropic Console](https://console.anthropic.com/)
+- **KERNEL_API_KEY**: Get from the [Kernel Dashboard](https://dashboard.kernel.sh/api-keys)
+
+## Running locally
+
+<Tabs>
+<Tab title="TypeScript">
+```bash
+# Install dependencies
+pnpm install
+
+# Set up environment variables
+cp .env.example .env
+# Edit .env with your API keys
+
+# Run with default task
+pnpm exec tsx index.ts
+
+# Run with custom task
+pnpm exec tsx index.ts "Go to duckduckgo.com and search for 'Kernel browser automation'"
+```
+</Tab>
+<Tab title="Python">
+```bash
+# Install dependencies
+uv sync
+
+# Set up environment variables
+cp .env.example .env
+# Edit .env with your API keys
+
+# Run with default task
+uv run main.py
+
+# Run with custom task
+uv run main.py "Go to duckduckgo.com and search for 'Kernel browser automation'"
+```
+</Tab>
+</Tabs>
+
+## Deploying to Kernel
+
+Deploy and invoke the app on Kernel's infrastructure:
+
+<Tabs>
+<Tab title="TypeScript">
+```bash
+# Login to Kernel
+kernel login
+
+# Deploy the app with environment variables
+kernel deploy index.ts --env-file .env
+
+# Invoke the action (logs stream automatically)
+kernel invoke ts-claude-agent-sdk agent-task -p '{"task": "Go to https://news.ycombinator.com and get the top 3 stories"}'
+```
+</Tab>
+<Tab title="Python">
+```bash
+# Login to Kernel
+kernel login
+
+# Deploy the app with environment variables
+kernel deploy main.py --env-file .env
+
+# Invoke the action (logs stream automatically)
+kernel invoke py-claude-agent-sdk agent-task -p '{"task": "Go to https://news.ycombinator.com and get the top 3 stories"}'
+```
+</Tab>
+</Tabs>
+
+## How it works
+
+1. **Browser Creation**: A Kernel browser session is created with stealth mode enabled
+2. **MCP Server**: An in-process MCP server is created with an `execute_playwright` tool
+3. **Agent Execution**: The Claude Agent SDK runs with access to the Playwright tool
+4. **Task Completion**: Claude autonomously uses the tool to complete the given task
+5. **Cleanup**: The browser session is deleted when done
+
+## Example tasks
 
 ```bash
-# Check extension status
-kernel claude status <browser-id>
+# Get top Hacker News stories
+"Go to https://news.ycombinator.com and tell me the top 3 stories"
 
-# Send a single message (scriptable)
-kernel claude send <browser-id> "What is 2+2?"
+# Search for something
+"Go to duckduckgo.com and search for 'Kernel browser automation'"
 
-# Send from stdin
-echo "Explain this error" | kernel claude send <browser-id>
-
-# Send from file
-kernel claude send <browser-id> -f prompt.txt
-
-# Interactive chat TUI
-kernel claude chat <browser-id>
+# Extract data from a page
+"Go to https://github.com/trending and list the top 5 trending repositories"
 ```
-
-### Loading into an existing browser
-
-You can also load the Claude extension into an existing Kernel browser session:
-
-```bash
-# Load Claude into an existing browser session
-kernel claude load <browser-id> -b claude-bundle.zip
-```
-
-## Available commands
-
-| Command | Description |
-|---------|-------------|
-| `kernel claude extract` | Extract the Claude extension and authentication data from a local Chrome installation |
-| `kernel claude launch` | Launch a new Kernel browser with the extension pre-loaded and authenticated |
-| `kernel claude load` | Load the extension into an existing Kernel browser |
-| `kernel claude status` | Check the extension's state in a browser |
-| `kernel claude send` | Send single messages programmatically (scriptable) |
-| `kernel claude chat` | Interactive chat with Claude via a TUI |
 
 ## Benefits of using Kernel with Claude Agent SDK
 
-- **No local browser management**: Run Claude automations without installing or maintaining browsers locally
-- **Authenticated sessions**: Extract and reuse your Claude authentication across cloud browsers
-- **Scriptable interactions**: Send messages and receive responses programmatically for automation workflows
-- **Interactive chat**: Use the built-in TUI for interactive conversations with Claude
+- **No local browser management**: Run Claude Agent SDK automations without installing or maintaining browsers locally
 - **Scalability**: Launch multiple browser sessions in parallel for concurrent AI agents
+- **Stealth mode**: Built-in anti-detection features for reliable web interactions
+- **Session state**: Maintain browser state across runs via [Profiles](/browsers/profiles)
 - **Live view**: Debug your Claude agents with real-time browser viewing
-- **Cloud infrastructure**: Run AI-powered automations without local resource constraints
+- **Cloud infrastructure**: Run computationally intensive AI agents without local resource constraints
 
 ## Next steps
 
-- Check out [live view](/browsers/live-view) for debugging your Claude automations
-- Learn about [browser extensions](/browsers/extensions) for loading custom extensions
+- Check out [live view](/browsers/live-view) for debugging your Claude Agent SDK automations
+- Learn about [stealth mode](/browsers/bot-detection/stealth) for avoiding detection
+- Learn about [Playwright Execution](/browsers/playwright-execution) for running Playwright code in the browser VM
 - Learn how to properly [terminate browser sessions](/browsers/termination)
-- Learn about [profiles](/browsers/profiles) to maintain browser state across runs
+- Learn how to [deploy](/apps/deploy) your Claude Agent SDK app to Kernel
