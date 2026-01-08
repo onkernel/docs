@@ -115,6 +115,7 @@
             "pages": [
               "integrations/overview",
               "integrations/browser-use",
+              "integrations/claude-agent-sdk",
               {
                 "group": "Computer Use",
                 "pages": [

@@ -1,0 +1,99 @@
+---
+title: "Claude Agent SDK"
+---
+
+The [Claude for Chrome extension](https://chromewebstore.google.com/detail/claude/hbhbdkfkmpfgjfegglflhflgjpojgnll) brings Claude's powerful AI capabilities directly into your browser. With Kernel's Claude Agent SDK integration, you can run the Claude extension in cloud-hosted browsers, enabling automated interactions with Claude without managing local browser infrastructure.
+
+By integrating the Claude Agent SDK with Kernel, you can programmatically send messages to Claude, receive responses, and build AI-powered automations that leverage Claude's capabilities in the browser.
+
+## Quick setup with Claude Agent SDK
+
+Get started with the Claude Agent SDK using the Kernel CLI:
+
+### Step 1: Extract the extension from your local Chrome
+
+First, extract the Claude extension and authentication data from your local Chrome installation:
+
+```bash
+# Extract extension + auth data to a bundle file
+kernel claude extract -o claude-bundle.zip
+
+# Extract without auth (will require login in browser)
+kernel claude extract -o claude-bundle.zip --no-auth
+
+# Use a specific Chrome profile
+kernel claude extract -o claude-bundle.zip --chrome-profile "Profile 1"
+```
+
+### Step 2: Launch a Kernel browser with Claude pre-loaded
+
+Launch a cloud browser with the Claude extension automatically loaded and authenticated:
+
+```bash
+# Launch browser with Claude extension
+kernel claude launch -b claude-bundle.zip
+
+# Launch with custom timeout
+kernel claude launch -b claude-bundle.zip -t 7200
+
+# Launch and navigate to a specific URL
+kernel claude launch -b claude-bundle.zip --url https://example.com
+```
+
+### Step 3: Interact with Claude
+
+Once your browser is running, you can interact with Claude programmatically:
+
+```bash
+# Check extension status
+kernel claude status <browser-id>
+
+# Send a single message (scriptable)
+kernel claude send <browser-id> "What is 2+2?"
+
+# Send from stdin
+echo "Explain this error" | kernel claude send <browser-id>
+
+# Send from file
+kernel claude send <browser-id> -f prompt.txt
+
+# Interactive chat TUI
+kernel claude chat <browser-id>
+```
+
+### Loading into an existing browser
+
+You can also load the Claude extension into an existing Kernel browser session:
+
+```bash
+# Load Claude into an existing browser session
+kernel claude load <browser-id> -b claude-bundle.zip
+```
+
+## Available commands
+
+| Command | Description |
+|---------|-------------|
+| `kernel claude extract` | Extract the Claude extension and authentication data from a local Chrome installation |
+| `kernel claude launch` | Launch a new Kernel browser with the extension pre-loaded and authenticated |
+| `kernel claude load` | Load the extension into an existing Kernel browser |
+| `kernel claude status` | Check the extension's state in a browser |
+| `kernel claude send` | Send single messages programmatically (scriptable) |
+| `kernel claude chat` | Interactive chat with Claude via a TUI |
+
+## Benefits of using Kernel with Claude Agent SDK
+
+- **No local browser management**: Run Claude automations without installing or maintaining browsers locally
+- **Authenticated sessions**: Extract and reuse your Claude authentication across cloud browsers
+- **Scriptable interactions**: Send messages and receive responses programmatically for automation workflows
+- **Interactive chat**: Use the built-in TUI for interactive conversations with Claude
+- **Scalability**: Launch multiple browser sessions in parallel for concurrent AI agents
+- **Live view**: Debug your Claude agents with real-time browser viewing
+- **Cloud infrastructure**: Run AI-powered automations without local resource constraints
+
+## Next steps
+
+- Check out [live view](/browsers/live-view) for debugging your Claude automations
+- Learn about [browser extensions](/browsers/extensions) for loading custom extensions
+- Learn how to properly [terminate browser sessions](/browsers/termination)
+- Learn about [profiles](/browsers/profiles) to maintain browser state across runs
