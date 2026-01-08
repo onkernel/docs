@@ -64,6 +64,23 @@ kernel invoke my-app action-name --payload '{"key":"value"}'
 - `--no-color` - Disable color output
 - `--log-level <level>` - Set the log level (trace, debug, info, warn, error, fatal, print)
 
+## JSON Output
+
+Many commands support `--output json` (or `-o json`) for machine-readable output, useful for scripting and automation:
+
+```bash
+# Get browser session as JSON
+kernel browsers create -o json
+
+# List apps as JSON array
+kernel app list -o json
+
+# Deploy with JSONL streaming (one JSON object per line)
+kernel deploy index.ts -o json
+```
+
+See individual command documentation for JSON output availability.
+
 <Info>
 Looking for the API? See the [API Reference](/api-reference/invocations/invoke-an-action).
 </Info>
