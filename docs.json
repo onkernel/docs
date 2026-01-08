@@ -154,7 +154,8 @@
                   "integrations/vercel/ai-sdk",
                   "integrations/vercel/marketplace"
                 ]
-              }
+              },
+              "integrations/web-bot-auth"
             ]
           },
           {

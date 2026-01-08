@@ -1,0 +1,110 @@
+---
+title: "Web Bot Auth"
+---
+
+Cloudflare's [web-bot-auth](https://github.com/cloudflare/web-bot-auth) extension adds HTTP Message Signatures to browser requests, providing cryptographic proof of browser authenticity. This is particularly useful for bypassing bot detection systems that support this authentication method.
+
+## Quick Start
+
+**1. Prepare the extension:**
+
+```bash
+kernel extensions prepare-web-bot-auth --output ./my-web-bot-auth
+```
+
+Output:
+```
+✓ Web-bot-auth extension prepared successfully!
+
+Extension ID: <extension-id>
+Output directory: ./my-web-bot-auth
+```
+
+**3. Upload the extension to Kernel:**
+
+```bash
+kernel extensions upload ./my-web-bot-auth --name <extension-id>
+```
+
+<Info>
+Use the extension ID as the name to ensure consistency with the generated policy files.
+</Info>
+
+**3. Use in a browsers:**
+
+<CodeGroup>
+```typescript Typescript/Javascript
+import { Kernel } from '@onkernel/sdk';
+
+const kernel = new Kernel();
+const browser = await kernel.browsers.create({
+    extensions: [{ name: "<extension-id>" }],
+});
+
+// The extension is now active and signing requests
+console.log('Browser created:', browser.session_id);
+```
+
+```python Python
+from kernel import Kernel
+
+kernel = Kernel()
+browser = kernel.browsers.create(
+    extensions=[{"name": "<extension-id>"}]
+)
+
+# The extension is now active and signing requests
+print(f"Browser created: {browser.session_id}")
+```
+
+```bash CLI
+kernel browsers create --extension <extension-id>
+```
+</CodeGroup>
+
+<Info>
+The `<extension-id>` is different than the name. Extension ID can be retrieved from `kernel extensions list` command.
+</Info>
+
+## Configuration Options
+
+The `prepare-web-bot-auth` command options:
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--output` | `./web-bot-auth` | Output directory for the prepared extension |
+| `--url` | `http://127.0.0.1:10001` | Base URL for extension updates |
+
+## Understanding the Build Process
+
+### Extension signing
+
+When you run `prepare-web-bot-auth`, it generates a `private_key.pem` file. This key:
+- Determines the extension's unique ID
+- Must be kept secure
+- Should be reused for updates to maintain the same extension ID
+
+<Warning>
+Keep `private_key.pem` secure. Anyone with this key can create extensions with the same ID.
+</Warning>
+
+### What's in the output directory
+
+The generated `my-web-bot-auth` directory contains:
+
+```
+my-web-bot-auth
+├── manifest.json              # Extension manifest
+├── background.mjs             # Extension code
+├── update.xml                 # Update manifest for Chrome
+├── http-message-signatures-extension.crx  # Signed extension package
+└── private_key.pem                        # Private key not uploaded to Kernel
+```
+
+## References
+
+- [Cloudflare web-bot-auth Repository](https://github.com/cloudflare/web-bot-auth)
+- [HTTP Message Signatures RFC 9421](https://datatracker.ietf.org/doc/html/rfc9421)
+- [Chrome Enterprise Policy Documentation](https://chromeenterprise.google/policies/)
+- [Chrome webRequest API](https://developer.chrome.com/docs/extensions/reference/api/webRequest)
+- [Kernel Extensions Documentation](/browsers/extensions)
