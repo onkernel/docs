@@ -41,9 +41,8 @@ You'll need:
 
 ## Running locally
 
-<Tabs>
-<Tab title="TypeScript">
-```bash
+<CodeGroup>
+```bash TypeScript
 # Install dependencies
 pnpm install
 
@@ -57,9 +56,8 @@ pnpm exec tsx index.ts
 # Run with custom task
 pnpm exec tsx index.ts "Go to duckduckgo.com and search for 'Kernel browser automation'"
 ```
-</Tab>
-<Tab title="Python">
-```bash
+
+```bash Python
 # Install dependencies
 uv sync
 
@@ -73,16 +71,14 @@ uv run main.py
 # Run with custom task
 uv run main.py "Go to duckduckgo.com and search for 'Kernel browser automation'"
 ```
-</Tab>
-</Tabs>
+</CodeGroup>
 
 ## Deploying to Kernel
 
 Deploy and invoke the app on Kernel's infrastructure:
 
-<Tabs>
-<Tab title="TypeScript">
-```bash
+<CodeGroup>
+```bash TypeScript
 # Login to Kernel
 kernel login
 
@@ -92,9 +88,8 @@ kernel deploy index.ts --env-file .env
 # Invoke the action (logs stream automatically)
 kernel invoke ts-claude-agent-sdk agent-task -p '{"task": "Go to https://news.ycombinator.com and get the top 3 stories"}'
 ```
-</Tab>
-<Tab title="Python">
-```bash
+
+```bash Python
 # Login to Kernel
 kernel login
 
@@ -104,8 +99,7 @@ kernel deploy main.py --env-file .env
 # Invoke the action (logs stream automatically)
 kernel invoke py-claude-agent-sdk agent-task -p '{"task": "Go to https://news.ycombinator.com and get the top 3 stories"}'
 ```
-</Tab>
-</Tabs>
+</CodeGroup>
 
 ## How it works
 
