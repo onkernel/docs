@@ -104,115 +104,29 @@ After downloading, you can upload the extension to Kernel:
 kernel extensions upload ./my-extension --name my-extension
 ```
 
-## Preparing Enterprise Extensions
+### `kernel extensions build-web-bot-auth`
+Build Cloudflare's [Web Bot Auth](/integrations/web-bot-auth) browser extension for signing HTTP requests with RFC 9421 signatures.
 
-### `kernel extensions prepare-web-bot-auth`
+| Flag | Description |
+|------|-------------|
+| `--to <dir>` | Output directory for the built extension (required). |
+| `--key <path>` | Path to JWK file with Ed25519 signing key (defaults to RFC9421 test key). |
+| `--upload` | Upload the extension to Kernel after building. |
+| `--name <name>` | Extension name when uploading (default: `web-bot-auth`). |
 
-Download, build, and prepare the Cloudflare web-bot-auth extension with Kernel-specific configurations. This command creates a complete extension package ready to upload to Kernel.
-
-The web-bot-auth extension adds HTTP Message Signatures to browser requests, providing cryptographic proof of browser authenticity. It requires enterprise policies due to its use of the `webRequestBlocking` permission.
-
-| Flag | Default | Description |
-|------|---------|-------------|
-| `--output <path>` | `./web-bot-auth` | Output directory for the prepared extension. |
-| `--url <url>` | `http://127.0.0.1:10001` | Base URL for extension updates and policy configuration. |
-| `--version <version>` | `main` | GitHub branch or tag to download. |
-
-**Prerequisites:**
-- Node.js and npm must be installed on your system
-- Internet connection to download from GitHub
-
-**What this command does:**
-
-1. **Downloads** the latest web-bot-auth source from GitHub
-2. **Modifies** configuration files to work with Kernel's infrastructure
-3. **Builds** the extension using npm
-4. **Signs** the extension with a stable extension ID using a generated private key
-5. **Creates** a zip file ready to upload to Kernel
-
-**Output files:**
-
-- Extension directory with all source files
-- `web-bot-auth.zip` - Ready to upload to Kernel
-- `private_key.pem` - Signing key (keep secure!)
-- `update.xml` - Chrome update manifest
-- `.crx` file - Signed extension package
-- Policy files for reference
-
-**Example:**
+**Examples:**
 
 ```bash
-# Prepare with defaults
-kernel extensions prepare-web-bot-auth
+# Build with default test key
+kernel extensions build-web-bot-auth --to ./web-bot-auth-ext
 
-# Prepare with custom output directory
-kernel extensions prepare-web-bot-auth --output ./my-web-bot-auth
+# Build with custom key and upload
+kernel extensions build-web-bot-auth --to ./web-bot-auth-ext --key ./my-key.jwk --upload
 
-# Prepare specific version
-kernel extensions prepare-web-bot-auth --version v1.0.0
-```
-
-**Output:**
-
-```
-✓ Web-bot-auth extension prepared successfully!
-
-Extension ID: gilochgnhkffnkiiaooiedhngaiflfho
-Output directory: ./web-bot-auth
-Zip file: ./web-bot-auth/web-bot-auth.zip
-
-Next steps:
-1. Upload: kernel extensions upload ./web-bot-auth/web-bot-auth.zip --name gilochgnhkffnkiiaooiedhngaiflfho
-2. Use in browsers: kernel browsers create --extension gilochgnhkffnkiiaooiedhngaiflfho
-```
-
-**Next steps after preparation:**
-
-1. **Upload the extension:**
-
-```bash
-kernel extensions upload ./web-bot-auth/web-bot-auth.zip --name <extension-id>
+# Build with custom name
+kernel extensions build-web-bot-auth --to ./web-bot-auth-ext --upload --name <extension-name>
 ```
 
 <Info>
-Use the extension ID shown in the output as the name. This ensures consistency with the generated policy files.
+This command requires Node.js and npm to be installed on your system.
 </Info>
-
-2. **Use in browsers:**
-
-<CodeGroup>
-```typescript Typescript/Javascript
-import { Kernel } from '@onkernel/sdk';
-
-const kernel = new Kernel();
-const browser = await kernel.browsers.create({
-    extensions: [{ name: "gilochgnhkffnkiiaooiedhngaiflfho" }]
-});
-```
-
-```python Python
-from kernel import Kernel
-
-kernel = Kernel()
-browser = kernel.browsers.create(
-    extensions=[{"name": "gilochgnhkffnkiiaooiedhngaiflfho"}]
-)
-```
-
-```bash CLI
-kernel browsers create --extension gilochgnhkffnkiiaooiedhngaiflfho
-```
-</CodeGroup>
-
-<Warning>
-Keep your `private_key.pem` file secure! Anyone with access to this key can create extensions with the same extension ID. Store it safely if you need to rebuild or update the extension in the future.
-</Warning>
-
-**How it works:**
-
-The kernel-images server automatically serves the extension's update files at `http://127.0.0.1:10001/extensions/{extension-id}/update.xml`. Chrome uses this URL to install the extension via the `ExtensionInstallForcelist` policy. No additional HTTP server or manual configuration is needed.
-
-**For more information:**
-
-- [Web Bot Authentication integration guide](/integrations/web-bot-auth) - Detailed guide with examples
-- [Extensions requiring enterprise policies](/browsers/extensions#uploading-extensions-requiring-enterprise-policies) - General information about enterprise extensions

@@ -202,7 +202,8 @@
           "reference/cli/create",
           "reference/cli/auth",
           "reference/cli/browsers",
-          "reference/cli/apps"
+          "reference/cli/apps",
+          "reference/cli/extensions"
         ]
       },
       {
