@@ -1,0 +1,218 @@
+---
+title: "Extensions"
+---
+
+Manage browser extensions for use with Kernel browsers.
+
+## Extension Management
+
+### `kernel extensions list`
+
+List all extensions in your organization.
+
+**Output includes:**
+- Extension ID
+- Name (if assigned)
+- Created date
+- Size in bytes
+- Last used date
+
+**Example:**
+
+```bash
+kernel extensions list
+```
+
+### `kernel extensions upload <directory>`
+
+Upload an unpacked browser extension directory or zip file.
+
+| Flag | Description |
+|------|-------------|
+| `--name <name>` | Optional unique name for the extension. Must be unique within your organization. |
+
+**Example:**
+
+```bash
+# Upload with auto-generated ID
+kernel extensions upload ./my-extension
+
+# Upload with custom name
+kernel extensions upload ./my-extension --name my-custom-extension
+```
+
+<Info>
+Extensions requiring enterprise policies must include `update.xml` and `.crx` files. See [Extensions requiring enterprise policies](/browsers/extensions#uploading-extensions-requiring-enterprise-policies) for details.
+</Info>
+
+### `kernel extensions download <id-or-name>`
+
+Download an extension archive by ID or name.
+
+| Flag | Description |
+|------|-------------|
+| `--to <path>` | Output path for the downloaded zip file. |
+
+**Example:**
+
+```bash
+# Download to current directory
+kernel extensions download my-extension
+
+# Download to specific path
+kernel extensions download my-extension --to ./downloads/extension.zip
+```
+
+### `kernel extensions delete <id-or-name>`
+
+Delete an extension by ID or name.
+
+| Flag | Description |
+|------|-------------|
+| `--yes`, `-y` | Skip confirmation prompt. |
+
+**Example:**
+
+```bash
+# Delete with confirmation
+kernel extensions delete my-extension
+
+# Delete without confirmation
+kernel extensions delete my-extension --yes
+```
+
+### `kernel extensions download-web-store <url>`
+
+Download and unpack an extension directly from the Chrome Web Store.
+
+| Flag | Description |
+|------|-------------|
+| `--to <path>` | Output directory for the unpacked extension. |
+| `--os <platform>` | Target OS: `mac`, `win`, or `linux` (default: `linux`). |
+
+**Example:**
+
+```bash
+kernel extensions download-web-store \
+  https://chromewebstore.google.com/detail/extension-id \
+  --to ./my-extension
+```
+
+After downloading, you can upload the extension to Kernel:
+
+```bash
+kernel extensions upload ./my-extension --name my-extension
+```
+
+## Preparing Enterprise Extensions
+
+### `kernel extensions prepare-web-bot-auth`
+
+Download, build, and prepare the Cloudflare web-bot-auth extension with Kernel-specific configurations. This command creates a complete extension package ready to upload to Kernel.
+
+The web-bot-auth extension adds HTTP Message Signatures to browser requests, providing cryptographic proof of browser authenticity. It requires enterprise policies due to its use of the `webRequestBlocking` permission.
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--output <path>` | `./web-bot-auth` | Output directory for the prepared extension. |
+| `--url <url>` | `http://127.0.0.1:10001` | Base URL for extension updates and policy configuration. |
+| `--version <version>` | `main` | GitHub branch or tag to download. |
+
+**Prerequisites:**
+- Node.js and npm must be installed on your system
+- Internet connection to download from GitHub
+
+**What this command does:**
+
+1. **Downloads** the latest web-bot-auth source from GitHub
+2. **Modifies** configuration files to work with Kernel's infrastructure
+3. **Builds** the extension using npm
+4. **Signs** the extension with a stable extension ID using a generated private key
+5. **Creates** a zip file ready to upload to Kernel
+
+**Output files:**
+
+- Extension directory with all source files
+- `web-bot-auth.zip` - Ready to upload to Kernel
+- `private_key.pem` - Signing key (keep secure!)
+- `update.xml` - Chrome update manifest
+- `.crx` file - Signed extension package
+- Policy files for reference
+
+**Example:**
+
+```bash
+# Prepare with defaults
+kernel extensions prepare-web-bot-auth
+
+# Prepare with custom output directory
+kernel extensions prepare-web-bot-auth --output ./my-web-bot-auth
+
+# Prepare specific version
+kernel extensions prepare-web-bot-auth --version v1.0.0
+```
+
+**Output:**
+
+```
+✓ Web-bot-auth extension prepared successfully!
+
+Extension ID: gilochgnhkffnkiiaooiedhngaiflfho
+Output directory: ./web-bot-auth
+Zip file: ./web-bot-auth/web-bot-auth.zip
+
+Next steps:
+1. Upload: kernel extensions upload ./web-bot-auth/web-bot-auth.zip --name gilochgnhkffnkiiaooiedhngaiflfho
+2. Use in browsers: kernel browsers create --extension gilochgnhkffnkiiaooiedhngaiflfho
+```
+
+**Next steps after preparation:**
+
+1. **Upload the extension:**
+
+```bash
+kernel extensions upload ./web-bot-auth/web-bot-auth.zip --name <extension-id>
+```
+
+<Info>
+Use the extension ID shown in the output as the name. This ensures consistency with the generated policy files.
+</Info>
+
+2. **Use in browsers:**
+
+<CodeGroup>
+```typescript Typescript/Javascript
+import { Kernel } from '@onkernel/sdk';
+
+const kernel = new Kernel();
+const browser = await kernel.browsers.create({
+    extensions: [{ name: "gilochgnhkffnkiiaooiedhngaiflfho" }]
+});
+```
+
+```python Python
+from kernel import Kernel
+
+kernel = Kernel()
+browser = kernel.browsers.create(
+    extensions=[{"name": "gilochgnhkffnkiiaooiedhngaiflfho"}]
+)
+```
+
+```bash CLI
+kernel browsers create --extension gilochgnhkffnkiiaooiedhngaiflfho
+```
+</CodeGroup>
+
+<Warning>
+Keep your `private_key.pem` file secure! Anyone with access to this key can create extensions with the same extension ID. Store it safely if you need to rebuild or update the extension in the future.
+</Warning>
+
+**How it works:**
+
+The kernel-images server automatically serves the extension's update files at `http://127.0.0.1:10001/extensions/{extension-id}/update.xml`. Chrome uses this URL to install the extension via the `ExtensionInstallForcelist` policy. No additional HTTP server or manual configuration is needed.
+
+**For more information:**
+
+- [Web Bot Authentication integration guide](/integrations/web-bot-auth) - Detailed guide with examples
+- [Extensions requiring enterprise policies](/browsers/extensions#uploading-extensions-requiring-enterprise-policies) - General information about enterprise extensions
