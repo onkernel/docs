@@ -13,9 +13,13 @@ Kernel browsers run in fully sandboxed environments with writable filesystems. W
 Playwright performs downloads via the browser itself, so there are a few steps:
 
 - Create a browser session
-- Configure where the browser saves downloads using CDP
+- Configure browser download behavior using CDP
 - Perform the download
 - Retrieve the file from the browser's filesystem
+
+<Note>
+  With `behavior: 'default'`, downloads are saved to the browser's default download directory at `~/Downloads`. Use Kernel's File I/O APIs to retrieve files from this location.
+</Note>
 
 <Info>
   The CDP `downloadProgress` event signals when the browser finishes writing a
@@ -30,9 +34,10 @@ Playwright performs downloads via the browser itself, so there are a few steps:
 import Kernel from '@onkernel/sdk';
 import { chromium } from 'playwright';
 import fs from 'fs';
+import os from 'os';
 import pTimeout from 'p-timeout';
 
-const DOWNLOAD_DIR = '/tmp/downloads';
+const DOWNLOAD_DIR = `${os.homedir()}/Downloads`;
 const kernel = new Kernel();
 
 // Poll listFiles until the expected file appears in the directory
@@ -63,8 +68,7 @@ async function main() {
 
   const client = await context.newCDPSession(page);
   await client.send('Browser.setDownloadBehavior', {
-    behavior: 'allow',
-    downloadPath: DOWNLOAD_DIR,
+    behavior: 'default',
     eventsEnabled: true,
   });
 
@@ -139,11 +143,12 @@ main();
 ```python Python
 import asyncio
 import os
+from pathlib import Path
 import time
 from kernel import Kernel
 from playwright.async_api import async_playwright
 
-DOWNLOAD_DIR = "/tmp/downloads"
+DOWNLOAD_DIR = str(Path.home() / "Downloads")
 kernel = Kernel()
 
 
@@ -173,8 +178,7 @@ async def main():
         await cdp_session.send(
             "Browser.setDownloadBehavior",
             {
-                "behavior": "allow",
-                "downloadPath": DOWNLOAD_DIR,
+                "behavior": "default",
                 "eventsEnabled": True,
             },
         )
@@ -353,135 +357,96 @@ Browser Use handles downloads automatically when configured properly. Documentat
 
 ## Uploads
 
-You can upload from your local filesystem into the browser directly using Playwright's file input helpers.
+Playwright's `setInputFiles()` method allows you to upload files directly to file input elements. You can provide either a local file path or a buffer with file data.
 
 <CodeGroup>
 ```typescript Typescript/Javascript
 import Kernel from '@onkernel/sdk';
 import { chromium } from 'playwright';
-import { config } from 'dotenv';
-
-config();
-
-const REMOTE_DIR = '/tmp/downloads';
-const FILENAME = 'Kernel-Logo_Accent.png';
-const IMAGE_URL = 'https://www.onkernel.com/brand_assets/Kernel-Logo_Accent.png';
+import fs from 'fs';
 
 const kernel = new Kernel();
 
 async function main() {
-    // 1. Create Kernel browser session
+    // Create Kernel browser session
     const kernelBrowser = await kernel.browsers.create();
     console.log('Live view:', kernelBrowser.browser_live_view_url);
 
-    // 2. Fetch the image from URL
-    console.log(`Fetching image from ${IMAGE_URL}`);
-    const response = await fetch(IMAGE_URL);
-    if (!response.ok) {
-        throw new Error(`Failed to fetch image: ${response.status}`);
-    }
-    const imageBlob = await response.blob();
-
-    // 3. Write the fetched image to the remote browser's filesystem
-    const remotePath = `${REMOTE_DIR}/${FILENAME}`;
-    console.log(`Writing to remote browser at ${remotePath}`);
-    await kernel.browsers.fs.writeFile(kernelBrowser.session_id, imageBlob, {
-        path: remotePath,
-    });
-    console.log('File written to remote browser');
-
-    // 4. Connect Playwright and navigate to upload test page
+    // Connect Playwright
     const browser = await chromium.connectOverCDP(kernelBrowser.cdp_ws_url);
     const context = browser.contexts()[0] || (await browser.newContext());
     const page = context.pages()[0] || (await context.newPage());
 
+    // Navigate to upload test page
     console.log('Navigating to upload test page');
     await page.goto('https://browser-tests-alpha.vercel.app/api/upload-test');
 
-    // 5. Upload the file using Playwright's file input helper
-    console.log(`Uploading ${remotePath} via file input`);
-    const remoteFile = await kernel.browsers.fs.readFile(kernelBrowser.session_id, { path: remotePath });
-    const fileBuffer = Buffer.from(await remoteFile.bytes());
-    await page.locator('#fileUpload').setInputFiles([{
-        name: FILENAME,
-        mimeType: 'image/png',
+    // Option 1: Upload from a local file path
+    // await page.locator('#fileUpload').setInputFiles('./path/to/local/file.png');
+
+    // Option 2: Upload from a buffer (useful for dynamically generated content)
+    const fileBuffer = fs.readFileSync('./test-file.txt');
+    await page.locator('#fileUpload').setInputFiles({
+        name: 'test-file.txt',
+        mimeType: 'text/plain',
         buffer: fileBuffer,
-    }]);
-    console.log('Upload completed');
+    });
+    console.log('File selected');
+
+    // Submit the form and verify the upload
+    await page.getByRole('button', { name: 'Upload' }).click();
+    await page.waitForSelector('#uploadResult');
+    const result = await page.locator('#uploadResult').textContent();
+    console.log('Upload result:', result);
 
     await kernel.browsers.deleteByID(kernelBrowser.session_id);
     console.log('Browser deleted');
-
-    return null;
 }
 
 main();
-
 ````
 
 ```python Python
 import asyncio
-import os
+from pathlib import Path
 from kernel import Kernel
 from playwright.async_api import async_playwright
-from dotenv import load_dotenv
-
-load_dotenv()
-
-REMOTE_DIR = '/tmp/downloads'
-FILENAME = 'Kernel-Logo_Accent.png'
-IMAGE_URL = 'https://www.onkernel.com/brand_assets/Kernel-Logo_Accent.png'
 
 kernel = Kernel()
 
 
 async def main():
-    # 1. Create Kernel browser session
+    # Create Kernel browser session
     kernel_browser = kernel.browsers.create()
     print(f'Live view: {kernel_browser.browser_live_view_url}')
 
-    # 2. Fetch the image from URL
-    print(f'Fetching image from {IMAGE_URL}')
-    import aiohttp
-    async with aiohttp.ClientSession() as session:
-        async with session.get(IMAGE_URL) as response:
-            if response.status != 200:
-                raise Exception(f'Failed to fetch image: {response.status}')
-            image_bytes = await response.read()
-
-    # 3. Write the fetched image to the remote browser's filesystem
-    remote_path = f'{REMOTE_DIR}/{FILENAME}'
-    print(f'Writing to remote browser at {remote_path}')
-    kernel.browsers.fs.write_file(
-        kernel_browser.session_id,
-        image_bytes,
-        path=remote_path
-    )
-    print('File written to remote browser')
-
-    # 4. Connect Playwright and navigate to upload test page
     async with async_playwright() as playwright:
+        # Connect Playwright
         browser = await playwright.chromium.connect_over_cdp(kernel_browser.cdp_ws_url)
         context = browser.contexts[0] if browser.contexts else await browser.new_context()
         page = context.pages[0] if context.pages else await context.new_page()
 
+        # Navigate to upload test page
         print('Navigating to upload test page')
         await page.goto('https://browser-tests-alpha.vercel.app/api/upload-test')
 
-        # 5. Upload the file using Playwright's file input helper
-        print(f'Uploading {remote_path} via file input')
-        remote_file = kernel.browsers.fs.read_file(
-            kernel_browser.session_id,
-            path=remote_path
-        )
-        file_buffer = remote_file.read()
+        # Option 1: Upload from a local file path
+        # await page.locator('#fileUpload').set_input_files('./path/to/local/file.png')
 
+        # Option 2: Upload from a buffer (useful for dynamically generated content)
+        file_buffer = Path('./test-file.txt').read_bytes()
         await page.locator('#fileUpload').set_input_files({
-            'name': FILENAME,
-            'mimeType': 'image/png',
+            'name': 'test-file.txt',
+            'mimeType': 'text/plain',
             'buffer': file_buffer,
         })
-        print('Upload completed')
+        print('File selected')
+
+        # Submit the form and verify the upload
+        await page.get_by_role('button', name='Upload').click()
+        await page.wait_for_selector('#uploadResult')
+        result = await page.locator('#uploadResult').text_content()
+        print(f'Upload result: {result}')
 
         await browser.close()
 
