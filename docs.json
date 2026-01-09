@@ -56,50 +56,67 @@
         "icon": "book-open",
         "groups": [
           {
-            "group": "Get Started",
+            "group": "Getting started",
             "pages": [
               "introduction",
               "quickstart"
             ]
           },
           {
-            "group": "Browsers",
+            "group": "Working with your browser",
             "pages": [
-              "browsers/create-a-browser",
-              "browsers/headless",
-              "browsers/viewport",
-              "browsers/live-view",
-              "browsers/standby",
-              "browsers/profiles",
-              "browsers/termination",
               {
-                "group": "Bot Anti-Detection",
+                "group": "Basics",
+                "expanded": true,
                 "pages": [
-                  "browsers/bot-detection/overview",
-                  "browsers/bot-detection/stealth",
-                  {
-                    "group": "Proxies",
-                    "pages": [
-                      "proxies/overview",
-                      "proxies/custom",
-                      "proxies/residential",
-                      "proxies/isp",
-                      "proxies/datacenter"
-                    ]
-                  }
+                  "browsers/create-a-browser",
+                  "browsers/live-view",
+                  "browsers/termination",
+                  "browsers/standby",
+                  "browsers/headless"
                 ]
               },
-              "browsers/file-io",
-              "browsers/replays",
-              "browsers/pools",
-              "browsers/extensions",
-              "browsers/computer-controls",
-              "browsers/playwright-execution",
-              "browsers/faq"
+              {
+                "group": "Intermediate",
+                "expanded": true,
+                "pages": [
+                  "browsers/replays",
+                  "browsers/viewport",
+                  "browsers/profiles",
+                  "browsers/pools",
+                  "browsers/file-io"
+                ]
+              },
+              {
+                "group": "Advanced",
+                "expanded": true,
+                "pages": [
+                  {
+                    "group": "Bot Anti-Detection",
+                    "pages": [
+                      "browsers/bot-detection/overview",
+                      "browsers/bot-detection/stealth",
+                      {
+                        "group": "Proxies",
+                        "pages": [
+                          "proxies/overview",
+                          "proxies/custom",
+                          "proxies/residential",
+                          "proxies/isp",
+                          "proxies/datacenter"
+                        ]
+                      }
+                    ]
+                  },
+                  "browsers/playwright-execution",
+                  "browsers/computer-controls",
+                  "browsers/extensions"
+                ]
+              }
             ]
           },
           {
-            "group": "App Platform",
+            "group": "Building your app",
             "pages": [
               "apps/develop",
               "apps/deploy",
@@ -156,6 +173,7 @@
           {
             "group": "Info",
             "pages": [
+              "browsers/faq",
               "info/concepts",
               "info/pricing",
               "info/unikernels"
