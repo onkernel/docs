@@ -22,12 +22,20 @@ Then follow the [Quickstart guide](/quickstart/) to deploy and run your Claude A
 
 ### Claude Code Installation
 
-The Claude Agent SDK requires Claude Code to be installed. Follow the [official installation guide](https://platform.claude.com/docs/en/agent-sdk/overview#get-started):
+The Claude Agent SDK requires Claude Code to be installed. Choose one of the following methods:
 
 ```bash
+# Homebrew (macOS)
+brew install --cask claude-code
+
+# pnpm (cross-platform)
+pnpm add -g @anthropic-ai/claude-code
+
 # macOS/Linux/WSL
 curl -fsSL https://claude.ai/install.sh | bash
 ```
+
+See the [official installation guide](https://platform.claude.com/docs/en/agent-sdk/overview#get-started) for Windows and other options.
 
 <Note>
 When deploying to Kernel, the app automatically installs Claude Code on the remote infrastructure.
