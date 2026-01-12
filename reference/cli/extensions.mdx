@@ -111,8 +111,7 @@ Build Cloudflare's [Web Bot Auth](/integrations/web-bot-auth) browser extension 
 |------|-------------|
 | `--to <dir>` | Output directory for the built extension (required). |
 | `--key <path>` | Path to JWK file with Ed25519 signing key (defaults to RFC9421 test key). |
-| `--upload` | Upload the extension to Kernel after building. |
-| `--name <name>` | Extension name when uploading (default: `web-bot-auth`). |
+| `--upload <name>` | Upload the extension to Kernel with specified name (e.g., --upload my-web-bot-auth). |
 
 **Examples:**
 
@@ -124,7 +123,7 @@ kernel extensions build-web-bot-auth --to ./web-bot-auth-ext
 kernel extensions build-web-bot-auth --to ./web-bot-auth-ext --key ./my-key.jwk --upload
 
 # Build with custom name
-kernel extensions build-web-bot-auth --to ./web-bot-auth-ext --upload --name <extension-name>
+kernel extensions build-web-bot-auth --to ./web-bot-auth-ext --upload my-web-bot-auth
 ```
 
 <Info>

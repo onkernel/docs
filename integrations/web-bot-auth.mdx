@@ -25,13 +25,13 @@ The fastest way to get started is using Cloudflare's RFC9421 test key, which wor
 Use the Kernel CLI to build the Web Bot Auth extension:
 
 ```bash
-kernel extensions build-web-bot-auth --to ./web-bot-auth-ext --upload
+kernel extensions build-web-bot-auth --to ./web-bot-auth-ext --upload my-web-bot-auth
 ```
 
 This command:
 - Downloads Cloudflare's web-bot-auth browser extension source
 - Builds it with the default RFC9421 test key
-- Uploads it to Kernel as `web-bot-auth`
+- Uploads it to Kernel as `my-web-bot-auth`
 
 <Info>
 The build command requires Node.js and npm to be installed on your system.
@@ -42,7 +42,7 @@ The build command requires Node.js and npm to be installed on your system.
 <CodeGroup>
 ```bash CLI
 # Create a browser with the web-bot-auth extension
-kernel browsers create --extension web-bot-auth
+kernel browsers create --extension my-web-bot-auth
 
 # The command outputs the browser ID and live view URL
 # Open the live view URL in your browser, then navigate to:
@@ -57,7 +57,7 @@ const kernel = new Kernel();
 
 // Create browser with web-bot-auth extension
 const browser = await kernel.browsers.create({
-  extensions: [{ name: "web-bot-auth" }],
+  extensions: [{ name: "my-web-bot-auth" }],
 });
 
 // Connect via Playwright
@@ -76,7 +76,7 @@ from playwright.sync_api import sync_playwright
 kernel = Kernel()
 
 # Create browser with web-bot-auth extension
-browser = kernel.browsers.create(extensions=[{"name": "web-bot-auth"}])
+browser = kernel.browsers.create(extensions=[{"name": "my-web-bot-auth"}])
 
 # Connect via Playwright
 with sync_playwright() as p:
@@ -124,7 +124,7 @@ See [Cloudflare's web-bot-auth documentation](https://github.com/cloudflare/web-
 ### 2. Build with your key
 
 ```bash
-kernel extensions build-web-bot-auth --to ./web-bot-auth-ext --key ./my-key.jwk --upload --name my-web-bot-auth
+kernel extensions build-web-bot-auth --to ./web-bot-auth-ext --key ./my-key.jwk --upload my-web-bot-auth
 ```
 
 ### 3. Host your public key
