@@ -359,14 +359,14 @@ Browser Use handles downloads automatically when configured properly. Documentat
 
 ## Uploads
 
-Playwright's `setInputFiles()` method allows you to upload files directly to file input elements. You can provide either a local file path or a buffer with file data.
+Playwright's `setInputFiles()` method allows you to upload files directly to file input elements. You can fetch a file from a URL and pass the buffer directly to `setInputFiles()`.
 
 <CodeGroup>
 ```typescript Typescript/Javascript
 import Kernel from '@onkernel/sdk';
 import { chromium } from 'playwright';
-import fs from 'fs';
 
+const IMAGE_URL = 'https://www.kernel.sh/brand_assets/Kernel-Logo_Accent.png';
 const kernel = new Kernel();
 
 async function main() {
@@ -382,17 +382,16 @@ async function main() {
     // Navigate to a page with a file input
     await page.goto('https://browser-tests-alpha.vercel.app/api/upload-test');
 
-    // Option 1: Upload from a local file path
-    await page.locator('input[type="file"]').setInputFiles('./path/to/local/file.png');
+    // Fetch file and pass buffer directly to setInputFiles
+    const response = await fetch(IMAGE_URL);
+    const buffer = Buffer.from(await response.arrayBuffer());
 
-    // Option 2: Upload from a buffer (useful for dynamically generated content)
-    const fileBuffer = fs.readFileSync('./document.pdf');
-    await page.locator('input[type="file"]').setInputFiles({
-        name: 'document.pdf',
-        mimeType: 'application/pdf',
-        buffer: fileBuffer,
-    });
-    console.log('File selected');
+    await page.locator('input[type="file"]').setInputFiles([{
+        name: 'Kernel-Logo_Accent.png',
+        mimeType: 'image/png',
+        buffer: buffer,
+    }]);
+    console.log('File uploaded');
 
     await kernel.browsers.deleteByID(kernelBrowser.session_id);
     console.log('Browser deleted');
@@ -403,10 +402,11 @@ main();
 
 ```python Python
 import asyncio
-from pathlib import Path
+import httpx
 from kernel import Kernel
 from playwright.async_api import async_playwright
 
+IMAGE_URL = 'https://www.kernel.sh/brand_assets/Kernel-Logo_Accent.png'
 kernel = Kernel()
 
 
@@ -424,17 +424,17 @@ async def main():
         # Navigate to a page with a file input
         await page.goto('https://browser-tests-alpha.vercel.app/api/upload-test')
 
-        # Option 1: Upload from a local file path
-        await page.locator('input[type="file"]').set_input_files('./path/to/local/file.png')
+        # Fetch file and pass buffer directly to set_input_files
+        async with httpx.AsyncClient() as client:
+            response = await client.get(IMAGE_URL)
+            buffer = response.content
 
-        # Option 2: Upload from a buffer (useful for dynamically generated content)
-        file_buffer = Path('./document.pdf').read_bytes()
-        await page.locator('input[type="file"]').set_input_files({
-            'name': 'document.pdf',
-            'mimeType': 'application/pdf',
-            'buffer': file_buffer,
-        })
-        print('File selected')
+        await page.locator('input[type="file"]').set_input_files([{
+            'name': 'Kernel-Logo_Accent.png',
+            'mimeType': 'image/png',
+            'buffer': buffer,
+        }])
+        print('File uploaded')
 
         await browser.close()
 
