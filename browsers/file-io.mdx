@@ -18,7 +18,7 @@ Playwright performs downloads via the browser itself, so there are a few steps:
 - Retrieve the file from the browser's filesystem
 
 <Note>
-  With `behavior: 'default'`, downloads are saved to the browser's default download directory at `~/Downloads`. Use Kernel's File I/O APIs to retrieve files from this location.
+  With `behavior: 'default'`, downloads are saved to the browser's default download directory. The CDP `downloadProgress` event includes a `filePath` field when the download completes, which tells you exactly where the file was saved. Use this path with Kernel's File I/O APIs to retrieve the file.
 </Note>
 
 <Info>
@@ -34,19 +34,19 @@ Playwright performs downloads via the browser itself, so there are a few steps:
 import Kernel from '@onkernel/sdk';
 import { chromium } from 'playwright';
 import fs from 'fs';
-import os from 'os';
+import path from 'path';
 import pTimeout from 'p-timeout';
 
-const DOWNLOAD_DIR = `${os.homedir()}/Downloads`;
 const kernel = new Kernel();
 
 // Poll listFiles until the expected file appears in the directory
 async function waitForFile(
   sessionId: string,
-  dir: string,
-  filename: string,
+  filePath: string,
   timeoutMs = 30_000
 ) {
+  const dir = path.dirname(filePath);
+  const filename = path.basename(filePath);
   const start = Date.now();
   while (Date.now() - start < timeoutMs) {
     const files = await kernel.browsers.fs.listFiles(sessionId, { path: dir });
@@ -55,7 +55,7 @@ async function waitForFile(
     }
     await new Promise((r) => setTimeout(r, 500));
   }
-  throw new Error(`File ${filename} not found after ${timeoutMs}ms`);
+  throw new Error(`File ${filePath} not found after ${timeoutMs}ms`);
 }
 
 async function main() {
@@ -72,8 +72,8 @@ async function main() {
     eventsEnabled: true,
   });
 
-  // Set up CDP listeners to capture download filename and completion
-  let downloadFilename: string | undefined;
+  // Set up CDP listeners to capture download path and completion
+  let downloadFilePath: string | undefined;
   let downloadState: string | undefined;
   let downloadCompletedResolve!: () => void;
   const downloadCompleted = new Promise<void>((resolve) => {
@@ -81,13 +81,13 @@ async function main() {
   });
 
   client.on('Browser.downloadWillBegin', (event) => {
-    downloadFilename = event.suggestedFilename ?? 'unknown';
-    console.log('Download started:', downloadFilename);
+    console.log('Download started:', event.suggestedFilename);
   });
 
   client.on('Browser.downloadProgress', (event) => {
     if (event.state === 'completed' || event.state === 'canceled') {
       downloadState = event.state;
+      downloadFilePath = event.filePath;
       downloadCompletedResolve();
     }
   });
@@ -107,8 +107,8 @@ async function main() {
     throw err;
   }
 
-  if (!downloadFilename) {
-    throw new Error('Unable to determine download filename');
+  if (!downloadFilePath) {
+    throw new Error('Unable to determine download file path');
   }
 
   if (downloadState === 'canceled') {
@@ -116,19 +116,18 @@ async function main() {
   }
 
   // Wait for the file to be available via Kernel's File I/O APIs
-  console.log(`Waiting for file: ${downloadFilename}`);
-  await waitForFile(kernelBrowser.session_id, DOWNLOAD_DIR, downloadFilename);
+  console.log(`Waiting for file: ${downloadFilePath}`);
+  await waitForFile(kernelBrowser.session_id, downloadFilePath);
 
-  const remotePath = `${DOWNLOAD_DIR}/${downloadFilename}`;
-  console.log(`Reading file: ${remotePath}`);
+  console.log(`Reading file: ${downloadFilePath}`);
 
   const resp = await kernel.browsers.fs.readFile(kernelBrowser.session_id, {
-    path: remotePath,
+    path: downloadFilePath,
   });
 
   const bytes = await resp.bytes();
   fs.mkdirSync('downloads', { recursive: true });
-  const localPath = `downloads/${downloadFilename}`;
+  const localPath = `downloads/${path.basename(downloadFilePath)}`;
   fs.writeFileSync(localPath, bytes);
   console.log(`Saved to ${localPath}`);
 
@@ -148,21 +147,22 @@ import time
 from kernel import Kernel
 from playwright.async_api import async_playwright
 
-DOWNLOAD_DIR = str(Path.home() / "Downloads")
 kernel = Kernel()
 
 
 # Poll list_files until the expected file appears in the directory
 async def wait_for_file(
-    session_id: str, dir: str, filename: str, timeout_sec: float = 30
+    session_id: str, file_path: str, timeout_sec: float = 30
 ):
+    dir_path = str(Path(file_path).parent)
+    filename = Path(file_path).name
     start = time.time()
     while time.time() - start < timeout_sec:
-        files = kernel.browsers.fs.list_files(session_id, path=dir)
+        files = kernel.browsers.fs.list_files(session_id, path=dir_path)
         if any(f.name == filename for f in files):
             return
         await asyncio.sleep(0.5)
-    raise TimeoutError(f"File {filename} not found after {timeout_sec}s")
+    raise TimeoutError(f"File {file_path} not found after {timeout_sec}s")
 
 
 async def main():
@@ -184,18 +184,17 @@ async def main():
         )
 
         download_completed = asyncio.Event()
-        download_filename: str | None = None
+        download_file_path: str | None = None
         download_state: str | None = None
 
         def _on_download_begin(event):
-            nonlocal download_filename
-            download_filename = event.get("suggestedFilename", "unknown")
-            print(f"Download started: {download_filename}")
+            print(f"Download started: {event.get('suggestedFilename', 'unknown')}")
 
         def _on_download_progress(event):
-            nonlocal download_state
+            nonlocal download_state, download_file_path
             if event.get("state") in ["completed", "canceled"]:
                 download_state = event.get("state")
+                download_file_path = event.get("filePath")
                 download_completed.set()
 
         cdp_session.on("Browser.downloadWillBegin", _on_download_begin)
@@ -212,17 +211,20 @@ async def main():
             print("Download timed out after 10 seconds")
             raise
 
+        if not download_file_path:
+            raise RuntimeError("Unable to determine download file path")
+
         if download_state == "canceled":
             raise RuntimeError("Download was canceled")
 
         # Wait for the file to be available via Kernel's File I/O APIs
-        print(f"Waiting for file: {download_filename}")
-        await wait_for_file(kernel_browser.session_id, DOWNLOAD_DIR, download_filename)
+        print(f"Waiting for file: {download_file_path}")
+        await wait_for_file(kernel_browser.session_id, download_file_path)
 
         resp = kernel.browsers.fs.read_file(
-            kernel_browser.session_id, path=f"{DOWNLOAD_DIR}/{download_filename}"
+            kernel_browser.session_id, path=download_file_path
         )
-        local_path = f"./downloads/{download_filename}"
+        local_path = f"./downloads/{Path(download_file_path).name}"
         os.makedirs("./downloads", exist_ok=True)
         resp.write_to_file(local_path)
         print(f"Saved to {local_path}")
@@ -377,27 +379,20 @@ async function main() {
     const context = browser.contexts()[0] || (await browser.newContext());
     const page = context.pages()[0] || (await context.newPage());
 
-    // Navigate to upload test page
-    console.log('Navigating to upload test page');
+    // Navigate to a page with a file input
     await page.goto('https://browser-tests-alpha.vercel.app/api/upload-test');
 
     // Option 1: Upload from a local file path
-    // await page.locator('#fileUpload').setInputFiles('./path/to/local/file.png');
+    await page.locator('input[type="file"]').setInputFiles('./path/to/local/file.png');
 
     // Option 2: Upload from a buffer (useful for dynamically generated content)
-    const fileBuffer = fs.readFileSync('./test-file.txt');
-    await page.locator('#fileUpload').setInputFiles({
-        name: 'test-file.txt',
-        mimeType: 'text/plain',
+    const fileBuffer = fs.readFileSync('./document.pdf');
+    await page.locator('input[type="file"]').setInputFiles({
+        name: 'document.pdf',
+        mimeType: 'application/pdf',
         buffer: fileBuffer,
     });
     console.log('File selected');
-
-    // Submit the form and verify the upload
-    await page.getByRole('button', { name: 'Upload' }).click();
-    await page.waitForSelector('#uploadResult');
-    const result = await page.locator('#uploadResult').textContent();
-    console.log('Upload result:', result);
 
     await kernel.browsers.deleteByID(kernelBrowser.session_id);
     console.log('Browser deleted');
@@ -426,27 +421,20 @@ async def main():
         context = browser.contexts[0] if browser.contexts else await browser.new_context()
         page = context.pages[0] if context.pages else await context.new_page()
 
-        # Navigate to upload test page
-        print('Navigating to upload test page')
+        # Navigate to a page with a file input
         await page.goto('https://browser-tests-alpha.vercel.app/api/upload-test')
 
         # Option 1: Upload from a local file path
-        # await page.locator('#fileUpload').set_input_files('./path/to/local/file.png')
+        await page.locator('input[type="file"]').set_input_files('./path/to/local/file.png')
 
         # Option 2: Upload from a buffer (useful for dynamically generated content)
-        file_buffer = Path('./test-file.txt').read_bytes()
-        await page.locator('#fileUpload').set_input_files({
-            'name': 'test-file.txt',
-            'mimeType': 'text/plain',
+        file_buffer = Path('./document.pdf').read_bytes()
+        await page.locator('input[type="file"]').set_input_files({
+            'name': 'document.pdf',
+            'mimeType': 'application/pdf',
             'buffer': file_buffer,
         })
         print('File selected')
-
-        # Submit the form and verify the upload
-        await page.get_by_role('button', name='Upload').click()
-        await page.wait_for_selector('#uploadResult')
-        result = await page.locator('#uploadResult').text_content()
-        print(f'Upload result: {result}')
 
         await browser.close()
 
