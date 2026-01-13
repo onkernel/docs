@@ -13,9 +13,13 @@ Kernel browsers run in fully sandboxed environments with writable filesystems. W
 Playwright performs downloads via the browser itself, so there are a few steps:
 
 - Create a browser session
-- Configure where the browser saves downloads using CDP
+- Configure browser download behavior using CDP
 - Perform the download
 - Retrieve the file from the browser's filesystem
+
+<Note>
+  With `behavior: 'default'`, downloads are saved to the browser's default download directory. The CDP `downloadProgress` event includes a `filePath` field when the download completes, which tells you exactly where the file was saved. Use this path with Kernel's File I/O APIs to retrieve the file.
+</Note>
 
 <Info>
   The CDP `downloadProgress` event signals when the browser finishes writing a
@@ -30,18 +34,19 @@ Playwright performs downloads via the browser itself, so there are a few steps:
 import Kernel from '@onkernel/sdk';
 import { chromium } from 'playwright';
 import fs from 'fs';
+import path from 'path';
 import pTimeout from 'p-timeout';
 
-const DOWNLOAD_DIR = '/tmp/downloads';
 const kernel = new Kernel();
 
 // Poll listFiles until the expected file appears in the directory
 async function waitForFile(
   sessionId: string,
-  dir: string,
-  filename: string,
+  filePath: string,
   timeoutMs = 30_000
 ) {
+  const dir = path.dirname(filePath);
+  const filename = path.basename(filePath);
   const start = Date.now();
   while (Date.now() - start < timeoutMs) {
     const files = await kernel.browsers.fs.listFiles(sessionId, { path: dir });
@@ -50,7 +55,7 @@ async function waitForFile(
     }
     await new Promise((r) => setTimeout(r, 500));
   }
-  throw new Error(`File ${filename} not found after ${timeoutMs}ms`);
+  throw new Error(`File ${filePath} not found after ${timeoutMs}ms`);
 }
 
 async function main() {
@@ -63,13 +68,12 @@ async function main() {
 
   const client = await context.newCDPSession(page);
   await client.send('Browser.setDownloadBehavior', {
-    behavior: 'allow',
-    downloadPath: DOWNLOAD_DIR,
+    behavior: 'default',
     eventsEnabled: true,
   });
 
-  // Set up CDP listeners to capture download filename and completion
-  let downloadFilename: string | undefined;
+  // Set up CDP listeners to capture download path and completion
+  let downloadFilePath: string | undefined;
   let downloadState: string | undefined;
   let downloadCompletedResolve!: () => void;
   const downloadCompleted = new Promise<void>((resolve) => {
@@ -77,13 +81,13 @@ async function main() {
   });
 
   client.on('Browser.downloadWillBegin', (event) => {
-    downloadFilename = event.suggestedFilename ?? 'unknown';
-    console.log('Download started:', downloadFilename);
+    console.log('Download started:', event.suggestedFilename);
   });
 
   client.on('Browser.downloadProgress', (event) => {
     if (event.state === 'completed' || event.state === 'canceled') {
       downloadState = event.state;
+      downloadFilePath = event.filePath;
       downloadCompletedResolve();
     }
   });
@@ -103,28 +107,27 @@ async function main() {
     throw err;
   }
 
-  if (!downloadFilename) {
-    throw new Error('Unable to determine download filename');
-  }
-
   if (downloadState === 'canceled') {
     throw new Error('Download was canceled');
   }
 
-  // Wait for the file to be available via Kernel's File I/O APIs
-  console.log(`Waiting for file: ${downloadFilename}`);
-  await waitForFile(kernelBrowser.session_id, DOWNLOAD_DIR, downloadFilename);
+  if (!downloadFilePath) {
+    throw new Error('Unable to determine download file path');
+  }
 
-  const remotePath = `${DOWNLOAD_DIR}/${downloadFilename}`;
-  console.log(`Reading file: ${remotePath}`);
+  // Wait for the file to be available via Kernel's File I/O APIs
+  console.log(`Waiting for file: ${downloadFilePath}`);
+  await waitForFile(kernelBrowser.session_id, downloadFilePath);
+
+  console.log(`Reading file: ${downloadFilePath}`);
 
   const resp = await kernel.browsers.fs.readFile(kernelBrowser.session_id, {
-    path: remotePath,
+    path: downloadFilePath,
   });
 
   const bytes = await resp.bytes();
   fs.mkdirSync('downloads', { recursive: true });
-  const localPath = `downloads/${downloadFilename}`;
+  const localPath = `downloads/${path.basename(downloadFilePath)}`;
   fs.writeFileSync(localPath, bytes);
   console.log(`Saved to ${localPath}`);
 
@@ -139,25 +142,27 @@ main();
 ```python Python
 import asyncio
 import os
+from pathlib import Path
 import time
 from kernel import Kernel
 from playwright.async_api import async_playwright
 
-DOWNLOAD_DIR = "/tmp/downloads"
 kernel = Kernel()
 
 
 # Poll list_files until the expected file appears in the directory
 async def wait_for_file(
-    session_id: str, dir: str, filename: str, timeout_sec: float = 30
+    session_id: str, file_path: str, timeout_sec: float = 30
 ):
+    dir_path = str(Path(file_path).parent)
+    filename = Path(file_path).name
     start = time.time()
     while time.time() - start < timeout_sec:
-        files = kernel.browsers.fs.list_files(session_id, path=dir)
+        files = kernel.browsers.fs.list_files(session_id, path=dir_path)
         if any(f.name == filename for f in files):
             return
         await asyncio.sleep(0.5)
-    raise TimeoutError(f"File {filename} not found after {timeout_sec}s")
+    raise TimeoutError(f"File {file_path} not found after {timeout_sec}s")
 
 
 async def main():
@@ -173,25 +178,23 @@ async def main():
         await cdp_session.send(
             "Browser.setDownloadBehavior",
             {
-                "behavior": "allow",
-                "downloadPath": DOWNLOAD_DIR,
+                "behavior": "default",
                 "eventsEnabled": True,
             },
         )
 
         download_completed = asyncio.Event()
-        download_filename: str | None = None
+        download_file_path: str | None = None
         download_state: str | None = None
 
         def _on_download_begin(event):
-            nonlocal download_filename
-            download_filename = event.get("suggestedFilename", "unknown")
-            print(f"Download started: {download_filename}")
+            print(f"Download started: {event.get('suggestedFilename', 'unknown')}")
 
         def _on_download_progress(event):
-            nonlocal download_state
+            nonlocal download_state, download_file_path
             if event.get("state") in ["completed", "canceled"]:
                 download_state = event.get("state")
+                download_file_path = event.get("filePath")
                 download_completed.set()
 
         cdp_session.on("Browser.downloadWillBegin", _on_download_begin)
@@ -211,14 +214,17 @@ async def main():
         if download_state == "canceled":
             raise RuntimeError("Download was canceled")
 
+        if not download_file_path:
+            raise RuntimeError("Unable to determine download file path")
+
         # Wait for the file to be available via Kernel's File I/O APIs
-        print(f"Waiting for file: {download_filename}")
-        await wait_for_file(kernel_browser.session_id, DOWNLOAD_DIR, download_filename)
+        print(f"Waiting for file: {download_file_path}")
+        await wait_for_file(kernel_browser.session_id, download_file_path)
 
         resp = kernel.browsers.fs.read_file(
-            kernel_browser.session_id, path=f"{DOWNLOAD_DIR}/{download_filename}"
+            kernel_browser.session_id, path=download_file_path
         )
-        local_path = f"./downloads/{download_filename}"
+        local_path = f"./downloads/{Path(download_file_path).name}"
         os.makedirs("./downloads", exist_ok=True)
         resp.write_to_file(local_path)
         print(f"Saved to {local_path}")
@@ -353,135 +359,82 @@ Browser Use handles downloads automatically when configured properly. Documentat
 
 ## Uploads
 
-You can upload from your local filesystem into the browser directly using Playwright's file input helpers.
+Playwright's `setInputFiles()` method allows you to upload files directly to file input elements. You can fetch a file from a URL and pass the buffer directly to `setInputFiles()`.
 
 <CodeGroup>
 ```typescript Typescript/Javascript
 import Kernel from '@onkernel/sdk';
 import { chromium } from 'playwright';
-import { config } from 'dotenv';
 
-config();
-
-const REMOTE_DIR = '/tmp/downloads';
-const FILENAME = 'Kernel-Logo_Accent.png';
-const IMAGE_URL = 'https://www.onkernel.com/brand_assets/Kernel-Logo_Accent.png';
-
+const IMAGE_URL = 'https://www.kernel.sh/brand_assets/Kernel-Logo_Accent.png';
 const kernel = new Kernel();
 
 async function main() {
-    // 1. Create Kernel browser session
+    // Create Kernel browser session
     const kernelBrowser = await kernel.browsers.create();
     console.log('Live view:', kernelBrowser.browser_live_view_url);
 
-    // 2. Fetch the image from URL
-    console.log(`Fetching image from ${IMAGE_URL}`);
-    const response = await fetch(IMAGE_URL);
-    if (!response.ok) {
-        throw new Error(`Failed to fetch image: ${response.status}`);
-    }
-    const imageBlob = await response.blob();
-
-    // 3. Write the fetched image to the remote browser's filesystem
-    const remotePath = `${REMOTE_DIR}/${FILENAME}`;
-    console.log(`Writing to remote browser at ${remotePath}`);
-    await kernel.browsers.fs.writeFile(kernelBrowser.session_id, imageBlob, {
-        path: remotePath,
-    });
-    console.log('File written to remote browser');
-
-    // 4. Connect Playwright and navigate to upload test page
+    // Connect Playwright
     const browser = await chromium.connectOverCDP(kernelBrowser.cdp_ws_url);
     const context = browser.contexts()[0] || (await browser.newContext());
     const page = context.pages()[0] || (await context.newPage());
 
-    console.log('Navigating to upload test page');
+    // Navigate to a page with a file input
     await page.goto('https://browser-tests-alpha.vercel.app/api/upload-test');
 
-    // 5. Upload the file using Playwright's file input helper
-    console.log(`Uploading ${remotePath} via file input`);
-    const remoteFile = await kernel.browsers.fs.readFile(kernelBrowser.session_id, { path: remotePath });
-    const fileBuffer = Buffer.from(await remoteFile.bytes());
-    await page.locator('#fileUpload').setInputFiles([{
-        name: FILENAME,
+    // Fetch file and pass buffer directly to setInputFiles
+    const response = await fetch(IMAGE_URL);
+    const buffer = Buffer.from(await response.arrayBuffer());
+
+    await page.locator('input[type="file"]').setInputFiles([{
+        name: 'Kernel-Logo_Accent.png',
         mimeType: 'image/png',
-        buffer: fileBuffer,
+        buffer: buffer,
     }]);
-    console.log('Upload completed');
+    console.log('File uploaded');
 
     await kernel.browsers.deleteByID(kernelBrowser.session_id);
     console.log('Browser deleted');
-
-    return null;
 }
 
 main();
-
 ````
 
 ```python Python
 import asyncio
-import os
+import httpx
 from kernel import Kernel
 from playwright.async_api import async_playwright
-from dotenv import load_dotenv
 
-load_dotenv()
-
-REMOTE_DIR = '/tmp/downloads'
-FILENAME = 'Kernel-Logo_Accent.png'
-IMAGE_URL = 'https://www.onkernel.com/brand_assets/Kernel-Logo_Accent.png'
-
+IMAGE_URL = 'https://www.kernel.sh/brand_assets/Kernel-Logo_Accent.png'
 kernel = Kernel()
 
 
 async def main():
-    # 1. Create Kernel browser session
+    # Create Kernel browser session
     kernel_browser = kernel.browsers.create()
     print(f'Live view: {kernel_browser.browser_live_view_url}')
 
-    # 2. Fetch the image from URL
-    print(f'Fetching image from {IMAGE_URL}')
-    import aiohttp
-    async with aiohttp.ClientSession() as session:
-        async with session.get(IMAGE_URL) as response:
-            if response.status != 200:
-                raise Exception(f'Failed to fetch image: {response.status}')
-            image_bytes = await response.read()
-
-    # 3. Write the fetched image to the remote browser's filesystem
-    remote_path = f'{REMOTE_DIR}/{FILENAME}'
-    print(f'Writing to remote browser at {remote_path}')
-    kernel.browsers.fs.write_file(
-        kernel_browser.session_id,
-        image_bytes,
-        path=remote_path
-    )
-    print('File written to remote browser')
-
-    # 4. Connect Playwright and navigate to upload test page
     async with async_playwright() as playwright:
+        # Connect Playwright
         browser = await playwright.chromium.connect_over_cdp(kernel_browser.cdp_ws_url)
         context = browser.contexts[0] if browser.contexts else await browser.new_context()
         page = context.pages[0] if context.pages else await context.new_page()
 
-        print('Navigating to upload test page')
+        # Navigate to a page with a file input
         await page.goto('https://browser-tests-alpha.vercel.app/api/upload-test')
 
-        # 5. Upload the file using Playwright's file input helper
-        print(f'Uploading {remote_path} via file input')
-        remote_file = kernel.browsers.fs.read_file(
-            kernel_browser.session_id,
-            path=remote_path
-        )
-        file_buffer = remote_file.read()
+        # Fetch file and pass buffer directly to set_input_files
+        async with httpx.AsyncClient() as client:
+            response = await client.get(IMAGE_URL)
+            buffer = response.content
 
-        await page.locator('#fileUpload').set_input_files({
-            'name': FILENAME,
+        await page.locator('input[type="file"]').set_input_files([{
+            'name': 'Kernel-Logo_Accent.png',
             'mimeType': 'image/png',
-            'buffer': file_buffer,
-        })
-        print('Upload completed')
+            'buffer': buffer,
+        }])
+        print('File uploaded')
 
         await browser.close()
 
