@@ -33,6 +33,9 @@ Bring your own proxy network or use Kernel's managed pool (selectable down to ZI
 ### [Profiles](/browsers/profiles)
 Profiles persist cookies, local storage, and session data between runs. Combined with a fixed proxy, this mimics a returning user. We recommend using them to persist authenticated states and reduce CAPTCHAs.
 
+### [Browser Pools](/browsers/pools)
+Browser pools let you reuse browsers across multiple visits to the same website, which introduces consistency with respect to the IP address. Since IP addresses are one of the main components of fingerprinting used by modern bot detection systems, browser pools drastically increase your chances of avoiding detection.
+
 ### [Playwright Execution API](/browsers/playwright-execution)
 Executes Playwright scripts in the same VM as the browser, ensuring headers, user-agent strings, and environment match.
 Kernel automatically applies Patchright to remove automation fingerprints, including headless indicators.
