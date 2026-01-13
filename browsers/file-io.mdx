@@ -107,12 +107,12 @@ async function main() {
     throw err;
   }
 
-  if (!downloadFilePath) {
-    throw new Error('Unable to determine download file path');
-  }
-
   if (downloadState === 'canceled') {
     throw new Error('Download was canceled');
+  }
+
+  if (!downloadFilePath) {
+    throw new Error('Unable to determine download file path');
   }
 
   // Wait for the file to be available via Kernel's File I/O APIs
@@ -211,11 +211,11 @@ async def main():
             print("Download timed out after 10 seconds")
             raise
 
-        if not download_file_path:
-            raise RuntimeError("Unable to determine download file path")
-
         if download_state == "canceled":
             raise RuntimeError("Download was canceled")
+
+        if not download_file_path:
+            raise RuntimeError("Unable to determine download file path")
 
         # Wait for the file to be available via Kernel's File I/O APIs
         print(f"Waiting for file: {download_file_path}")
