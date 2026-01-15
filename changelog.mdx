@@ -7,6 +7,13 @@ description: Updates and improvements
 For API library updates, see the [Node SDK](https://github.com/onkernel/kernel-node-sdk/blob/main/CHANGELOG.md), [Python SDK](https://github.com/onkernel/kernel-python-sdk/blob/next/CHANGELOG.md), and [Go SDK](https://github.com/onkernel/kernel-go-sdk/blob/main/CHANGELOG.md) changelogs.
 </Note>
 
+<Update label="January 16" tags={["Product"]}>
+## Product updates
+- Added a Past Sessions view to the [dashboard](https://dashboard.onkernel.com/) that displays your last 100 browser sessions, with a tooltip providing context about the session history limit.
+- Fixed an issue where downloading multiple files with the same filename would overwrite previous downloads. Downloads now behave like local browsers, where subsequent files with identical names receive unique suffixes.
+- Resolved browser session stability issues including premature disconnections and websocket failures. Added auto-retry logic for CDP connections and heartbeat mechanisms to keep sessions alive.
+</Update>
+
 <Update label="January 9" tags={["Product", "Docs"]}>
 ## Product updates
 - Introduced a new [Hobbyist plan](https://www.kernel.sh/#pricing), which provides affordable access to features like session replays, uploading and downloading files, and using custom Chrome extensions.
