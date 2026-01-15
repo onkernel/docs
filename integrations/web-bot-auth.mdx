@@ -13,6 +13,7 @@ Web Bot Auth works via a Chrome extension that intercepts all outgoing HTTP requ
 
 - **`Signature`**: The RFC 9421 signature of the request
 - **`Signature-Input`**: Metadata about how the signature was created
+- **`Signature-Agent`**: URL that points to your key directory
 
 Websites can verify these signatures against your public key to confirm the request came from your authenticated agent.
 
@@ -121,13 +122,7 @@ Create a JWK file with your Ed25519 private key. The key must include both the p
 See [Cloudflare's web-bot-auth documentation](https://github.com/cloudflare/web-bot-auth) for tools to generate Ed25519 key pairs.
 </Info>
 
-### 2. Build with your key
-
-```bash
-kernel extensions build-web-bot-auth --to ./web-bot-auth-ext --key ./my-key.jwk --upload my-web-bot-auth
-```
-
-### 3. Host your public key
+### 2. Host your public key
 
 For websites to verify your signatures, you need to host your public key at a well-known URL. Create a key directory at:
 
@@ -149,6 +144,16 @@ The directory should contain your public keys in JWKS format:
   ],
   "purpose": "your-bot-purpose"
 }
+```
+
+### 3. Build with your key and hosted key directory
+
+```bash
+kernel extensions build-web-bot-auth \
+  --to ./web-bot-auth-ext \
+  --key ./my-key.jwk \
+  --url https://yourdomain.com/.well-known/http-message-signatures-directory \
+  --upload my-web-bot-auth
 ```
 
 ### 4. Register with Cloudflare (optional)
