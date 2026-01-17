@@ -4,11 +4,8 @@
     { "source": "/careers/intro", "destination": "https://jobs.ashbyhq.com/usekernel" },
     { "source": "/careers/infra-engineer", "destination": "https://jobs.ashbyhq.com/usekernel" },
     { "source": "/careers/backend-engineer", "destination": "https://jobs.ashbyhq.com/usekernel" },
-    { "source": "/careers/browser-security-engineer", "destination": "https://jobs.ashbyhq.com/usekernel" },
     { "source": "/careers/engineer-new-grad", "destination": "https://jobs.ashbyhq.com/usekernel" },
-    { "source": "/careers/devrel-engineer", "destination": "https://jobs.ashbyhq.com/usekernel" },
-    { "source": "/careers/customer-engineer", "destination": "https://jobs.ashbyhq.com/usekernel" },
-    { "source": "/careers/solutions-engineer", "destination": "https://jobs.ashbyhq.com/usekernel" }
+    { "source": "/careers/customer-engineer", "destination": "https://jobs.ashbyhq.com/usekernel" }
   ],
   "theme": "palm",
   "name": "Kernel",
@@ -83,8 +80,8 @@
                   "browsers/replays",
                   "browsers/viewport",
                   "browsers/profiles",
-                  "browsers/pools",
-                  "browsers/file-io"
+                  "browsers/file-io",
+                  "browsers/computer-controls"
                 ]
               },
               {
@@ -109,7 +106,7 @@
                     ]
                   },
                   "browsers/playwright-execution",
-                  "browsers/computer-controls",
+                  "browsers/pools",
                   "browsers/extensions"
                 ]
               }
