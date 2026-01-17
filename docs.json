@@ -113,6 +113,15 @@
             ]
           },
           {
+            "group": "Auth",
+            "pages": [
+              "auth/agent/overview",
+              "auth/agent/hosted-ui",
+              "auth/agent/programmatic",
+              "auth/credentials"
+            ]
+          },
+          {
             "group": "Building your app",
             "pages": [
               "apps/develop",
@@ -200,6 +209,7 @@
           "reference/cli/auth",
           "reference/cli/browsers",
           "reference/cli/apps",
+          "reference/cli/mcp",
           "reference/cli/extensions"
         ]
       },
