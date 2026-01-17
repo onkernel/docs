@@ -9,6 +9,10 @@ title: "Browsers"
 ### `kernel browsers list`
 List all browser sessions.
 
+| Flag | Description |
+|------|-------------|
+| `--output json`, `-o json` | Output raw JSON array. |
+
 ### `kernel browsers create`
 Create a new browser session.
 
@@ -17,6 +21,7 @@ Create a new browser session.
 | `--stealth` | Enable stealth mode to reduce automation fingerprints. |
 | `--headless` | Launch without GUI/VNC access. |
 | `--kiosk` | Launch in Chrome kiosk mode. |
+| `--output json`, `-o json` | Output raw JSON object. |
 
 ### `kernel browsers delete <session-id>`
 Delete a browser session. Use `-y` to skip confirmation.
@@ -27,6 +32,17 @@ Delete a browser session. Use `-y` to skip confirmation.
 
 ### `kernel browsers view <session-id>`
 Return a live view URL for remote monitoring and control.
+
+| Flag | Description |
+|------|-------------|
+| `--output json`, `-o json` | Output JSON with `liveViewUrl` field. |
+
+### `kernel browsers get <session-id>`
+Get detailed information about a browser session.
+
+| Flag | Description |
+|------|-------------|
+| `--output json`, `-o json` | Output raw JSON object. |
 
 ## Browser logs
 
@@ -47,6 +63,10 @@ Stream browser logs from the supervisor or a file path.
 ### `kernel browsers replays list <session-id>`
 List replay recordings for a browser session.
 
+| Flag | Description |
+|------|-------------|
+| `--output json`, `-o json` | Output raw JSON array. |
+
 ### `kernel browsers replays start <session-id>`
 Start recording a replay.
 
@@ -54,6 +74,7 @@ Start recording a replay.
 |------|-------------|
 | `--framerate <fps>` | Recording framerate in frames per second. |
 | `--max-duration <seconds>` | Maximum recording duration. |
+| `--output json`, `-o json` | Output raw JSON object. |
 
 ### `kernel browsers replays stop <session-id> <replay-id>`
 Stop an active replay recording.
@@ -78,6 +99,7 @@ Execute a command synchronously inside the browser VM.
 | `--timeout <seconds>` | Execution timeout. |
 | `--as-user <user>` | Run as a specific user. |
 | `--as-root` | Run as root. |
+| `--output json`, `-o json` | Output raw JSON object. |
 
 ### `kernel browsers process spawn <session-id> [--] [command...]`
 Execute a command asynchronously in the browser VM.
@@ -90,6 +112,7 @@ Execute a command asynchronously in the browser VM.
 | `--timeout <seconds>` | Execution timeout. |
 | `--as-user <user>` | Run as a specific user. |
 | `--as-root` | Run as root. |
+| `--output json`, `-o json` | Output raw JSON object. |
 
 ### `kernel browsers process kill <session-id> <process-id>`
 Send a signal to a process running in the browser VM.
@@ -149,6 +172,7 @@ Retrieve metadata for a file or directory.
 | Flag | Description |
 |------|-------------|
 | `--path <path>` | Absolute file or directory path (required). |
+| `--output json`, `-o json` | Output raw JSON object. |
 
 ### `kernel browsers fs list-files <session-id>`
 List directory contents.
@@ -156,6 +180,7 @@ List directory contents.
 | Flag | Description |
 |------|-------------|
 | `--path <path>` | Absolute directory path (required). |
+| `--output json`, `-o json` | Output raw JSON array. |
 
 ### `kernel browsers fs move <session-id>`
 Move or rename a file or directory.
@@ -295,12 +320,17 @@ Execute Playwright/TypeScript code against a running browser session.
 ### `kernel extensions list`
 List all uploaded extensions.
 
+| Flag | Description |
+|------|-------------|
+| `--output json`, `-o json` | Output raw JSON array. |
+
 ### `kernel extensions upload <directory>`
 Upload an unpacked extension directory.
 
 | Flag | Description |
 |------|-------------|
 | `--name <name>` | Optional unique extension name. |
+| `--output json`, `-o json` | Output raw JSON object. |
 
 ### `kernel extensions download <id-or-name>`
 Download an extension archive.
@@ -332,8 +362,16 @@ Upload one or more unpacked Chrome extensions directly into a running browser se
 ### `kernel proxies list`
 List available proxy configurations.
 
+| Flag | Description |
+|------|-------------|
+| `--output json`, `-o json` | Output raw JSON array. |
+
 ### `kernel proxies get <id>`
 Show details for a proxy configuration.
+
+| Flag | Description |
+|------|-------------|
+| `--output json`, `-o json` | Output raw JSON object. |
 
 ### `kernel proxies create`
 Create a new proxy configuration.
@@ -354,6 +392,7 @@ Create a new proxy configuration.
 | `--port <port>` | Proxy port (custom; required). |
 | `--username <username>` | Proxy username (custom). |
 | `--password <password>` | Proxy password (custom). |
+| `--output json`, `-o json` | Output raw JSON object. |
 
 ### `kernel proxies delete <id>`
 Delete a proxy configuration.
@@ -361,3 +400,93 @@ Delete a proxy configuration.
 | Flag | Description |
 |------|-------------|
 | `--yes`, `-y` | Skip confirmation. |
+
+## Browser pools
+
+For more details on browser pools, see [Browser Pools](/browsers/pools).
+
+### `kernel browser-pools list`
+List all browser pools.
+
+| Flag | Description |
+|------|-------------|
+| `--output json`, `-o json` | Output raw JSON array. |
+
+### `kernel browser-pools create`
+Create a new browser pool.
+
+| Flag | Description |
+|------|-------------|
+| `--name <name>` | Optional unique name for the pool. |
+| `--size <n>` | Number of browsers in the pool (required). |
+| `--fill-rate <n>` | Percentage of the pool to fill per minute. |
+| `--timeout <seconds>` | Idle timeout for browsers acquired from the pool. |
+| `--output json`, `-o json` | Output raw JSON object. |
+
+### `kernel browser-pools get <id-or-name>`
+Get pool details.
+
+| Flag | Description |
+|------|-------------|
+| `--output json`, `-o json` | Output raw JSON object. |
+
+### `kernel browser-pools update <id-or-name>`
+Update pool configuration.
+
+| Flag | Description |
+|------|-------------|
+| `--size <n>` | Updated pool size. |
+| `--discard-all-idle` | Discard all idle browsers and refill. |
+| `--output json`, `-o json` | Output raw JSON object. |
+
+### `kernel browser-pools acquire <id-or-name>`
+Acquire a browser from the pool.
+
+| Flag | Description |
+|------|-------------|
+| `--timeout <seconds>` | Acquire timeout before returning 204. |
+| `--output json`, `-o json` | Output raw JSON object. |
+
+### `kernel browser-pools release <id-or-name>`
+Release a browser back to the pool.
+
+| Flag | Description |
+|------|-------------|
+| `--session-id <id>` | Browser session ID to release (required). |
+| `--reuse` | Reuse the browser instance (default: true). |
+
+### `kernel browser-pools delete <id-or-name>`
+Delete a pool.
+
+| Flag | Description |
+|------|-------------|
+| `--force` | Force delete even if browsers are leased. |
+
+### `kernel browser-pools flush <id-or-name>`
+Destroy all idle browsers in the pool.
+
+## Profiles
+
+For more details on browser profiles, see [Profiles](/browsers/profiles).
+
+### `kernel profiles list`
+List all browser profiles.
+
+| Flag | Description |
+|------|-------------|
+| `--output json`, `-o json` | Output raw JSON array. |
+
+### `kernel profiles get <id-or-name>`
+Get profile details.
+
+| Flag | Description |
+|------|-------------|
+| `--output json`, `-o json` | Output raw JSON object. |
+
+### `kernel profiles create`
+Create a new browser profile.
+
+| Flag | Description |
+|------|-------------|
+| `--name <name>` | Optional unique name for the profile. |
+| `--output json`, `-o json` | Output raw JSON object. |

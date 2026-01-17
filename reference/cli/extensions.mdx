@@ -1,0 +1,131 @@
+---
+title: "Extensions"
+---
+
+Manage browser extensions for use with Kernel browsers.
+
+## Extension Management
+
+### `kernel extensions list`
+
+List all extensions in your organization.
+
+**Output includes:**
+- Extension ID
+- Name (if assigned)
+- Created date
+- Size in bytes
+- Last used date
+
+**Example:**
+
+```bash
+kernel extensions list
+```
+
+### `kernel extensions upload <directory>`
+
+Upload an unpacked browser extension directory or zip file.
+
+| Flag | Description |
+|------|-------------|
+| `--name <name>` | Optional unique name for the extension. Must be unique within your organization. |
+
+**Example:**
+
+```bash
+# Upload with auto-generated ID
+kernel extensions upload ./my-extension
+
+# Upload with custom name
+kernel extensions upload ./my-extension --name my-custom-extension
+```
+
+<Info>
+Extensions requiring enterprise policies must include `update.xml` and `.crx` files. See [Extensions requiring enterprise policies](/browsers/extensions#uploading-extensions-requiring-enterprise-policies) for details.
+</Info>
+
+### `kernel extensions download <id-or-name>`
+
+Download an extension archive by ID or name.
+
+| Flag | Description |
+|------|-------------|
+| `--to <path>` | Output path for the downloaded zip file. |
+
+**Example:**
+
+```bash
+# Download to current directory
+kernel extensions download my-extension
+
+# Download to specific path
+kernel extensions download my-extension --to ./downloads/extension.zip
+```
+
+### `kernel extensions delete <id-or-name>`
+
+Delete an extension by ID or name.
+
+| Flag | Description |
+|------|-------------|
+| `--yes`, `-y` | Skip confirmation prompt. |
+
+**Example:**
+
+```bash
+# Delete with confirmation
+kernel extensions delete my-extension
+
+# Delete without confirmation
+kernel extensions delete my-extension --yes
+```
+
+### `kernel extensions download-web-store <url>`
+
+Download and unpack an extension directly from the Chrome Web Store.
+
+| Flag | Description |
+|------|-------------|
+| `--to <path>` | Output directory for the unpacked extension. |
+| `--os <platform>` | Target OS: `mac`, `win`, or `linux` (default: `linux`). |
+
+**Example:**
+
+```bash
+kernel extensions download-web-store \
+  https://chromewebstore.google.com/detail/extension-id \
+  --to ./my-extension
+```
+
+After downloading, you can upload the extension to Kernel:
+
+```bash
+kernel extensions upload ./my-extension --name my-extension
+```
+
+### `kernel extensions build-web-bot-auth`
+Build Cloudflare's [Web Bot Auth](/integrations/web-bot-auth) browser extension for signing HTTP requests with RFC 9421 signatures.
+
+| Flag | Description |
+|------|-------------|
+| `--to <dir>` | Output directory for the built extension (required). |
+| `--key <path>` | Path to JWK file with Ed25519 signing key (defaults to RFC9421 test key). |
+| `--upload <name>` | Upload the extension to Kernel with specified name (e.g., --upload my-web-bot-auth). |
+
+**Examples:**
+
+```bash
+# Build with default test key
+kernel extensions build-web-bot-auth --to ./web-bot-auth-ext
+
+# Build with custom key
+kernel extensions build-web-bot-auth --to ./web-bot-auth-ext --key ./my-key.jwk
+
+# Build with custom name and upload
+kernel extensions build-web-bot-auth --to ./web-bot-auth-ext --upload my-web-bot-auth
+```
+
+<Info>
+This command requires Node.js and npm to be installed on your system.
+</Info>

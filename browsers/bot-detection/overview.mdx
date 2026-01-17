@@ -33,6 +33,9 @@ Bring your own proxy network or use Kernel's managed pool (selectable down to ZI
 ### [Profiles](/browsers/profiles)
 Profiles persist cookies, local storage, and session data between runs. Combined with a fixed proxy, this mimics a returning user. We recommend using them to persist authenticated states and reduce CAPTCHAs.
 
+### [Browser Pools](/browsers/pools)
+Browser pools let you reuse browsers across multiple visits to the same website, which introduces consistency with respect to the IP address. Since IP addresses are one of the main components of fingerprinting used by modern bot detection systems, browser pools drastically increase your chances of avoiding detection.
+
 ### [Playwright Execution API](/browsers/playwright-execution)
 Executes Playwright scripts in the same VM as the browser, ensuring headers, user-agent strings, and environment match.
 Kernel automatically applies Patchright to remove automation fingerprints, including headless indicators.
@@ -45,7 +48,7 @@ Emulates native keyboard and mouse input directly at the OS level.
 
 Before you start automating your workflow, we recommend that you manually test your website to understand how it behaves with Kernel's browsers. Here's how to do that:
 
-1. **Launch a browser from the [Kernel dashboard](https://www.dashboard.onkernel.com/browsers).** This opens a Kernel browser instance in a clean virtual machine.
+1. **Launch a browser from the [Kernel dashboard](https://dashboard.onkernel.com/browsers).** This opens a Kernel browser instance in a clean virtual machine.
 2. **Navigate to the target website** and perform the same actions you plan to automate — logging in, filling forms, loading dashboards, etc.
 3. **Observe potential friction points:**
    - Are you immediately prompted for CAPTCHA or MFA?  
