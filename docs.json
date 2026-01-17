@@ -113,12 +113,12 @@
             ]
           },
           {
-            "group": "Agent Auth",
+            "group": "Auth",
             "pages": [
-              "agents/auth/overview",
-              "agents/auth/hosted-ui",
-              "agents/auth/programmatic",
-              "agents/auth/credentials"
+              "auth/agent/overview",
+              "auth/agent/hosted-ui",
+              "auth/agent/programmatic",
+              "auth/credentials"
             ]
           },
           {

@@ -71,7 +71,7 @@ if state.status == "SUCCESS":
 </CodeGroup>
   </Step>
   <Step title="Use the Profile">
-    Create browsers with the saved profile—they're already logged in.
+    Create browsers with the profile and navigate to the site—the session is already authenticated.
 
 <CodeGroup>
 ```typescript TypeScript
@@ -79,7 +79,9 @@ const browser = await kernel.browsers.create({
   profile: { name: 'netflix-user-123' },
   stealth: true,
 });
-// Browser is logged into Netflix!
+
+// Navigate to the site—you're already logged in
+await page.goto('https://netflix.com');
 ```
 
 ```python Python
@@ -87,38 +89,45 @@ browser = await kernel.browsers.create(
     profile={"name": "netflix-user-123"},
     stealth=True,
 )
-# Browser is logged into Netflix!
+
+# Navigate to the site—you're already logged in
+await page.goto("https://netflix.com")
 ```
 </CodeGroup>
 
-    For fully automated flows, link [Credentials](/agents/auth/credentials) to enable re-authentication without user input.
+    For fully automated flows, link [Credentials](/auth/credentials) to enable re-authentication without user input.
   </Step>
 </Steps>
 
 ## Choose Your Integration
 
 <CardGroup cols={2}>
-  <Card title="Hosted UI (Recommended)" icon="browser" href="/agents/auth/hosted-ui">
-    **Best for:** Most applications
+  <Card title="Hosted UI" icon="browser" href="/auth/agent/hosted-ui">
+    **Start here** - Simplest integration
 
-    Collect credentials via Kernel's hosted page. Simplest integration.
+    Redirect users to Kernel's hosted page. Add features incrementally: save credentials for auto-reauth, custom login URLs, SSO support.
   </Card>
-  <Card title="Programmatic" icon="code" href="/agents/auth/programmatic">
-    **Best for:** Custom UI or headless
+  <Card title="Programmatic" icon="code" href="/auth/agent/programmatic">
+    **Full control** - Custom UI or headless
 
-    Build your own credential collection with polling and submit APIs.
+    Build your own credential collection. Handle login fields, SSO buttons, MFA selection, and external actions (push notifications, security keys).
   </Card>
 </CardGroup>
+
+<Tip>
+Layer in [Credentials](/auth/credentials) to enable fully automated re-authentication when sessions expire—no user interaction needed.
+</Tip>
 
 ## Why Agent Auth?
 
 The most valuable workflows live behind logins. Agent Auth provides:
 
-- **Works on any website** - Login pages are handled automatically
-- **SSO/OAuth support** - "Sign in with Google/GitHub/Microsoft" buttons work out of the box
-- **2FA/OTP handling** - TOTP codes automated, SMS/email OTP via the UI
-- **Session monitoring** - Automatic re-authentication when sessions expire
-- **Secure by default** - Credentials encrypted at rest, never exposed in API responses
+- **Works on any website** - Login pages discovered and handled automatically
+- **SSO/OAuth support** - "Sign in with Google/GitHub/Microsoft" buttons work out of the box via `allowed_domains`
+- **2FA/OTP handling** - TOTP codes automated, SMS/email/push OTP supported
+- **Post-login URL** - Get the URL where login landed (`post_login_url`) so you can start automations from the right page
+- **Session monitoring** - Automatic re-authentication when sessions expire (with stored credentials)
+- **Secure by default** - Credentials encrypted at rest, never exposed in API responses or passed to LLMs
 
 ## Security
 

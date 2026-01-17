@@ -14,7 +14,7 @@ Use the Programmatic flow when:
 
 <Steps>
   <Step title="Create Auth Agent and Start Authentication">
-    Same as [Hosted UI](/agents/auth/hosted-ui)
+    Same as [Hosted UI](/auth/agent/hosted-ui)
   </Step>
   <Step title="Poll and Submit">
     Poll until `step` becomes `awaiting_input`, then submit credentials
@@ -188,7 +188,9 @@ if (state.status === 'SUCCESS') {
     profile: { name: 'github-profile' },
     stealth: true,
   });
-  // Browser is logged into GitHub!
+  
+  // Navigate to the site—you're already logged in
+  await page.goto('https://github.com');
 }
 ```
 
@@ -240,6 +242,134 @@ if state.status == "SUCCESS":
         profile={"name": "github-profile"},
         stealth=True,
     )
-    # Browser is logged into GitHub!
+    
+    # Navigate to the site—you're already logged in
+    await page.goto("https://github.com")
 ```
 </CodeGroup>
+
+## Handling Different Input Types
+
+The basic polling loop handles `pending_fields`, but login pages can require other input types too.
+
+### SSO Buttons
+
+When the login page has "Sign in with Google/GitHub/Microsoft" buttons, they appear in `pending_sso_buttons`:
+
+<CodeGroup>
+```typescript TypeScript
+if (state.pending_sso_buttons?.length) {
+  // Show the user available SSO options
+  for (const btn of state.pending_sso_buttons) {
+    console.log(`${btn.provider}: ${btn.label}`);
+  }
+  
+  // Submit the selected SSO button
+  await kernel.agents.auth.invocations.submit(
+    invocation.invocation_id,
+    { sso_button: state.pending_sso_buttons[0].selector }
+  );
+}
+```
+
+```python Python
+if state.pending_sso_buttons:
+    # Show the user available SSO options
+    for btn in state.pending_sso_buttons:
+        print(f"{btn['provider']}: {btn['label']}")
+    
+    # Submit the selected SSO button
+    await kernel.agents.auth.invocations.submit(
+        invocation.invocation_id,
+        sso_button=state.pending_sso_buttons[0]["selector"],
+    )
+```
+</CodeGroup>
+
+<Info>
+Remember to set `allowed_domains` on the agent to include the OAuth provider's domain (e.g., `accounts.google.com`).
+</Info>
+
+### MFA Selection
+
+When the site offers multiple MFA methods, they appear in `mfa_options`:
+
+<CodeGroup>
+```typescript TypeScript
+if (state.mfa_options?.length) {
+  // Available types: sms, email, totp, push, call, security_key
+  for (const opt of state.mfa_options) {
+    console.log(`${opt.type}: ${opt.label}`);
+  }
+  
+  // Submit the selected MFA method
+  await kernel.agents.auth.invocations.submit(
+    invocation.invocation_id,
+    { selected_mfa_type: 'sms' }
+  );
+}
+```
+
+```python Python
+if state.mfa_options:
+    # Available types: sms, email, totp, push, call, security_key
+    for opt in state.mfa_options:
+        print(f"{opt['type']}: {opt['label']}")
+    
+    # Submit the selected MFA method
+    await kernel.agents.auth.invocations.submit(
+        invocation.invocation_id,
+        selected_mfa_type="sms",
+    )
+```
+</CodeGroup>
+
+After selecting an MFA method, the flow continues—poll for `pending_fields` to submit the code, or handle external actions for push/security key.
+
+### External Actions (Push, Security Key)
+
+When the site requires an action outside the browser (push notification, security key tap), the step becomes `awaiting_external_action`:
+
+<CodeGroup>
+```typescript TypeScript
+if (state.step === 'awaiting_external_action') {
+  // Show the message to the user
+  console.log(state.external_action_message);
+  // e.g., "Check your phone for a push notification"
+  
+  // Keep polling—the flow resumes automatically when the user completes the action
+}
+```
+
+```python Python
+if state.step == "awaiting_external_action":
+    # Show the message to the user
+    print(state.external_action_message)
+    # e.g., "Check your phone for a push notification"
+    
+    # Keep polling—the flow resumes automatically when the user completes the action
+```
+</CodeGroup>
+
+## Step Reference
+
+The `step` field indicates what the flow is waiting for:
+
+| Step | Description |
+|------|-------------|
+| `discovering` | Finding the login page and analyzing it |
+| `awaiting_input` | Waiting for field values, SSO button click, or MFA selection |
+| `submitting` | Processing submitted values |
+| `awaiting_external_action` | Waiting for push approval, security key, etc. |
+
+## Status Reference
+
+The `status` field indicates the overall invocation state:
+
+| Status | Description |
+|--------|-------------|
+| `IN_PROGRESS` | Authentication is ongoing—keep polling |
+| `SUCCESS` | Login completed, profile saved |
+| `FAILED` | Login failed (check `error_message`) |
+| `EXPIRED` | Invocation timed out (5 minutes) |
+| `CANCELED` | Invocation was canceled |
