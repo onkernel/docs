@@ -18,7 +18,7 @@ Playwright performs downloads via the browser itself, so there are a few steps:
 - Retrieve the file from the browser's filesystem
 
 <Note>
-  With `behavior: 'default'`, downloads are saved to the browser's default download directory. The CDP `downloadProgress` event includes a `filePath` field when the download completes, which tells you exactly where the file was saved. Use this path with Kernel's File I/O APIs to retrieve the file.
+  With `behavior: 'default'`, downloads are saved to `/tmp/playwright-artifacts-XXXXXX/` (where `XXXXXX` is a random suffix), not `/home/kernel/Downloads`. The CDP `downloadProgress` event includes a `filePath` field when the download completes, which tells you exactly where the file was saved. Use this path with Kernel's File I/O APIs to retrieve the file.
 </Note>
 
 <Info>
