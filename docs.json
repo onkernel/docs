@@ -161,7 +161,8 @@
                   "integrations/vercel/marketplace"
                 ]
               },
-              "integrations/web-bot-auth"
+              "integrations/web-bot-auth",
+              "integrations/1password"
             ]
           },
           {
