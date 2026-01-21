@@ -192,7 +192,7 @@
       {
         "tab": "API Reference",
         "icon": "code",
-        "openapi": "https://app.stainless.com/api/spec/documented/kernel/openapi.documented.yml"
+        "openapi": "http://api.onkernel.com/spec.yaml"
       },
       {
         "tab": "MCP",
