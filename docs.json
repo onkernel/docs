@@ -113,7 +113,7 @@
             ]
           },
           {
-            "group": "Auth",
+            "group": "Agent Auth",
             "pages": [
               "auth/agent/overview",
               "auth/agent/hosted-ui",
