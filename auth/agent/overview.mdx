@@ -1,0 +1,139 @@
+---
+title: "Overview"
+description: "Create authenticated browser sessions for your automations"
+---
+
+Agent Auth creates authenticated browser sessions for your automations—handling login flows, 2FA/OTP, and session persistence automatically.
+
+## How It Works
+
+<Steps>
+  <Step title="Create an Auth Agent">
+    An **Auth Agent** represents a login session for a specific website and profile. Create one for each domain + profile combination.
+
+<CodeGroup>
+```typescript TypeScript
+const agent = await kernel.agents.auth.create({
+  domain: 'netflix.com',
+  profile_name: 'netflix-user-123',
+});
+```
+
+```python Python
+agent = await kernel.agents.auth.create(
+    domain="netflix.com",
+    profile_name="netflix-user-123",
+)
+```
+</CodeGroup>
+  </Step>
+  <Step title="Start Authentication">
+    Start the login flow. Users provide credentials via the hosted page (or your own UI).
+
+<CodeGroup>
+```typescript TypeScript
+const invocation = await kernel.agents.auth.invocations.create({
+  auth_agent_id: agent.id,
+});
+
+// Send user to login page
+console.log('Login URL:', invocation.hosted_url);
+
+// Poll until complete
+let state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id);
+while (state.status === 'IN_PROGRESS') {
+  await new Promise(r => setTimeout(r, 2000));
+  state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id);
+}
+
+if (state.status === 'SUCCESS') {
+  console.log('Authenticated!');
+}
+```
+
+```python Python
+invocation = await kernel.agents.auth.invocations.create(
+    auth_agent_id=agent.id,
+)
+
+# Send user to login page
+print(f"Login URL: {invocation.hosted_url}")
+
+# Poll until complete
+state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id)
+while state.status == "IN_PROGRESS":
+    await asyncio.sleep(2)
+    state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id)
+
+if state.status == "SUCCESS":
+    print("Authenticated!")
+```
+</CodeGroup>
+  </Step>
+  <Step title="Use the Profile">
+    Create browsers with the profile and navigate to the site—the session is already authenticated.
+
+<CodeGroup>
+```typescript TypeScript
+const browser = await kernel.browsers.create({
+  profile: { name: 'netflix-user-123' },
+  stealth: true,
+});
+
+// Navigate to the site—you're already logged in
+await page.goto('https://netflix.com');
+```
+
+```python Python
+browser = await kernel.browsers.create(
+    profile={"name": "netflix-user-123"},
+    stealth=True,
+)
+
+# Navigate to the site—you're already logged in
+await page.goto("https://netflix.com")
+```
+</CodeGroup>
+
+    For fully automated flows, link [Credentials](/auth/credentials) to enable re-authentication without user input.
+  </Step>
+</Steps>
+
+## Choose Your Integration
+
+<CardGroup cols={2}>
+  <Card title="Hosted UI" icon="browser" href="/auth/agent/hosted-ui">
+    **Start here** - Simplest integration
+
+    Redirect users to Kernel's hosted page. Add features incrementally: save credentials for auto-reauth, custom login URLs, SSO support.
+  </Card>
+  <Card title="Programmatic" icon="code" href="/auth/agent/programmatic">
+    **Full control** - Custom UI or headless
+
+    Build your own credential collection. Handle login fields, SSO buttons, MFA selection, and external actions (push notifications, security keys).
+  </Card>
+</CardGroup>
+
+<Tip>
+Layer in [Credentials](/auth/credentials) to enable fully automated re-authentication when sessions expire—no user interaction needed.
+</Tip>
+
+## Why Agent Auth?
+
+The most valuable workflows live behind logins. Agent Auth provides:
+
+- **Works on any website** - Login pages discovered and handled automatically
+- **SSO/OAuth support** - "Sign in with Google/GitHub/Microsoft" buttons work out of the box via `allowed_domains`
+- **2FA/OTP handling** - TOTP codes automated, SMS/email/push OTP supported
+- **Post-login URL** - Get the URL where login landed (`post_login_url`) so you can start automations from the right page
+- **Session monitoring** - Automatic re-authentication when sessions expire (with stored credentials)
+- **Secure by default** - Credentials encrypted at rest, never exposed in API responses or passed to LLMs
+
+## Security
+
+| Feature | Description |
+|---------|-------------|
+| **Encrypted credentials** | Values encrypted with per-organization keys |
+| **No credential exposure** | Never returned in API responses or passed to LLMs |
+| **Encrypted profiles** | Browser session state encrypted end-to-end |
+| **Isolated execution** | Each login runs in an isolated browser environment |

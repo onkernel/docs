@@ -113,6 +113,15 @@
             ]
           },
           {
+            "group": "Auth",
+            "pages": [
+              "auth/agent/overview",
+              "auth/agent/hosted-ui",
+              "auth/agent/programmatic",
+              "auth/credentials"
+            ]
+          },
+          {
             "group": "Building your app",
             "pages": [
               "apps/develop",
@@ -152,7 +161,8 @@
                   "integrations/vercel/marketplace"
                 ]
               },
-              "integrations/web-bot-auth"
+              "integrations/web-bot-auth",
+              "integrations/1password"
             ]
           },
           {
@@ -182,7 +192,7 @@
       {
         "tab": "API Reference",
         "icon": "code",
-        "openapi": "https://app.stainless.com/api/spec/documented/kernel/openapi.documented.yml"
+        "openapi": "https://api.onkernel.com/spec.yaml"
       },
       {
         "tab": "MCP",
@@ -200,6 +210,7 @@
           "reference/cli/auth",
           "reference/cli/browsers",
           "reference/cli/apps",
+          "reference/cli/mcp",
           "reference/cli/extensions"
         ]
       },
