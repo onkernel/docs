@@ -118,7 +118,8 @@
               "auth/agent/overview",
               "auth/agent/hosted-ui",
               "auth/agent/programmatic",
-              "auth/credentials"
+              "auth/credentials",
+              "auth/agent/faq"
             ]
           },
           {
