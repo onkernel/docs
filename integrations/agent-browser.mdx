@@ -4,9 +4,53 @@ title: "Agent Browser"
 
 [Agent Browser](https://github.com/vercel-labs/agent-browser) is a headless browser automation CLI for AI agents built by Vercel. It provides a fast Rust CLI with Node.js fallback, making it ideal for AI-powered browser automation. By integrating with Kernel, you can run Agent Browser automations with cloud-hosted browsers.
 
-## Adding Kernel to existing Agent Browser implementations
+## Using the native Kernel provider
 
-If you already have an Agent Browser implementation, you can easily switch to using Kernel's cloud browsers by connecting via CDP.
+Agent Browser has built-in support for Kernel as a cloud browser provider. This is the simplest way to use Kernel with Agent Browser.
+
+### Quick start
+
+Use the `-p` flag to enable Kernel:
+
+```bash
+export KERNEL_API_KEY="your-api-key"
+agent-browser -p kernel open https://example.com
+```
+
+Or use environment variables for CI/scripts:
+
+```bash
+export AGENT_BROWSER_PROVIDER=kernel
+export KERNEL_API_KEY="your-api-key"
+agent-browser open https://example.com
+```
+
+Get your API key from the [Kernel Dashboard](https://dashboard.onkernel.com).
+
+### Configuration options
+
+Configure Kernel via environment variables:
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `KERNEL_HEADLESS` | Run browser in headless mode (`true`/`false`) | `false` |
+| `KERNEL_STEALTH` | Enable stealth mode to avoid bot detection (`true`/`false`) | `true` |
+| `KERNEL_TIMEOUT_SECONDS` | Session timeout in seconds | `300` |
+| `KERNEL_PROFILE_NAME` | Browser profile name for persistent cookies/logins | (none) |
+
+### Profile persistence
+
+When `KERNEL_PROFILE_NAME` is set, the profile will be created if it doesn't already exist. Cookies, logins, and session data are automatically saved back to the profile when the browser session ends, making them available for future sessions.
+
+```bash
+export KERNEL_API_KEY="your-api-key"
+export KERNEL_PROFILE_NAME="my-profile"
+agent-browser -p kernel open https://example.com
+```
+
+## Connecting via CDP (alternative)
+
+If you need more control, you can connect Agent Browser to Kernel via CDP directly.
 
 ### 1. Install the Kernel SDK
 
