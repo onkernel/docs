@@ -1,0 +1,63 @@
+---
+title: "FAQ"
+description: "Common questions about Agent Auth and re-authentication"
+---
+
+## How re-authentication works
+
+When you save credentials, Kernel keeps your session authenticated automatically. Kernel runs periodic checks to detect expired sessions, and when logout is detected, re-auth happens automatically. When you create a browser with the profile, it's already logged in.
+
+### Initial login
+
+Initial login uses AI to discover the login page and identify form fields. This happens once per site—credentials are never passed to the LLM.
+
+| Step | Method |
+|------|--------|
+| Discover login page | AI |
+| Identify form fields | AI |
+| Fill and submit credentials | Deterministic |
+| Handle captcha | Stealth mode + captcha solver |
+| Verify login success | AI |
+
+### Re-authentication
+
+Re-authentication is fully deterministic. No AI, no guessing—just replaying the stored login flow.
+
+| Step | Method |
+|------|--------|
+| Navigate to login page | Deterministic (stored URL) |
+| Fill and submit credentials | Deterministic (stored field mapping) |
+| Handle captcha | Stealth mode + captcha solver |
+| Verify login success | AI |
+
+### Session monitoring
+
+Session monitoring runs periodic auth checks (default: every hour) to detect expired sessions. When logout is detected, re-auth happens automatically.
+
+<Info>
+For sites with short session timeouts, configurable check intervals per auth agent are coming soon.
+</Info>
+
+## Common questions
+
+<AccordionGroup>
+  <Accordion title="Does Kernel check if a session is expired before creating a browser?">
+    Yes. Kernel runs periodic auth checks (default: every hour) to detect expired sessions. When you create a browser with a profile, the session is already authenticated.
+  </Accordion>
+
+  <Accordion title="How does Kernel know which login page URL to use?">
+    During initial login, AI discovers the login page for the domain. This URL is stored and reused deterministically for all future re-authentications.
+  </Accordion>
+
+  <Accordion title="How does Kernel know which fields to put credentials into?">
+    During initial login, AI identifies the form fields (username, password, etc.). The field mapping is stored and reused deterministically for re-authentication.
+  </Accordion>
+
+  <Accordion title="Is re-authentication deterministic or probabilistic?">
+    Re-authentication is fully deterministic. After the initial AI-powered discovery, all subsequent logins replay the exact same flow—same URL, same field mapping, same steps. No AI, no guessing.
+  </Accordion>
+
+  <Accordion title="When does AI get used vs deterministic replay?">
+    AI is used only during **initial login** to discover the login page and identify form fields. All **re-authentications** are deterministic replays of the stored flow. The only exception is verifying login success, which uses AI to confirm the session is authenticated.
+  </Accordion>
+</AccordionGroup>
