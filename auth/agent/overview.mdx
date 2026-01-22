@@ -129,35 +129,6 @@ The most valuable workflows live behind logins. Agent Auth provides:
 - **Session monitoring** - Automatic re-authentication when sessions expire (with stored credentials)
 - **Secure by default** - Credentials encrypted at rest, never exposed in API responses or passed to LLMs
 
-## How Re-Authentication Works
-
-When you save credentials, Kernel keeps your session authenticated automatically. Kernel runs periodic checks to detect expired sessions, and when logout is detected, re-auth happens automatically. When you create a browser with the profile, it's already logged in.
-
-**Initial login** uses AI to discover the login page and identify form fields. This happens once per site—credentials are never passed to the LLM.
-
-| Step | Method |
-|------|--------|
-| Discover login page | AI |
-| Identify form fields | AI |
-| Fill and submit credentials | Deterministic |
-| Handle captcha | Stealth mode + captcha solver |
-| Verify login success | AI |
-
-**Re-authentication** is fully deterministic. No AI, no guessing—just replaying the stored login flow.
-
-| Step | Method |
-|------|--------|
-| Navigate to login page | Deterministic (stored URL) |
-| Fill and submit credentials | Deterministic (stored field mapping) |
-| Handle captcha | Stealth mode + captcha solver |
-| Verify login success | AI |
-
-**Session monitoring** runs periodic auth checks (default: every hour) to detect expired sessions. When logout is detected, re-auth happens automatically.
-
-<Info>
-For sites with short session timeouts, configurable check intervals per auth agent are coming soon.
-</Info>
-
 ## Security
 
 | Feature | Description |
