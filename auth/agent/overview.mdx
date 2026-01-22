@@ -140,6 +140,7 @@ When you save credentials, Kernel keeps your session authenticated automatically
 | Discover login page | AI |
 | Identify form fields | AI |
 | Fill and submit credentials | Deterministic |
+| Handle captcha | Stealth mode + captcha solver |
 | Verify login success | AI |
 
 **Re-authentication** is fully deterministic. No AI, no guessing—just replaying the stored login flow.
@@ -148,7 +149,14 @@ When you save credentials, Kernel keeps your session authenticated automatically
 |------|--------|
 | Navigate to login page | Deterministic (stored URL) |
 | Fill and submit credentials | Deterministic (stored field mapping) |
+| Handle captcha | Stealth mode + captcha solver |
 | Verify login success | AI |
+
+**Session monitoring** runs periodic auth checks (default: every hour) to detect expired sessions. When logout is detected, re-auth happens automatically.
+
+<Info>
+For sites with short session timeouts, configurable check intervals per auth agent are coming soon.
+</Info>
 
 ## Security
 
