@@ -116,6 +116,7 @@
             "group": "Agent Auth",
             "pages": [
               "auth/agent/overview",
+              "auth/agent/how-it-works",
               "auth/agent/hosted-ui",
               "auth/agent/programmatic",
               "auth/credentials"
