@@ -1,0 +1,105 @@
+---
+title: "Agent Browser"
+---
+
+[Agent Browser](https://github.com/vercel-labs/agent-browser) is a headless browser automation CLI for AI agents built by Vercel. It provides a fast Rust CLI with Node.js fallback, making it ideal for AI-powered browser automation. By integrating with Kernel, you can run Agent Browser automations with cloud-hosted browsers.
+
+## Adding Kernel to existing Agent Browser implementations
+
+If you already have an Agent Browser implementation, you can easily switch to using Kernel's cloud browsers by connecting via CDP.
+
+### 1. Install the Kernel SDK
+
+```bash
+npm install @onkernel/sdk
+```
+
+### 2. Initialize Kernel and create a browser
+
+Import the libraries and create a cloud browser session:
+
+```typescript
+import Kernel from '@onkernel/sdk';
+
+const kernel = new Kernel();
+
+const kernelBrowser = await kernel.browsers.create({ stealth: true });
+
+console.log("Live view url: ", kernelBrowser.browser_live_view_url);
+```
+
+### 3. Connect Agent Browser to Kernel
+
+Use Agent Browser's `connect` command to connect to Kernel's CDP WebSocket URL:
+
+```bash
+agent-browser connect <cdp_ws_url>
+```
+
+Where `<cdp_ws_url>` is the `cdp_ws_url` from your Kernel browser session.
+
+### 4. Use Agent Browser commands
+
+Once connected, use Agent Browser's commands with the Kernel-powered browser:
+
+```bash
+agent-browser open example.com
+agent-browser snapshot              # Get accessibility tree with refs
+agent-browser click @e2             # Click by ref from snapshot
+agent-browser fill @e3 "test@example.com"  # Fill by ref
+agent-browser get text @e1          # Get text by ref
+agent-browser screenshot page.png
+```
+
+### 5. Clean up
+
+When you're done, close the browser and clean up the Kernel session:
+
+```bash
+agent-browser close
+```
+
+```typescript
+await kernel.browsers.deleteByID(kernelBrowser.session_id);
+```
+
+## Programmatic usage
+
+You can also use Agent Browser programmatically with Kernel:
+
+```typescript
+import Kernel from '@onkernel/sdk';
+import { execSync } from 'child_process';
+
+const kernel = new Kernel();
+
+// Create a Kernel browser session
+const kernelBrowser = await kernel.browsers.create({ stealth: true });
+
+console.log("Live view url: ", kernelBrowser.browser_live_view_url);
+
+// Connect Agent Browser to Kernel
+execSync(`agent-browser connect ${kernelBrowser.cdp_ws_url}`);
+
+// Run your automation
+execSync('agent-browser open https://example.com');
+execSync('agent-browser snapshot');
+
+// Clean up
+execSync('agent-browser close');
+await kernel.browsers.deleteByID(kernelBrowser.session_id);
+```
+
+## Benefits of using Kernel with Agent Browser
+
+- **No local browser management**: Run automations without installing or maintaining browsers locally
+- **Scalability**: Launch multiple browser sessions in parallel
+- **Stealth mode**: Built-in anti-detection features for web scraping
+- **Session state**: Maintain browser state across runs via [Profiles](/browsers/profiles)
+- **Live view**: Debug your automations with real-time browser viewing
+
+## Next steps
+
+- Check out [live view](/browsers/live-view) for debugging your automations
+- Learn about [stealth mode](/browsers/bot-detection/stealth) for avoiding detection
+- Learn how to properly [terminate browser sessions](/browsers/termination)
