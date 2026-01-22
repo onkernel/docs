@@ -240,5 +240,6 @@
       "github": "https://github.com/orgs/onkernel",
       "linkedin": "https://www.linkedin.com/company/onkernel"
     }
-  }
+  },
+  "css": ".prose ul > li:has([data-as=\"iframe\"])::before, .dark .prose ul > li:has([data-as=\"iframe\"])::before { display: none; }"
 }
