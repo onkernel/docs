@@ -1,0 +1,54 @@
+---
+title: FAQ
+description: Frequently asked questions about Agent Auth
+---
+
+## How Re-Authentication Works
+
+When you save credentials, Kernel keeps your session authenticated automatically. Kernel runs periodic checks to detect expired sessions, and when logout is detected, re-auth happens automatically. When you create a browser with the profile, it's already logged in.
+
+**Initial login** uses AI to discover the login page and identify form fields. This happens once per site—credentials are never passed to the LLM.
+
+| Step | Method |
+|------|--------|
+| Discover login page | AI |
+| Identify form fields | AI |
+| Fill and submit credentials | Deterministic |
+| Handle captcha | Stealth mode + captcha solver |
+| Verify login success | AI |
+
+**Re-authentication** is fully deterministic. No AI, no guessing—just replaying the stored login flow.
+
+| Step | Method |
+|------|--------|
+| Navigate to login page | Deterministic (stored URL) |
+| Fill and submit credentials | Deterministic (stored field mapping) |
+| Handle captcha | Stealth mode + captcha solver |
+| Verify login success | AI |
+
+**Session monitoring** runs periodic auth checks (default: every hour) to detect expired sessions. When logout is detected, re-auth happens automatically.
+
+<Info>
+For sites with short session timeouts, configurable check intervals per auth agent are coming soon.
+</Info>
+
+## What authentication methods are supported?
+
+Agent Auth supports username/password authentication and most SSO providers. 
+
+<Warning>
+Passkey-based authentication (e.g., Google accounts with passkeys enabled) is not currently supported. If a user's SSO provider requires a passkey, the login will fail.
+</Warning>
+
+## What happens if login fails?
+
+If a login attempt fails, Kernel will retry with exponential backoff. After multiple failures, the [auth invocation](/auth/agent/hosted-ui#tracking-invocation-status) will be marked as failed and you'll receive an error. Common failure reasons include:
+
+- Invalid credentials
+- Bot detection blocking the login page
+- Site structure changes that break field detection
+- Captcha that couldn't be solved
+
+## Can I use Agent Auth with any website?
+
+Agent Auth works with most websites that use standard login forms. Some sites with aggressive bot detection may require additional configuration (stealth mode, proxies). Sites that require passkeys or hardware security keys are not supported.
