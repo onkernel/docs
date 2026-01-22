@@ -118,10 +118,6 @@ await page.goto("https://netflix.com")
 Layer in [Credentials](/auth/credentials) to enable fully automated re-authentication when sessions expire—no user interaction needed.
 </Tip>
 
-<Card title="How It Works" icon="gear" href="/auth/agent/how-it-works">
-  Learn what happens under the hood—how login pages are discovered, why re-auth is deterministic, and how sessions are monitored.
-</Card>
-
 ## Why Agent Auth?
 
 The most valuable workflows live behind logins. Agent Auth provides:
@@ -132,6 +128,27 @@ The most valuable workflows live behind logins. Agent Auth provides:
 - **Post-login URL** - Get the URL where login landed (`post_login_url`) so you can start automations from the right page
 - **Session monitoring** - Automatic re-authentication when sessions expire (with stored credentials)
 - **Secure by default** - Credentials encrypted at rest, never exposed in API responses or passed to LLMs
+
+## How Re-Authentication Works
+
+When you save credentials, Kernel keeps your session authenticated automatically.
+
+**On first login**, Kernel discovers the login page and identifies form fields (email, password, etc.). This uses AI and happens once per site.
+
+**On re-authentication**, the flow is deterministic—no AI guessing:
+1. Navigate to the stored login page
+2. Fill credentials into the mapped fields
+3. Submit and handle captcha if needed
+4. Verify login success
+
+Kernel runs periodic checks to detect expired sessions. When logout is detected, re-auth happens automatically. When you create a browser with the profile, it's already logged in.
+
+| Step | Method |
+|------|--------|
+| Discover login page | AI (first time only) |
+| Identify form fields | AI (first time only) |
+| Fill and submit credentials | Deterministic |
+| Verify login success | AI |
 
 ## Security
 
