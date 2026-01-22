@@ -131,23 +131,23 @@ The most valuable workflows live behind logins. Agent Auth provides:
 
 ## How Re-Authentication Works
 
-When you save credentials, Kernel keeps your session authenticated automatically.
+When you save credentials, Kernel keeps your session authenticated automatically. Kernel runs periodic checks to detect expired sessions, and when logout is detected, re-auth happens automatically. When you create a browser with the profile, it's already logged in.
 
-**On first login**, Kernel discovers the login page and identifies form fields (email, password, etc.). This uses AI and happens once per site.
-
-**On re-authentication**, the flow is deterministic—no AI guessing:
-1. Navigate to the stored login page
-2. Fill credentials into the mapped fields
-3. Submit and handle captcha if needed
-4. Verify login success
-
-Kernel runs periodic checks to detect expired sessions. When logout is detected, re-auth happens automatically. When you create a browser with the profile, it's already logged in.
+**Initial login** uses AI to discover the login page and identify form fields. This happens once per site—credentials are never passed to the LLM.
 
 | Step | Method |
 |------|--------|
-| Discover login page | AI (first time only) |
-| Identify form fields | AI (first time only) |
+| Discover login page | AI |
+| Identify form fields | AI |
 | Fill and submit credentials | Deterministic |
+| Verify login success | AI |
+
+**Re-authentication** is fully deterministic. No AI, no guessing—just replaying the stored login flow.
+
+| Step | Method |
+|------|--------|
+| Navigate to login page | Deterministic (stored URL) |
+| Fill and submit credentials | Deterministic (stored field mapping) |
 | Verify login success | AI |
 
 ## Security
