@@ -68,7 +68,7 @@ async function processTask(taskData: any) {
     return { success: false, error: error.message };
   } finally {
     // Always clean up
-    await kernel.browsers.delete(session.session_id);
+    await kernel.browsers.deleteByID(session.session_id);
   }
 }
 ```
