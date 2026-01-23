@@ -1,0 +1,235 @@
+---
+title: "Overview"
+description: "Recommended practices for scaling your browser automations and web agents in production"
+---
+## Introduction
+
+This guide explains how to architect production-scale browser automation systems using Kernel, how to handle high-concurrency workloads, and best practices for building resilient systems.
+
+After understanding the [basics](/browsers/create-a-browser) of our browsers, you should understand how to create and connect to individual browsers on-demand. This guide builds on that foundation to help you design systems using [browser pools](/browsers/scaling/pools) that can handle hundreds or thousands of concurrent browser tasks reliably.
+
+## Understanding your requirements
+
+Before selecting an architecture, assess your workload's characteristics:
+
+**Concurrency**: How many browsers need to run simultaneously?
+- Low (1-50): On-demand browser creation is sufficient
+- Medium (50-100): Pre-configuring browser pools provides significant benefits
+- High (100+): Use multiple pools with queuing
+
+**Request Patterns**: How do tasks arrive?
+- Steady state: Size your pool to match average load
+- Bursty traffic: Size for burst capacity or implement queuing
+- Scheduled batches: Pre-configure pools to match batch processing size
+
+**Throughput**: How quickly do you need to create and tear down browsers?
+- Flexible (a few per hour or day): On-demand creation may suffice
+- Moderate (a few per minute): Pools provide noticeable improvement
+- High (many per second): Browser pools are essential
+
+## Architecture patterns
+
+### Direct browser creation (POC)
+
+For proof-of-concept work and early production systems with modest concurrency needs, creating browsers on-demand is the simplest approach.
+
+**When to use:**
+- Processing fewer than 50 concurrent tasks
+- Infrequent, unpredictable workloads
+- Early development and testing
+
+<Accordion title="Example">
+
+```typescript
+import Kernel from '@onkernel/sdk';
+import { chromium } from 'playwright';
+
+const kernel = new Kernel();
+
+async function processTask(taskData: any) {
+  // Create browser with extended timeout for long tasks
+  const session = await kernel.browsers.create({
+    stealth: true,
+    timeout_seconds: 3600, // 1 hour for long-running tasks
+  });
+
+  try {
+    const browser = await chromium.connectOverCDP(session.cdp_ws_url);
+    const context = browser.contexts()[0];
+    const page = context.pages()[0];
+
+    // Your automation logic here
+    await page.goto(taskData.url);
+    // ... perform work ...
+
+    return { success: true, data: /* results */ };
+  } catch (error) {
+    console.error('Task failed:', error);
+    return { success: false, error: error.message };
+  } finally {
+    // Always clean up
+    await kernel.browsers.deleteByID(session.session_id);
+  }
+}
+```
+</Accordion>
+
+### Single browser pool (scaling)
+
+For production systems with consistent, high-frequency workloads, a browser pool allows you to access higher concurrency plus predictable performance.
+
+**When to use:**
+- 50-100+ concurrent tasks with consistent configuration
+- Steady request patterns
+
+<Accordion title="Example">
+
+```typescript
+import Kernel from '@onkernel/sdk';
+import { chromium } from 'playwright';
+
+const kernel = new Kernel();
+const POOL_NAME = 'production-pool';
+
+// Initialize pool once (typically in deployment/startup)
+async function initializePool() {
+  await kernel.browserPools.create({
+    name: POOL_NAME,
+    size: 25, // Balance cost and availability
+    fill_rate_per_minute: 20, // 20% refill rate
+    timeout_seconds: 300, // 5 minutes idle timeout
+    stealth: true,
+    headless: false, // headless: true for cost savings if no live view needed
+  });
+}
+
+async function processTask(taskData: any) {
+  let session;
+  
+  try {
+    // Acquire browser (returns immediately if available)
+    session = await kernel.browserPools.acquire(POOL_NAME, {
+      acquire_timeout_seconds: 30, // Wait up to 30s for availability
+    });
+
+    const browser = await chromium.connectOverCDP(session.cdp_ws_url);
+    const context = browser.contexts()[0];
+    const page = context.pages()[0];
+
+    // Perform work
+    await page.goto(taskData.url);
+    // ... automation logic ...
+
+    return { success: true, data: /* results */ };
+  } catch (error) {
+    console.error('Task failed:', error);
+    return { success: false, error: error.message };
+  } finally {
+    // Critical: Always release back to pool
+    if (session) {
+      await kernel.browserPools.release(POOL_NAME, {
+        session_id: session.session_id,
+        reuse: true, // Reuse for efficiency
+      });
+    }
+  }
+}
+```
+</Accordion>
+
+**Key considerations:**
+- Pool size should match your typical concurrency
+- `timeout_seconds` should exceed your longest task duration
+- Always release browsers in a `finally` block to prevent pool exhaustion
+- Set `acquire_timeout_seconds` based on your SLA requirements
+
+### Queue-based processing (high scale)
+
+For systems exceeding pool capacity or with unpredictable bursts, implement a task queue to manage workloads gracefully.
+
+**When to use:**
+- Request volume exceeds maximum pool capacity (100+ concurrent)
+- Highly variable traffic patterns
+- Need to prioritize certain tasks
+- Want to decouple request ingestion from processing
+
+<Accordion title="Example">
+
+```typescript
+import { Queue } from 'bullmq'; // or any queue system
+import Kernel from '@onkernel/sdk';
+
+const kernel = new Kernel();
+const POOL_NAME = 'production-pool';
+const POOL_SIZE = 50;
+
+// Task queue configuration
+const taskQueue = new Queue('browser-tasks', {
+  connection: { /* Redis config */ }
+});
+
+// Worker that processes tasks
+async function startWorker() {
+  const worker = new Worker('browser-tasks', async (job) => {
+    let session;
+    
+    try {
+      // Acquire browser with reasonable timeout
+      session = await kernel.browserPools.acquire(POOL_NAME, {
+        acquire_timeout_seconds: 120,
+      });
+
+      const browser = await chromium.connectOverCDP(session.cdp_ws_url);
+      const context = browser.contexts()[0];
+      const page = context.pages()[0];
+
+      // Process job data
+      await page.goto(job.data.url);
+      const result = await page.evaluate(() => /* extract data */);
+
+      return { success: true, data: result };
+    } catch (error) {
+      // Handle errors with retry logic
+      if (error.message.includes('timeout')) {
+        throw new Error('RETRY'); // BullMQ will retry
+      }
+      throw error;
+    } finally {
+      if (session) {
+        await kernel.browserPools.release(POOL_NAME, {
+          session_id: session.session_id,
+          reuse: true,
+        });
+      }
+    }
+  }, {
+    connection: { /* Redis config */ },
+    concurrency: POOL_SIZE, // Match pool size
+  });
+
+  return worker;
+}
+
+// Add tasks to queue
+async function submitTask(taskData: any, priority?: number) {
+  await taskQueue.add('process', taskData, {
+    priority: priority || 5,
+    attempts: 3,
+    backoff: {
+      type: 'exponential',
+      delay: 2000,
+    },
+  });
+}
+```
+</Accordion>
+
+**Queue-specific considerations:**
+- Set worker concurrency to match or slightly exceed pool size
+- Implement proper retry logic for transient failures
+- Monitor queue depth to scale pools dynamically
+- Use priority queues for different SLAs
+
+## Next steps
+
+Continue on to learn how to use the [Browser Pools API](/browsers/scaling/pools) to create and manage your browser pools.

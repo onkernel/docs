@@ -3,17 +3,7 @@ title: "Browser Pools"
 description: "Pre-configure pools of browsers for immediate acquisition"
 ---
 
-Browser pools let you maintain a set of identical, pre-configured browsers ready for immediate use. Instead of waiting for browser creation on each request, you can acquire a browser from the pool without the startup delay and release it when done.
-
-## When to use pools
-
-Pools are ideal when you need to:
-
-- Minimize latency for browser acquisition for more complex configurations (with profiles, proxies, etc.)
-- Run many short-lived browser tasks in parallel
-- Maintain consistent browser configuration across sessions
-
-For one-off or long-running browser sessions, [creating browsers directly](/browsers/create-a-browser) with an optional extended timeout may be simpler.
+Browser pools let you maintain a set of identical, pre-configured browsers ready for immediate use.
 
 ## Create a pool
 
@@ -293,7 +283,3 @@ asyncio.run(main())
 ## API reference
 
 For more details on all available endpoints and parameters, see the [Browser Pools API reference](/api-reference/browser-pools/list-browser-pools).
-
-## Pricing
-
-For pricing details, see [Browser Pools pricing](/info/pricing#browser-pools).
