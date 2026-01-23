@@ -28,7 +28,8 @@ The pool's `timeout_seconds` only applies while the browser is acquired. If your
 
 ### Can I use different browser configurations within the same pool?
 
-No, all browsers in a pool share the same configuration. For different configurations (different proxies, profiles, etc.), create separate pools.
+All browsers in a pool initialize with the same configuration. Calling `kernel.browserPools.update()` updates the configuration for all idle browsers in the pool.
+Once you've acquired a browser, you can apply certain [hot swap configurations](https://www.kernel.sh/docs/api-reference/browsers/update-browser-session) to that browser instance using `kernel.browsers.update()`.
 
 ### How do I handle rate limiting from target websites?
 

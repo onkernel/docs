@@ -23,9 +23,9 @@ Before selecting an architecture, assess your workload's characteristics:
 - Scheduled batches: Pre-configure pools to match batch processing size
 
 **Throughput**: How quickly do you need to create and tear down browsers?
-- High (many per second): Browser pools are essential
-- Moderate (a few per minute): Pools provide noticeable improvement
 - Flexible (a few per hour or day): On-demand creation may suffice
+- Moderate (a few per minute): Pools provide noticeable improvement
+- High (many per second): Browser pools are essential
 
 ## Architecture patterns
 
@@ -140,7 +140,7 @@ async function processTask(taskData: any) {
 **Key considerations:**
 - Pool size should match your typical concurrency
 - `timeout_seconds` should exceed your longest task duration
-- Always release browsers in a finally block to prevent pool exhaustion
+- Always release browsers in a `finally` block to prevent pool exhaustion
 - Set `acquire_timeout_seconds` based on your SLA requirements
 
 ### Queue-based processing (high scale)
