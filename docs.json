@@ -106,8 +106,15 @@
                     ]
                   },
                   "browsers/playwright-execution",
-                  "browsers/pools",
-                  "browsers/extensions"
+                  "browsers/extensions",
+                  {
+                    "group": "Scaling in Production",
+                    "pages": [
+                      "browsers/scaling/overview",
+                      "browsers/scaling/pools",
+                      "browsers/scaling/faq"
+                    ]
+                  }
                 ]
               }
             ]

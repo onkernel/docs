@@ -1,0 +1,39 @@
+---
+title: "FAQ"
+---
+
+### When should I use browser pools vs. creating browsers directly?
+
+Use browser pools when you need to run many browsers concurrently (50+ simultaneous browsers). Pools allow you to pre-configure a set of browsers for your use cae, enabling you to scale to hundreds of concurrent browser sessions.
+
+### How do I know if my pool is too small or too large?
+
+Monitor the `available_count` metric. If it frequently drops to 0, your pool is too small. If it stays above 30-40% of the pool size during normal operation, you're over-provisioned. Target 10-20% available browsers during typical load.
+
+### What happens if I don't release a browser back to the pool?
+
+The browser will remain "acquired" until the idle timeout expires, at which point it's destroyed and a new browser is created to refill the pool. Unreleased browsers create inefficiency and can exhaust your pool.
+
+### Can I update a pool's configuration without recreating it?
+
+Yes, use `kernel.browserPools.update()`. By default, idle browsers are discarded and rebuilt with new configuration. Set `discard_all_idle: false` to only apply changes to newly created browsers.
+
+### Should I set `reuse: true` or `reuse: false` when releasing?
+
+Use `reuse: true` (default) for efficiency. Only use `reuse: false` when you suspect browser state corruption or need a guaranteed clean browser session.
+
+### How do pool timeouts interact with task duration?
+
+The pool's `timeout_seconds` only applies while the browser is acquired. If your task takes 5 minutes and timeout is 3 minutes, the browser won't be destroyed—the timeout only triggers if the browser is idle (no CDP connection) for 3 minutes. Set timeout to exceed your longest expected task duration.
+
+### Can I use different browser configurations within the same pool?
+
+No, all browsers in a pool share the same configuration. For different configurations (different proxies, profiles, etc.), create separate pools.
+
+### How do I handle rate limiting from target websites?
+
+Implement delays between requests, use multiple proxy pools to distribute requests across IPs, or implement backoff when rate limits are detected. Consider creating separate pools with different proxy configurations.
+
+### What's the best way to debug issues in production?
+
+Use `headless: false` for a temporary debug pool, access `browser_live_view_url` to watch browser sessions in real-time, collect screenshots at error points, and maintain detailed logging around acquire/release operations. You can also monitor past sessions via [replays](/browsers/replays).
