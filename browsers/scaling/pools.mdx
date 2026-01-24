@@ -45,21 +45,7 @@ print(pool.id)
 
 ### Pool configuration options
 
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `name` | string | - | Optional unique name for the pool. |
-| `size` | integer | - | Number of browsers to maintain in the pool (1-50). |
-| `fill_rate_per_minute` | integer | 10 | Percentage of the pool to fill per minute (0-25). |
-| `timeout_seconds` | integer | 600 | Idle timeout for acquired browsers before destruction (60-86400). |
-| `stealth` | boolean | false | Enable stealth mode to reduce bot detection. |
-| `headless` | boolean | false | Run browsers in headless mode. |
-| `profile` | object | - | Profile to load into each browser session. |
-| `extensions` | array | - | List of extensions to load (max 20). |
-| `proxy_id` | string | - | Proxy to associate with browser sessions. |
-| `viewport` | object | - | Browser window size configuration. |
-| `kiosk_mode` | boolean | false | Hide address bar and tabs in live view. |
-
-See [Stealth Mode](/browsers/bot-detection/stealth), [Profiles](/browsers/profiles), and [Extensions](/browsers/extensions) for details on these options.
+Pools can be pre-configured with options like custom extensions, stealth mode, residential proxies, profiles, and more. See the [API reference](/api-reference/browser-pools/create-a-browser-pool) for more details.
 
 ## Acquire a browser
 
@@ -142,7 +128,7 @@ By default, updating a pool discards all idle browsers and rebuilds them with th
 
 ## Flush idle browsers
 
-Destroy all idle browsers in the pool. Acquired browsers are not affected. The pool will automatically refill based on the configured `fill_rate_per_minute`.
+Destroy all idle browsers in the pool. Acquired browsers are not affected. The pool will automatically refill.
 
 <CodeGroup>
 ```typescript Typescript/Javascript

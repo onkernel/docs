@@ -1,6 +1,6 @@
 ---
 title: "Overview"
-description: "Recommended practices for scaling your browser automations and web agents in production"
+description: "Recommended practices for scaling"
 ---
 ## Introduction
 
@@ -50,7 +50,7 @@ async function processTask(taskData: any) {
   // Create browser with extended timeout for long tasks
   const session = await kernel.browsers.create({
     stealth: true,
-    timeout_seconds: 3600, // 1 hour for long-running tasks
+    timeout_seconds: 3600, // Destroy browser after 1 hour of inactivity
   });
 
   try {
@@ -96,8 +96,7 @@ async function initializePool() {
   await kernel.browserPools.create({
     name: POOL_NAME,
     size: 25, // Balance cost and availability
-    fill_rate_per_minute: 20, // 20% refill rate
-    timeout_seconds: 300, // 5 minutes idle timeout
+    timeout_seconds: 300, // Destroy browsers after 5 minutes of inactivity
     stealth: true,
     headless: false, // headless: true for cost savings if no live view needed
   });
@@ -139,7 +138,6 @@ async function processTask(taskData: any) {
 
 **Key considerations:**
 - Pool size should match your typical concurrency
-- `timeout_seconds` should exceed your longest task duration
 - Always release browsers in a `finally` block to prevent pool exhaustion
 - Set `acquire_timeout_seconds` based on your SLA requirements
 
