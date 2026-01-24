@@ -49,7 +49,7 @@ Pools can be pre-configured with options like custom extensions, stealth mode, r
 
 ## Acquire a browser
 
-Acquire a browser from the pool. The request returns immediately if a browser is available, or waits until one becomes available. The `acquire_timeout_seconds` parameter controls how long to wait; it defaults to the calculated time it would take to fill the pool at the currently configured fill rate.
+Acquire a browser from the pool. The request returns immediately if a browser is available, or waits until one becomes available. The `acquire_timeout_seconds` parameter controls how long to wait; it defaults to the calculated time it would take to fill the pool at the pool's configured [fill rate](/api-reference/browser-pools/create-a-browser-pool#body-fill-rate-per-minute).
 
 <CodeGroup>
 ```typescript Typescript/Javascript
@@ -76,7 +76,7 @@ The acquired browser includes all the same properties as a regular browser sessi
 
 ### Timeout behavior
 
-Browsers remain in the pool indefinitely until acquired. Once acquired, the pool's `timeout_seconds` applies just like a [regular browser timeout](/browsers/termination#automatic-deletion-via-timeout)—if the browser is idle (no CDP or live view connection) for longer than the timeout, it is destroyed and **not** returned to the pool. The pool will automatically create a replacement browser.
+Browsers remain in the pool indefinitely until acquired. Once acquired, the pool's `timeout_seconds` applies just like a [regular browser timeout](/browsers/termination#automatic-deletion-via-timeout)—if the browser is idle (no CDP or live view connection) for longer than the timeout, it is destroyed and **not** returned to the pool. The pool will automatically create a replacement browser at the pool's configured [fill rate](/api-reference/browser-pools/create-a-browser-pool#body-fill-rate-per-minute).
 
 ## Release a browser
 
@@ -128,7 +128,7 @@ By default, updating a pool discards all idle browsers and rebuilds them with th
 
 ## Flush idle browsers
 
-Destroy all idle browsers in the pool. Acquired browsers are not affected. The pool will automatically refill.
+Destroy all idle browsers in the pool. Acquired browsers are not affected. The pool will automatically refill with the pool's specified configuration.
 
 <CodeGroup>
 ```typescript Typescript/Javascript

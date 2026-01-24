@@ -14,6 +14,12 @@ Monitor the `available_count` metric. If it frequently drops to 0, your pool is 
 
 The browser will remain "acquired" until the idle timeout expires, at which point it's destroyed and a new browser is created to refill the pool. Unreleased browsers create inefficiency and can exhaust your pool.
 
+### What is `fill_rate_per_minute`?
+
+`fill_rate_per_minute` is the percentage of the pool that will be refilled per minute. For example, if you set `fill_rate_per_minute` to 10, the pool will be refilled with 10% of the pool size per minute. 
+
+When a browser from a pool is set to be destroyed (by reaching its specified `timeout_seconds` or `reuse: false`), a pool refill will be triggered to replace any destroyed browsers with new ones. Refill checks run once per minute.
+
 ### Can I update a pool's configuration without recreating it?
 
 Yes, use `kernel.browserPools.update()`. By default, idle browsers are discarded and rebuilt with new configuration. Set `discard_all_idle: false` to only apply changes to newly created browsers.
