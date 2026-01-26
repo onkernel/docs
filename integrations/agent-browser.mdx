@@ -17,14 +17,6 @@ export KERNEL_API_KEY="your-api-key"
 agent-browser -p kernel open https://example.com
 ```
 
-Or use environment variables for CI/scripts:
-
-```bash
-export AGENT_BROWSER_PROVIDER=kernel
-export KERNEL_API_KEY="your-api-key"
-agent-browser open https://example.com
-```
-
 Get your API key from the [Kernel Dashboard](https://dashboard.onkernel.com).
 
 ### Configuration options
@@ -33,6 +25,7 @@ Configure Kernel via environment variables:
 
 | Variable | Description | Default |
 |----------|-------------|---------|
+| `AGENT_BROWSER_PROVIDER` | Set to `kernel` as an alternative to the `-p kernel` flag | (none) |
 | `KERNEL_HEADLESS` | Run browser in headless mode (`true`/`false`) | `false` |
 | `KERNEL_STEALTH` | Enable stealth mode to avoid bot detection (`true`/`false`) | `true` |
 | `KERNEL_TIMEOUT_SECONDS` | Session timeout in seconds | `300` |
@@ -50,89 +43,71 @@ agent-browser -p kernel open https://example.com
 
 ## Connecting via CDP (alternative)
 
-If you need more control, you can connect Agent Browser to Kernel via CDP directly.
-
-### 1. Install the Kernel SDK
+Use this approach when you need full control of the Kernel browser session creation logic beyond what the agent-browser environment variables support.
 
 ```bash
-npm install @onkernel/sdk
-```
+# Create a Kernel browser and extract the CDP URL
+SESSION=$(kernel browsers create --stealth -o json)
+CDP_URL=$(echo "$SESSION" | jq -r '.cdp_ws_url')
+SESSION_ID=$(echo "$SESSION" | jq -r '.session_id')
 
-### 2. Initialize Kernel and create a browser
+# Connect agent-browser to the Kernel session
+agent-browser connect "$CDP_URL"
 
-Import the libraries and create a cloud browser session:
+# Run your automation
+agent-browser open https://example.com
+agent-browser snapshot
 
-```typescript
-import Kernel from '@onkernel/sdk';
-
-const kernel = new Kernel();
-
-const kernelBrowser = await kernel.browsers.create({ stealth: true });
-
-console.log("Live view url: ", kernelBrowser.browser_live_view_url);
-```
-
-### 3. Connect Agent Browser to Kernel
-
-Use Agent Browser's `connect` command to connect to Kernel's CDP WebSocket URL:
-
-```bash
-agent-browser connect <cdp_ws_url>
-```
-
-Where `<cdp_ws_url>` is the `cdp_ws_url` from your Kernel browser session.
-
-### 4. Use Agent Browser commands
-
-Once connected, use Agent Browser's commands with the Kernel-powered browser:
-
-```bash
-agent-browser open example.com
-agent-browser snapshot              # Get accessibility tree with refs
-agent-browser click @e2             # Click by ref from snapshot
-agent-browser fill @e3 "test@example.com"  # Fill by ref
-agent-browser get text @e1          # Get text by ref
-agent-browser screenshot page.png
-```
-
-### 5. Clean up
-
-When you're done, close the browser and clean up the Kernel session:
-
-```bash
+# Clean up
 agent-browser close
-```
-
-```typescript
-await kernel.browsers.deleteByID(kernelBrowser.session_id);
+kernel browsers delete "$SESSION_ID"
 ```
 
 ## Programmatic usage
 
-You can also use Agent Browser programmatically with Kernel:
+Use this approach if you want to use agent-browser as an alternative to Playwright within a Node.js or Python application while maintaining programmatic control over browser session lifecycle.
 
+<Tabs>
+  <Tab title="TypeScript">
 ```typescript
 import Kernel from '@onkernel/sdk';
 import { execSync } from 'child_process';
 
 const kernel = new Kernel();
+const browser = await kernel.browsers.create({ stealth: true });
 
-// Create a Kernel browser session
-const kernelBrowser = await kernel.browsers.create({ stealth: true });
+console.log("Live view url:", browser.browser_live_view_url);
 
-console.log("Live view url: ", kernelBrowser.browser_live_view_url);
-
-// Connect Agent Browser to Kernel
-execSync(`agent-browser connect ${kernelBrowser.cdp_ws_url}`);
-
-// Run your automation
-execSync('agent-browser open https://example.com');
-execSync('agent-browser snapshot');
-
-// Clean up
-execSync('agent-browser close');
-await kernel.browsers.deleteByID(kernelBrowser.session_id);
+try {
+  execSync(`agent-browser connect "${browser.cdp_ws_url}"`, { stdio: 'inherit' });
+  execSync('agent-browser open https://example.com', { stdio: 'inherit' });
+  execSync('agent-browser snapshot', { stdio: 'inherit' });
+  execSync('agent-browser close', { stdio: 'inherit' });
+} finally {
+  await kernel.browsers.deleteByID(browser.session_id);
+}
 ```
+  </Tab>
+  <Tab title="Python">
+```python
+import subprocess
+from kernel import Kernel
+
+kernel = Kernel()
+browser = kernel.browsers.create(stealth=True)
+
+print(f"Live view url: {browser.browser_live_view_url}")
+
+try:
+    subprocess.run(["agent-browser", "connect", browser.cdp_ws_url], check=True)
+    subprocess.run(["agent-browser", "open", "https://example.com"], check=True)
+    subprocess.run(["agent-browser", "snapshot"], check=True)
+    subprocess.run(["agent-browser", "close"], check=True)
+finally:
+    kernel.browsers.delete_by_id(browser.session_id)
+```
+  </Tab>
+</Tabs>
 
 ## Benefits of using Kernel with Agent Browser
 
