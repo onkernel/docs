@@ -145,6 +145,7 @@
             "group": "Integrations",
             "pages": [
               "integrations/overview",
+              "integrations/agent-browser",
               "integrations/browser-use",
               "integrations/claude-agent-sdk",
               {
