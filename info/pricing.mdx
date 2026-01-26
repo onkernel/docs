@@ -19,8 +19,8 @@ With Kernel, you only pay for what you use and nothing more. Our goal is to be c
 | Computer controls API | ✅ | ✅ | ✅ | ✅ |
 | Browser replays | ❌ | 7 days | 30 days | Custom |
 | Browser profiles | ❌ | ✅ | ✅ | ✅ |
+| Managed auth profiles | ❌ | ✅ | ✅ | ✅ |
 | File uploads & downloads | ❌ | ✅ | ✅ | ✅ |
-| Agent auth | ❌ | ✅ | ✅ | ✅ |
 | Configurable browser extensions | ❌ | ❌ | ✅ | ✅ |
 | Configurable & BYO proxies | ❌ | ❌ | ✅ | ✅ |
 | Browser pools | ❌ | ❌ | ✅ | ✅ |
@@ -43,10 +43,10 @@ With Browser Pools, you pay the standard usage-based price per GB-second while b
 
 | Feature | Developer (free + usage) | Hobbyist ($30 / mo + usage) | Start-Up ($200 / mo + usage) | Enterprise |
 | --- | --- | --- | --- | --- |
-| Reserved browsers (browser pools) | 0 | 0 | 100 | Custom |
+| Reserved browsers ([browser pools](/browsers/scaling/pools)) | 0 | 0 | 100 | Custom |
 | On-demand browsers | 5 | 10 | 50 | Custom |
 | Invocations | 5 | 10 | 50 | Custom |
 | Invocations (per-app) | 5 | 10 | 20 | Custom |
-| Live auth connections | N/A | 5 | 20 | Custom |
+| Managed auth profiles | N/A | 3 | 20 | Custom |
 
-> Note: Limits are org-wide by default unless stated otherwise. `Live auth connections` refer to the number of active auth connections that Kernel maintains using your stored [Credentials](/auth/credentials) or [1Password connection](/integrations/1password).
+> Note: Limits are org-wide by default unless stated otherwise. `Managed auth profiles` refer to the number of active auth profiles that Kernel maintains using your stored [Credentials](/auth/credentials) or [1Password connection](/integrations/1password).
