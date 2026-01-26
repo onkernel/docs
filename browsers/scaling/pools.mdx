@@ -1,19 +1,9 @@
 ---
 title: "Browser Pools"
-description: "Pre-warm pools of browsers for immediate acquisition"
+description: "Pre-configure pools of browsers for immediate acquisition"
 ---
 
-Browser pools let you maintain a set of pre-warmed, identically configured browsers ready for immediate use. Instead of waiting for browser creation on each request, you can acquire a browser from the pool without the startup delay and release it when done.
-
-## When to use pools
-
-Pools are ideal when you need to:
-
-- Minimize latency for browser acquisition for more complex configurations (with profiles, proxies, etc.)
-- Run many short-lived browser tasks in parallel
-- Maintain consistent browser configuration across sessions
-
-For one-off or long-running browser sessions, [creating browsers directly](/browsers/create-a-browser) with an optional extended timeout may be simpler.
+Browser pools let you maintain a set of identical, pre-configured browsers ready for immediate use.
 
 ## Create a pool
 
@@ -55,25 +45,11 @@ print(pool.id)
 
 ### Pool configuration options
 
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `name` | string | - | Optional unique name for the pool. |
-| `size` | integer | - | Number of browsers to maintain in the pool (1-50). |
-| `fill_rate_per_minute` | integer | 10 | Percentage of the pool to fill per minute (0-25). |
-| `timeout_seconds` | integer | 600 | Idle timeout for acquired browsers before destruction (60-86400). |
-| `stealth` | boolean | false | Enable stealth mode to reduce bot detection. |
-| `headless` | boolean | false | Run browsers in headless mode. |
-| `profile` | object | - | Profile to load into each browser session. |
-| `extensions` | array | - | List of extensions to load (max 20). |
-| `proxy_id` | string | - | Proxy to associate with browser sessions. |
-| `viewport` | object | - | Browser window size configuration. |
-| `kiosk_mode` | boolean | false | Hide address bar and tabs in live view. |
-
-See [Stealth Mode](/browsers/bot-detection/stealth), [Profiles](/browsers/profiles), and [Extensions](/browsers/extensions) for details on these options.
+Pools can be pre-configured with options like custom extensions, stealth mode, residential proxies, profiles, and more. See the [API reference](/api-reference/browser-pools/create-a-browser-pool) for more details.
 
 ## Acquire a browser
 
-Acquire a browser from the pool. The request returns immediately if a browser is available, or waits until one becomes available. The `acquire_timeout_seconds` parameter controls how long to wait; it defaults to the calculated time it would take to fill the pool at the currently configured fill rate.
+Acquire a browser from the pool. The request returns immediately if a browser is available, or waits until one becomes available. The `acquire_timeout_seconds` parameter controls how long to wait; it defaults to the calculated time it would take to fill the pool at the pool's configured [fill rate](/api-reference/browser-pools/create-a-browser-pool#body-fill-rate-per-minute).
 
 <CodeGroup>
 ```typescript Typescript/Javascript
@@ -100,7 +76,7 @@ The acquired browser includes all the same properties as a regular browser sessi
 
 ### Timeout behavior
 
-Browsers remain in the pool indefinitely until acquired. Once acquired, the pool's `timeout_seconds` applies just like a [regular browser timeout](/browsers/termination#automatic-deletion-via-timeout)—if the browser is idle (no CDP or live view connection) for longer than the timeout, it is destroyed and **not** returned to the pool. The pool will automatically create a replacement browser.
+Browsers remain in the pool indefinitely until acquired. Once acquired, the pool's `timeout_seconds` applies just like a [regular browser timeout](/browsers/termination#automatic-deletion-via-timeout)—if the browser is idle (no CDP or live view connection) for longer than the timeout, it is destroyed and **not** returned to the pool. The pool will automatically create a replacement browser at the pool's configured [fill rate](/api-reference/browser-pools/create-a-browser-pool#body-fill-rate-per-minute).
 
 ## Release a browser
 
@@ -152,7 +128,7 @@ By default, updating a pool discards all idle browsers and rebuilds them with th
 
 ## Flush idle browsers
 
-Destroy all idle browsers in the pool. Acquired browsers are not affected. The pool will automatically refill based on the configured `fill_rate_per_minute`.
+Destroy all idle browsers in the pool. Acquired browsers are not affected. The pool will automatically refill with the pool's specified configuration.
 
 <CodeGroup>
 ```typescript Typescript/Javascript
@@ -293,7 +269,3 @@ asyncio.run(main())
 ## API reference
 
 For more details on all available endpoints and parameters, see the [Browser Pools API reference](/api-reference/browser-pools/list-browser-pools).
-
-## Pricing
-
-For pricing details, see [Browser Pools pricing](/info/pricing#browser-pools).

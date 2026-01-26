@@ -212,6 +212,39 @@ When specifying a viewport:
 The server will reject any viewport configuration that doesn't exactly match one of the supported combinations listed above.
 </Warning>
 
+## Changing viewport after browser creation
+
+You can change the viewport of a browser after it has been created using the [update browser endpoint](/api-reference/browsers/update-browser-session).
+
+<CodeGroup>
+```typescript Typescript/Javascript
+// Create a browser with default viewport
+const kernelBrowser = await kernel.browsers.create();
+
+// Later, change the viewport
+await kernel.browsers.update(kernelBrowser.session_id, {
+  viewport: {
+    width: 1024,
+    height: 768
+  }
+});
+```
+
+```python Python
+# Create a browser with default viewport
+kernel_browser = await kernel.browsers.create()
+
+# Later, change the viewport
+await kernel.browsers.update(kernel_browser.session_id, viewport={"width": 1024, "height": 768})
+```
+</CodeGroup>
+
+<Warning>
+There are important limitations when changing the viewport:
+- **Headful browsers**: You cannot resize the viewport while [live view](/browsers/live-view) is active or while a [replay](/browsers/replays) is actively recording.
+- **Headless browsers**: Changing the viewport triggers a Chromium restart, which may disrupt active CDP connections.
+</Warning>
+
 ## Considerations
 
 - The viewport configuration is set when the browser is created and applies to the initial browser window

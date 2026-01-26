@@ -110,6 +110,34 @@ print("Live view:", kernel_browser2.browser_live_view_url)
 ```
 </CodeGroup>
 
+## Loading a profile into an existing browser
+
+You can load a profile into a browser after it has been created using the [update browser endpoint](/api-reference/browsers/update-browser-session).
+
+<CodeGroup>
+```typescript Typescript/Javascript
+// Create a browser without a profile
+const kernelBrowser = await kernel.browsers.create();
+
+// Later, load a profile into the browser
+await kernel.browsers.update(kernelBrowser.session_id, {
+  profile: { name: 'profiles-demo' }
+});
+```
+
+```python Python
+# Create a browser without a profile
+kernel_browser = await kernel.browsers.create()
+
+# Later, load a profile into the browser
+await kernel.browsers.update(kernel_browser.session_id, profile={"name": "profiles-demo"})
+```
+</CodeGroup>
+
+<Warning>
+You cannot load a profile into a browser that was already created with a profile. The browser must have been created without any profile configuration.
+</Warning>
+
 ## Other ways to use profiles
 
 The API and SDKs support listing, deleting, and downloading profile data as JSON. See the [API reference](/api-reference/profiles/list-profiles) for more details.
