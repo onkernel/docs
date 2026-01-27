@@ -108,6 +108,7 @@ table tbody td {
   overflow-wrap: break-word !important;
   white-space: normal !important;
   max-width: 0 !important;
+  min-width: 130px !important;
 }
 
 /* code in tables */
