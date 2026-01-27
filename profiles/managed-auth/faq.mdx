@@ -1,6 +1,6 @@
 ---
 title: FAQ
-description: Frequently asked questions about Agent Auth
+description: Frequently asked questions about Managed Auth
 ---
 
 ## How Re-Authentication Works
@@ -29,12 +29,12 @@ When you save credentials, Kernel keeps your session authenticated automatically
 **Session monitoring** runs periodic auth checks (default: every hour) to detect expired sessions. When logout is detected, re-auth happens automatically.
 
 <Info>
-For sites with short session timeouts, configurable check intervals per auth agent are coming soon.
+For sites with short session timeouts, configurable check intervals per managed auth are coming soon.
 </Info>
 
 ## What authentication methods are supported?
 
-Agent Auth supports username/password authentication and most SSO providers. 
+Managed Auth supports username/password authentication and most SSO providers. 
 
 <Warning>
 Passkey-based authentication (e.g., Google accounts with passkeys enabled) is not currently supported. If a user's SSO provider requires a passkey, the login will fail.
@@ -42,13 +42,13 @@ Passkey-based authentication (e.g., Google accounts with passkeys enabled) is no
 
 ## What happens if login fails?
 
-If a login attempt fails, Kernel will retry with exponential backoff. After multiple failures, the [auth invocation](/auth/agent/hosted-ui#tracking-invocation-status) will be marked as failed and you'll receive an error. Common failure reasons include:
+If a login attempt fails, Kernel will retry with exponential backoff. After multiple failures, the [login flow](/profiles/managed-auth/hosted-ui) will be marked as failed and you'll receive an error. Common failure reasons include:
 
 - Invalid credentials
 - Bot detection blocking the login page
 - Site structure changes that break field detection
 - Captcha that couldn't be solved
 
-## Can I use Agent Auth with any website?
+## Can I use Managed Auth with any website?
 
-Agent Auth works with most websites that use standard login forms. Some sites with aggressive bot detection may require additional configuration (stealth mode, proxies). Sites that require passkeys or hardware security keys are not supported.
+Managed Auth works with most websites that use standard login forms. Some sites with aggressive bot detection may require additional configuration (stealth mode, proxies). Sites that require passkeys or hardware security keys are not supported.

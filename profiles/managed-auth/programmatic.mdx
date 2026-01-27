@@ -13,11 +13,11 @@ Use the Programmatic flow when:
 ## How It Works
 
 <Steps>
-  <Step title="Create Auth Agent and Start Authentication">
-    Same as [Hosted UI](/auth/agent/hosted-ui)
+  <Step title="Create Managed Auth and Start Authentication">
+    Same as [Hosted UI](/profiles/managed-auth/hosted-ui)
   </Step>
   <Step title="Poll and Submit">
-    Poll until `step` becomes `awaiting_input`, then submit credentials
+    Poll until `flow_step` becomes `AWAITING_INPUT`, then submit credentials
   </Step>
   <Step title="Handle 2FA">
     If more fields appear (2FA code), submit again—same loop handles it
@@ -26,18 +26,18 @@ Use the Programmatic flow when:
 
 ## Getting started
 
-### 1. Create an Auth Agent
+### 1. Create Managed Auth
 
 <CodeGroup>
 ```typescript TypeScript
-const agent = await kernel.agents.auth.create({
+const auth = await kernel.profiles.auth.create({
   domain: 'github.com',
   profile_name: 'github-profile',
 });
 ```
 
 ```python Python
-agent = await kernel.agents.auth.create(
+auth = await kernel.profiles.auth.create(
     domain="github.com",
     profile_name="github-profile",
 )
@@ -48,15 +48,11 @@ agent = await kernel.agents.auth.create(
 
 <CodeGroup>
 ```typescript TypeScript
-const invocation = await kernel.agents.auth.invocations.create({
-  auth_agent_id: agent.id,
-});
+const login = await kernel.profiles.auth.login(auth.id);
 ```
 
 ```python Python
-invocation = await kernel.agents.auth.invocations.create(
-    auth_agent_id=agent.id,
-)
+login = await kernel.profiles.auth.login(auth.id)
 ```
 </CodeGroup>
 
@@ -64,15 +60,14 @@ To save credentials for automatic re-authentication:
 
 <CodeGroup>
 ```typescript TypeScript
-const invocation = await kernel.agents.auth.invocations.create({
-  auth_agent_id: agent.id,
+const login = await kernel.profiles.auth.login(auth.id, {
   save_credential_as: 'my-saved-creds',
 });
 ```
 
 ```python Python
-invocation = await kernel.agents.auth.invocations.create(
-    auth_agent_id=agent.id,
+login = await kernel.profiles.auth.login(
+    auth.id,
     save_credential_as="my-saved-creds",
 )
 ```
@@ -84,54 +79,48 @@ A single loop handles everything—initial login, 2FA, and completion:
 
 <CodeGroup>
 ```typescript TypeScript
-let state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id);
+let state = await kernel.profiles.auth.retrieve(auth.id);
 
-while (state.status === 'IN_PROGRESS') {
+while (state.flow_status === 'IN_PROGRESS') {
   // Submit when fields are ready (login or 2FA)
-  if (state.step === 'awaiting_input' && state.pending_fields?.length) {
-    const fieldValues = getCredentialsForFields(state.pending_fields);
-    await kernel.agents.auth.invocations.submit(
-      invocation.invocation_id,
-      { field_values: fieldValues }
-    );
+  if (state.flow_step === 'AWAITING_INPUT' && state.discovered_fields?.length) {
+    const fieldValues = getCredentialsForFields(state.discovered_fields);
+    await kernel.profiles.auth.submit(auth.id, { fields: fieldValues });
   }
   
   await new Promise(r => setTimeout(r, 2000));
-  state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id);
+  state = await kernel.profiles.auth.retrieve(auth.id);
 }
 
-if (state.status === 'SUCCESS') {
+if (state.status === 'AUTHENTICATED') {
   console.log('Authentication successful!');
 }
 ```
 
 ```python Python
-state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id)
+state = await kernel.profiles.auth.retrieve(auth.id)
 
-while state.status == "IN_PROGRESS":
+while state.flow_status == "IN_PROGRESS":
     # Submit when fields are ready (login or 2FA)
-    if state.step == "awaiting_input" and state.pending_fields:
-        field_values = get_credentials_for_fields(state.pending_fields)
-        await kernel.agents.auth.invocations.submit(
-            invocation.invocation_id,
-            field_values=field_values,
-        )
+    if state.flow_step == "AWAITING_INPUT" and state.discovered_fields:
+        field_values = get_credentials_for_fields(state.discovered_fields)
+        await kernel.profiles.auth.submit(auth.id, fields=field_values)
     
     await asyncio.sleep(2)
-    state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id)
+    state = await kernel.profiles.auth.retrieve(auth.id)
 
-if state.status == "SUCCESS":
+if state.status == "AUTHENTICATED":
     print("Authentication successful!")
 ```
 </CodeGroup>
 
-The `pending_fields` array tells you what the login form needs:
+The `discovered_fields` array tells you what the login form needs:
 
 ```typescript
-// Example pending_fields for login
+// Example discovered_fields for login
 [{ name: 'username', type: 'text' }, { name: 'password', type: 'password' }]
 
-// Example pending_fields for 2FA
+// Example discovered_fields for 2FA
 [{ name: 'otp', type: 'code' }]
 ```
 
@@ -143,45 +132,41 @@ import Kernel from '@onkernel/sdk';
 
 const kernel = new Kernel();
 
-// Create auth agent
-const agent = await kernel.agents.auth.create({
+// Create managed auth
+const auth = await kernel.profiles.auth.create({
   domain: 'github.com',
   profile_name: 'github-profile',
 });
 
-const invocation = await kernel.agents.auth.invocations.create({
-  auth_agent_id: agent.id,
-});
+const login = await kernel.profiles.auth.login(auth.id);
 
 // Single polling loop handles login + 2FA
-let state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id);
+let state = await kernel.profiles.auth.retrieve(auth.id);
 
-while (state.status === 'IN_PROGRESS') {
-  if (state.step === 'awaiting_input' && state.pending_fields?.length) {
+while (state.flow_status === 'IN_PROGRESS') {
+  if (state.flow_step === 'AWAITING_INPUT' && state.discovered_fields?.length) {
     // Check what fields are needed
-    const fieldNames = state.pending_fields.map(f => f.name);
+    const fieldNames = state.discovered_fields.map(f => f.name);
     
     if (fieldNames.includes('username')) {
       // Initial login
-      await kernel.agents.auth.invocations.submit(
-        invocation.invocation_id,
-        { field_values: { username: 'my-username', password: 'my-password' } }
-      );
+      await kernel.profiles.auth.submit(auth.id, {
+        fields: { username: 'my-username', password: 'my-password' }
+      });
     } else {
       // 2FA or additional fields
       const code = await promptUserForCode();
-      await kernel.agents.auth.invocations.submit(
-        invocation.invocation_id,
-        { field_values: { [state.pending_fields[0].name]: code } }
-      );
+      await kernel.profiles.auth.submit(auth.id, {
+        fields: { [state.discovered_fields[0].name]: code }
+      });
     }
   }
 
   await new Promise(r => setTimeout(r, 2000));
-  state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id);
+  state = await kernel.profiles.auth.retrieve(auth.id);
 }
 
-if (state.status === 'SUCCESS') {
+if (state.status === 'AUTHENTICATED') {
   console.log('Authentication successful!');
   
   const browser = await kernel.browsers.create({
@@ -200,42 +185,40 @@ import asyncio
 
 kernel = Kernel()
 
-# Create auth agent
-agent = await kernel.agents.auth.create(
+# Create managed auth
+auth = await kernel.profiles.auth.create(
     domain="github.com",
     profile_name="github-profile",
 )
 
-invocation = await kernel.agents.auth.invocations.create(
-    auth_agent_id=agent.id,
-)
+login = await kernel.profiles.auth.login(auth.id)
 
 # Single polling loop handles login + 2FA
-state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id)
+state = await kernel.profiles.auth.retrieve(auth.id)
 
-while state.status == "IN_PROGRESS":
-    if state.step == "awaiting_input" and state.pending_fields:
+while state.flow_status == "IN_PROGRESS":
+    if state.flow_step == "AWAITING_INPUT" and state.discovered_fields:
         # Check what fields are needed
-        field_names = [f["name"] for f in state.pending_fields]
+        field_names = [f["name"] for f in state.discovered_fields]
         
         if "username" in field_names:
             # Initial login
-            await kernel.agents.auth.invocations.submit(
-                invocation.invocation_id,
-                field_values={"username": "my-username", "password": "my-password"},
+            await kernel.profiles.auth.submit(
+                auth.id,
+                fields={"username": "my-username", "password": "my-password"},
             )
         else:
             # 2FA or additional fields
             code = input("Enter code: ")
-            await kernel.agents.auth.invocations.submit(
-                invocation.invocation_id,
-                field_values={state.pending_fields[0]["name"]: code},
+            await kernel.profiles.auth.submit(
+                auth.id,
+                fields={state.discovered_fields[0]["name"]: code},
             )
 
     await asyncio.sleep(2)
-    state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id)
+    state = await kernel.profiles.auth.retrieve(auth.id)
 
-if state.status == "SUCCESS":
+if state.status == "AUTHENTICATED":
     print("Authentication successful!")
     
     browser = await kernel.browsers.create(
@@ -250,7 +233,7 @@ if state.status == "SUCCESS":
 
 ## Handling Different Input Types
 
-The basic polling loop handles `pending_fields`, but login pages can require other input types too.
+The basic polling loop handles `discovered_fields`, but login pages can require other input types too.
 
 ### SSO Buttons
 
@@ -265,10 +248,9 @@ if (state.pending_sso_buttons?.length) {
   }
   
   // Submit the selected SSO button
-  await kernel.agents.auth.invocations.submit(
-    invocation.invocation_id,
-    { sso_button: state.pending_sso_buttons[0].selector }
-  );
+  await kernel.profiles.auth.submit(auth.id, {
+    sso_button_selector: state.pending_sso_buttons[0].selector
+  });
 }
 ```
 
@@ -279,15 +261,15 @@ if state.pending_sso_buttons:
         print(f"{btn['provider']}: {btn['label']}")
     
     # Submit the selected SSO button
-    await kernel.agents.auth.invocations.submit(
-        invocation.invocation_id,
-        sso_button=state.pending_sso_buttons[0]["selector"],
+    await kernel.profiles.auth.submit(
+        auth.id,
+        sso_button_selector=state.pending_sso_buttons[0]["selector"],
     )
 ```
 </CodeGroup>
 
 <Info>
-Remember to set `allowed_domains` on the agent to include the OAuth provider's domain (e.g., `accounts.google.com`).
+Remember to set `allowed_domains` on the managed auth to include the OAuth provider's domain (e.g., `accounts.google.com`).
 </Info>
 
 ### MFA Selection
@@ -303,10 +285,9 @@ if (state.mfa_options?.length) {
   }
   
   // Submit the selected MFA method
-  await kernel.agents.auth.invocations.submit(
-    invocation.invocation_id,
-    { selected_mfa_type: 'sms' }
-  );
+  await kernel.profiles.auth.submit(auth.id, {
+    mfa_option_id: 'sms'
+  });
 }
 ```
 
@@ -317,22 +298,22 @@ if state.mfa_options:
         print(f"{opt['type']}: {opt['label']}")
     
     # Submit the selected MFA method
-    await kernel.agents.auth.invocations.submit(
-        invocation.invocation_id,
-        selected_mfa_type="sms",
+    await kernel.profiles.auth.submit(
+        auth.id,
+        mfa_option_id="sms",
     )
 ```
 </CodeGroup>
 
-After selecting an MFA method, the flow continues—poll for `pending_fields` to submit the code, or handle external actions for push/security key.
+After selecting an MFA method, the flow continues—poll for `discovered_fields` to submit the code, or handle external actions for push/security key.
 
 ### External Actions (Push, Security Key)
 
-When the site requires an action outside the browser (push notification, security key tap), the step becomes `awaiting_external_action`:
+When the site requires an action outside the browser (push notification, security key tap), the step becomes `AWAITING_EXTERNAL_ACTION`:
 
 <CodeGroup>
 ```typescript TypeScript
-if (state.step === 'awaiting_external_action') {
+if (state.flow_step === 'AWAITING_EXTERNAL_ACTION') {
   // Show the message to the user
   console.log(state.external_action_message);
   // e.g., "Check your phone for a push notification"
@@ -342,7 +323,7 @@ if (state.step === 'awaiting_external_action') {
 ```
 
 ```python Python
-if state.step == "awaiting_external_action":
+if state.flow_step == "AWAITING_EXTERNAL_ACTION":
     # Show the message to the user
     print(state.external_action_message)
     # e.g., "Check your phone for a push notification"
@@ -353,23 +334,31 @@ if state.step == "awaiting_external_action":
 
 ## Step Reference
 
-The `step` field indicates what the flow is waiting for:
+The `flow_step` field indicates what the flow is waiting for:
 
 | Step | Description |
 |------|-------------|
-| `discovering` | Finding the login page and analyzing it |
-| `awaiting_input` | Waiting for field values, SSO button click, or MFA selection |
-| `submitting` | Processing submitted values |
-| `awaiting_external_action` | Waiting for push approval, security key, etc. |
+| `DISCOVERING` | Finding the login page and analyzing it |
+| `AWAITING_INPUT` | Waiting for field values, SSO button click, or MFA selection |
+| `SUBMITTING` | Processing submitted values |
+| `AWAITING_EXTERNAL_ACTION` | Waiting for push approval, security key, etc. |
+| `COMPLETED` | Flow has finished |
 
 ## Status Reference
 
-The `status` field indicates the overall invocation state:
+The `flow_status` field indicates the current flow state:
 
 | Status | Description |
 |--------|-------------|
 | `IN_PROGRESS` | Authentication is ongoing—keep polling |
 | `SUCCESS` | Login completed, profile saved |
 | `FAILED` | Login failed (check `error_message`) |
-| `EXPIRED` | Invocation timed out (5 minutes) |
-| `CANCELED` | Invocation was canceled |
+| `EXPIRED` | Flow timed out (5 minutes) |
+| `CANCELED` | Flow was canceled |
+
+The `status` field indicates the overall managed auth state:
+
+| Status | Description |
+|--------|-------------|
+| `AUTHENTICATED` | Profile is logged in and ready to use |
+| `NEEDS_AUTH` | Profile needs authentication |
