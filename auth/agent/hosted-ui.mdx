@@ -1,0 +1,308 @@
+---
+title: "Hosted UI"
+description: "The simplest way to create authenticated browser sessions"
+---
+
+Collect credentials via Kernel's hosted page, then use the authenticated session in your automations. This is the recommended approach for most applications.
+
+Use the Hosted UI when:
+- You need users to provide their credentials
+- You want the simplest integration with minimal code
+- You want Kernel to handle 2FA and multi-step login flows
+
+## Getting started
+
+### 1. Create an Auth Agent
+
+An Auth Agent represents a login session for a specific website and profile.
+
+<CodeGroup>
+```typescript TypeScript
+const agent = await kernel.agents.auth.create({
+  domain: 'linkedin.com',
+  profile_name: 'linkedin-profile',
+});
+```
+
+```python Python
+agent = await kernel.agents.auth.create(
+    domain="linkedin.com",
+    profile_name="linkedin-profile",
+)
+```
+</CodeGroup>
+
+### 2. Start Authentication
+
+Create an invocation to get the hosted login URL.
+
+<CodeGroup>
+```typescript TypeScript
+const invocation = await kernel.agents.auth.invocations.create({
+  auth_agent_id: agent.id,
+});
+```
+
+```python Python
+invocation = await kernel.agents.auth.invocations.create(
+    auth_agent_id=agent.id,
+)
+```
+</CodeGroup>
+
+### 3. Collect Credentials
+
+Send the user to the hosted login page:
+
+<CodeGroup>
+```typescript TypeScript
+window.location.href = invocation.hosted_url;
+```
+
+```python Python
+# Return the URL to your frontend
+print(f"Redirect to: {invocation.hosted_url}")
+```
+</CodeGroup>
+
+The user will:
+1. See the login page for the target website
+2. Enter their credentials
+3. Complete 2FA if needed
+
+### 4. Poll for Completion
+
+On your backend, poll until authentication completes:
+
+<CodeGroup>
+```typescript TypeScript
+let state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id);
+
+while (state.status === 'IN_PROGRESS') {
+  await new Promise(r => setTimeout(r, 2000));
+  state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id);
+}
+
+if (state.status === 'SUCCESS') {
+  console.log('Authentication successful!');
+}
+```
+
+```python Python
+state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id)
+
+while state.status == "IN_PROGRESS":
+    await asyncio.sleep(2)
+    state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id)
+
+if state.status == "SUCCESS":
+    print("Authentication successful!")
+```
+</CodeGroup>
+
+<Info>
+Poll every 2 seconds. The session expires after 5 minutes if not completed.
+</Info>
+
+### 5. Use the Profile
+
+Create browsers with the profile and navigate to the site—the session is already authenticated:
+
+<CodeGroup>
+```typescript TypeScript
+const browser = await kernel.browsers.create({
+  profile: { name: 'linkedin-profile' },
+  stealth: true,
+});
+
+// Navigate to the site—you're already logged in
+await page.goto('https://linkedin.com');
+```
+
+```python Python
+browser = await kernel.browsers.create(
+    profile={"name": "linkedin-profile"},
+    stealth=True,
+)
+
+# Navigate to the site—you're already logged in
+await page.goto("https://linkedin.com")
+```
+</CodeGroup>
+
+<Info>
+Use `stealth: true` when creating browsers for authenticated sessions.
+</Info>
+
+
+## Complete Example
+
+<CodeGroup>
+```typescript TypeScript
+import Kernel from '@onkernel/sdk';
+
+const kernel = new Kernel();
+
+// Create auth agent
+const agent = await kernel.agents.auth.create({
+  domain: 'doordash.com',
+  profile_name: 'doordash-user-123',
+});
+
+// Start authentication
+const invocation = await kernel.agents.auth.invocations.create({
+  auth_agent_id: agent.id,
+});
+
+// Send user to hosted page
+console.log('Login URL:', invocation.hosted_url);
+
+// Poll for completion
+let state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id);
+while (state.status === 'IN_PROGRESS') {
+  await new Promise(r => setTimeout(r, 2000));
+  state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id);
+}
+
+if (state.status === 'SUCCESS') {
+  const browser = await kernel.browsers.create({
+    profile: { name: 'doordash-user-123' },
+    stealth: true,
+  });
+  
+  // Navigate to the site—you're already logged in
+  await page.goto('https://doordash.com');
+}
+```
+
+```python Python
+from kernel import Kernel
+import asyncio
+
+kernel = Kernel()
+
+# Create auth agent
+agent = await kernel.agents.auth.create(
+    domain="doordash.com",
+    profile_name="doordash-user-123",
+)
+
+# Start authentication
+invocation = await kernel.agents.auth.invocations.create(
+    auth_agent_id=agent.id,
+)
+
+# Send user to hosted page
+print(f"Login URL: {invocation.hosted_url}")
+
+# Poll for completion
+state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id)
+while state.status == "IN_PROGRESS":
+    await asyncio.sleep(2)
+    state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id)
+
+if state.status == "SUCCESS":
+    browser = await kernel.browsers.create(
+        profile={"name": "doordash-user-123"},
+        stealth=True,
+    )
+    
+    # Navigate to the site—you're already logged in
+    await page.goto("https://doordash.com")
+```
+</CodeGroup>
+
+## Adding Features
+
+The basic flow above gets you started. Add these features as needed:
+
+### Save Credentials for Auto-Reauth
+
+Capture the user's credentials during login so future sessions can re-authenticate automatically when the session expires:
+
+<CodeGroup>
+```typescript TypeScript
+const invocation = await kernel.agents.auth.invocations.create({
+  auth_agent_id: agent.id,
+  save_credential_as: 'my-saved-creds',
+});
+```
+
+```python Python
+invocation = await kernel.agents.auth.invocations.create(
+    auth_agent_id=agent.id,
+    save_credential_as="my-saved-creds",
+)
+```
+</CodeGroup>
+
+After successful login, future invocations for this agent will automatically use the saved credentials—no user interaction needed. See [Credentials](/auth/credentials) for more on automated authentication.
+
+### Custom Login URL
+
+If the site's login page isn't at the default location, specify it when creating the agent:
+
+<CodeGroup>
+```typescript TypeScript
+const agent = await kernel.agents.auth.create({
+  domain: 'example.com',
+  profile_name: 'my-profile',
+  login_url: 'https://example.com/auth/signin',
+});
+```
+
+```python Python
+agent = await kernel.agents.auth.create(
+    domain="example.com",
+    profile_name="my-profile",
+    login_url="https://example.com/auth/signin",
+)
+```
+</CodeGroup>
+
+### SSO/OAuth Support
+
+For sites with "Sign in with Google/GitHub/Microsoft", add the OAuth provider's domains to `allowed_domains`:
+
+<CodeGroup>
+```typescript TypeScript
+const agent = await kernel.agents.auth.create({
+  domain: 'example.com',
+  profile_name: 'my-profile',
+  allowed_domains: ['accounts.google.com', 'google.com'],
+});
+```
+
+```python Python
+agent = await kernel.agents.auth.create(
+    domain="example.com",
+    profile_name="my-profile",
+    allowed_domains=["accounts.google.com", "google.com"],
+)
+```
+</CodeGroup>
+
+The user can click the SSO button on the hosted page, complete OAuth with the provider, and the authenticated session is saved to the profile.
+
+### Post-Login URL
+
+After successful authentication, retrieve the auth agent to get `post_login_url`—the page where the login landed. Use this to start your automation from the right place:
+
+<CodeGroup>
+```typescript TypeScript
+const authAgent = await kernel.agents.auth.retrieve(agent.id);
+
+if (authAgent.post_login_url) {
+  await page.goto(authAgent.post_login_url);
+  // Start automation from the dashboard/home page
+}
+```
+
+```python Python
+auth_agent = await kernel.agents.auth.retrieve(agent.id)
+
+if auth_agent.post_login_url:
+    await page.goto(auth_agent.post_login_url)
+    # Start automation from the dashboard/home page
+```
+</CodeGroup>

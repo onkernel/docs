@@ -1,0 +1,375 @@
+---
+title: "Programmatic Flow"
+description: "Build your own credential collection UI with full control"
+---
+
+Build your own credential collection UI instead of using the hosted page. Poll for login fields, then submit credentials via the API.
+
+Use the Programmatic flow when:
+- You need a custom credential collection UI that matches your app's design
+- You're building headless/automated authentication
+- You have credentials stored and want to authenticate without user interaction
+
+## How It Works
+
+<Steps>
+  <Step title="Create Auth Agent and Start Authentication">
+    Same as [Hosted UI](/auth/agent/hosted-ui)
+  </Step>
+  <Step title="Poll and Submit">
+    Poll until `step` becomes `awaiting_input`, then submit credentials
+  </Step>
+  <Step title="Handle 2FA">
+    If more fields appear (2FA code), submit again—same loop handles it
+  </Step>
+</Steps>
+
+## Getting started
+
+### 1. Create an Auth Agent
+
+<CodeGroup>
+```typescript TypeScript
+const agent = await kernel.agents.auth.create({
+  domain: 'github.com',
+  profile_name: 'github-profile',
+});
+```
+
+```python Python
+agent = await kernel.agents.auth.create(
+    domain="github.com",
+    profile_name="github-profile",
+)
+```
+</CodeGroup>
+
+### 2. Start Authentication
+
+<CodeGroup>
+```typescript TypeScript
+const invocation = await kernel.agents.auth.invocations.create({
+  auth_agent_id: agent.id,
+});
+```
+
+```python Python
+invocation = await kernel.agents.auth.invocations.create(
+    auth_agent_id=agent.id,
+)
+```
+</CodeGroup>
+
+To save credentials for automatic re-authentication:
+
+<CodeGroup>
+```typescript TypeScript
+const invocation = await kernel.agents.auth.invocations.create({
+  auth_agent_id: agent.id,
+  save_credential_as: 'my-saved-creds',
+});
+```
+
+```python Python
+invocation = await kernel.agents.auth.invocations.create(
+    auth_agent_id=agent.id,
+    save_credential_as="my-saved-creds",
+)
+```
+</CodeGroup>
+
+### 3. Poll and Submit Credentials
+
+A single loop handles everything—initial login, 2FA, and completion:
+
+<CodeGroup>
+```typescript TypeScript
+let state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id);
+
+while (state.status === 'IN_PROGRESS') {
+  // Submit when fields are ready (login or 2FA)
+  if (state.step === 'awaiting_input' && state.pending_fields?.length) {
+    const fieldValues = getCredentialsForFields(state.pending_fields);
+    await kernel.agents.auth.invocations.submit(
+      invocation.invocation_id,
+      { field_values: fieldValues }
+    );
+  }
+  
+  await new Promise(r => setTimeout(r, 2000));
+  state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id);
+}
+
+if (state.status === 'SUCCESS') {
+  console.log('Authentication successful!');
+}
+```
+
+```python Python
+state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id)
+
+while state.status == "IN_PROGRESS":
+    # Submit when fields are ready (login or 2FA)
+    if state.step == "awaiting_input" and state.pending_fields:
+        field_values = get_credentials_for_fields(state.pending_fields)
+        await kernel.agents.auth.invocations.submit(
+            invocation.invocation_id,
+            field_values=field_values,
+        )
+    
+    await asyncio.sleep(2)
+    state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id)
+
+if state.status == "SUCCESS":
+    print("Authentication successful!")
+```
+</CodeGroup>
+
+The `pending_fields` array tells you what the login form needs:
+
+```typescript
+// Example pending_fields for login
+[{ name: 'username', type: 'text' }, { name: 'password', type: 'password' }]
+
+// Example pending_fields for 2FA
+[{ name: 'otp', type: 'code' }]
+```
+
+## Complete Example
+
+<CodeGroup>
+```typescript TypeScript
+import Kernel from '@onkernel/sdk';
+
+const kernel = new Kernel();
+
+// Create auth agent
+const agent = await kernel.agents.auth.create({
+  domain: 'github.com',
+  profile_name: 'github-profile',
+});
+
+const invocation = await kernel.agents.auth.invocations.create({
+  auth_agent_id: agent.id,
+});
+
+// Single polling loop handles login + 2FA
+let state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id);
+
+while (state.status === 'IN_PROGRESS') {
+  if (state.step === 'awaiting_input' && state.pending_fields?.length) {
+    // Check what fields are needed
+    const fieldNames = state.pending_fields.map(f => f.name);
+    
+    if (fieldNames.includes('username')) {
+      // Initial login
+      await kernel.agents.auth.invocations.submit(
+        invocation.invocation_id,
+        { field_values: { username: 'my-username', password: 'my-password' } }
+      );
+    } else {
+      // 2FA or additional fields
+      const code = await promptUserForCode();
+      await kernel.agents.auth.invocations.submit(
+        invocation.invocation_id,
+        { field_values: { [state.pending_fields[0].name]: code } }
+      );
+    }
+  }
+
+  await new Promise(r => setTimeout(r, 2000));
+  state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id);
+}
+
+if (state.status === 'SUCCESS') {
+  console.log('Authentication successful!');
+  
+  const browser = await kernel.browsers.create({
+    profile: { name: 'github-profile' },
+    stealth: true,
+  });
+  
+  // Navigate to the site—you're already logged in
+  await page.goto('https://github.com');
+}
+```
+
+```python Python
+from kernel import Kernel
+import asyncio
+
+kernel = Kernel()
+
+# Create auth agent
+agent = await kernel.agents.auth.create(
+    domain="github.com",
+    profile_name="github-profile",
+)
+
+invocation = await kernel.agents.auth.invocations.create(
+    auth_agent_id=agent.id,
+)
+
+# Single polling loop handles login + 2FA
+state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id)
+
+while state.status == "IN_PROGRESS":
+    if state.step == "awaiting_input" and state.pending_fields:
+        # Check what fields are needed
+        field_names = [f["name"] for f in state.pending_fields]
+        
+        if "username" in field_names:
+            # Initial login
+            await kernel.agents.auth.invocations.submit(
+                invocation.invocation_id,
+                field_values={"username": "my-username", "password": "my-password"},
+            )
+        else:
+            # 2FA or additional fields
+            code = input("Enter code: ")
+            await kernel.agents.auth.invocations.submit(
+                invocation.invocation_id,
+                field_values={state.pending_fields[0]["name"]: code},
+            )
+
+    await asyncio.sleep(2)
+    state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id)
+
+if state.status == "SUCCESS":
+    print("Authentication successful!")
+    
+    browser = await kernel.browsers.create(
+        profile={"name": "github-profile"},
+        stealth=True,
+    )
+    
+    # Navigate to the site—you're already logged in
+    await page.goto("https://github.com")
+```
+</CodeGroup>
+
+## Handling Different Input Types
+
+The basic polling loop handles `pending_fields`, but login pages can require other input types too.
+
+### SSO Buttons
+
+When the login page has "Sign in with Google/GitHub/Microsoft" buttons, they appear in `pending_sso_buttons`:
+
+<CodeGroup>
+```typescript TypeScript
+if (state.pending_sso_buttons?.length) {
+  // Show the user available SSO options
+  for (const btn of state.pending_sso_buttons) {
+    console.log(`${btn.provider}: ${btn.label}`);
+  }
+  
+  // Submit the selected SSO button
+  await kernel.agents.auth.invocations.submit(
+    invocation.invocation_id,
+    { sso_button: state.pending_sso_buttons[0].selector }
+  );
+}
+```
+
+```python Python
+if state.pending_sso_buttons:
+    # Show the user available SSO options
+    for btn in state.pending_sso_buttons:
+        print(f"{btn['provider']}: {btn['label']}")
+    
+    # Submit the selected SSO button
+    await kernel.agents.auth.invocations.submit(
+        invocation.invocation_id,
+        sso_button=state.pending_sso_buttons[0]["selector"],
+    )
+```
+</CodeGroup>
+
+<Info>
+Remember to set `allowed_domains` on the agent to include the OAuth provider's domain (e.g., `accounts.google.com`).
+</Info>
+
+### MFA Selection
+
+When the site offers multiple MFA methods, they appear in `mfa_options`:
+
+<CodeGroup>
+```typescript TypeScript
+if (state.mfa_options?.length) {
+  // Available types: sms, email, totp, push, call, security_key
+  for (const opt of state.mfa_options) {
+    console.log(`${opt.type}: ${opt.label}`);
+  }
+  
+  // Submit the selected MFA method
+  await kernel.agents.auth.invocations.submit(
+    invocation.invocation_id,
+    { selected_mfa_type: 'sms' }
+  );
+}
+```
+
+```python Python
+if state.mfa_options:
+    # Available types: sms, email, totp, push, call, security_key
+    for opt in state.mfa_options:
+        print(f"{opt['type']}: {opt['label']}")
+    
+    # Submit the selected MFA method
+    await kernel.agents.auth.invocations.submit(
+        invocation.invocation_id,
+        selected_mfa_type="sms",
+    )
+```
+</CodeGroup>
+
+After selecting an MFA method, the flow continues—poll for `pending_fields` to submit the code, or handle external actions for push/security key.
+
+### External Actions (Push, Security Key)
+
+When the site requires an action outside the browser (push notification, security key tap), the step becomes `awaiting_external_action`:
+
+<CodeGroup>
+```typescript TypeScript
+if (state.step === 'awaiting_external_action') {
+  // Show the message to the user
+  console.log(state.external_action_message);
+  // e.g., "Check your phone for a push notification"
+  
+  // Keep polling—the flow resumes automatically when the user completes the action
+}
+```
+
+```python Python
+if state.step == "awaiting_external_action":
+    # Show the message to the user
+    print(state.external_action_message)
+    # e.g., "Check your phone for a push notification"
+    
+    # Keep polling—the flow resumes automatically when the user completes the action
+```
+</CodeGroup>
+
+## Step Reference
+
+The `step` field indicates what the flow is waiting for:
+
+| Step | Description |
+|------|-------------|
+| `discovering` | Finding the login page and analyzing it |
+| `awaiting_input` | Waiting for field values, SSO button click, or MFA selection |
+| `submitting` | Processing submitted values |
+| `awaiting_external_action` | Waiting for push approval, security key, etc. |
+
+## Status Reference
+
+The `status` field indicates the overall invocation state:
+
+| Status | Description |
+|--------|-------------|
+| `IN_PROGRESS` | Authentication is ongoing—keep polling |
+| `SUCCESS` | Login completed, profile saved |
+| `FAILED` | Login failed (check `error_message`) |
+| `EXPIRED` | Invocation timed out (5 minutes) |
+| `CANCELED` | Invocation was canceled |

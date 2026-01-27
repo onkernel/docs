@@ -1,0 +1,124 @@
+---
+title: "Agent Browser"
+---
+
+[Agent Browser](https://github.com/vercel-labs/agent-browser) is a headless browser automation CLI for AI agents built by Vercel. It provides a fast Rust CLI with Node.js fallback, making it ideal for AI-powered browser automation. By integrating with Kernel, you can run Agent Browser automations with cloud-hosted browsers.
+
+## Using the native Kernel provider
+
+Agent Browser has built-in support for Kernel as a cloud browser provider. This is the simplest way to use Kernel with Agent Browser.
+
+### Quick start
+
+Use the `-p` flag to enable Kernel:
+
+```bash
+export KERNEL_API_KEY="your-api-key"
+agent-browser -p kernel open https://example.com
+```
+
+Get your API key from the [Kernel Dashboard](https://dashboard.onkernel.com/api-keys).
+
+### Configuration options
+
+Configure Kernel via environment variables:
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `AGENT_BROWSER_PROVIDER` | Set to `kernel` as an alternative to the `-p kernel` flag | (none) |
+| `KERNEL_HEADLESS` | Run browser in headless mode (`true`/`false`) | `false` |
+| `KERNEL_STEALTH` | Enable stealth mode to avoid bot detection (`true`/`false`) | `true` |
+| `KERNEL_TIMEOUT_SECONDS` | Session timeout in seconds | `300` |
+| `KERNEL_PROFILE_NAME` | Browser profile name for persistent cookies/logins | (none) |
+
+### Profile persistence
+
+When `KERNEL_PROFILE_NAME` is set, the profile will be created if it doesn't already exist. Cookies, logins, and session data are automatically saved back to the profile when the browser session ends, making them available for future sessions.
+
+```bash
+export KERNEL_API_KEY="your-api-key"
+export KERNEL_PROFILE_NAME="my-profile"
+agent-browser -p kernel open https://example.com
+```
+
+## Connecting via CDP (alternative)
+
+Use this approach when you need full control of the Kernel browser session creation logic beyond what the agent-browser environment variables support.
+
+```bash
+# Create a Kernel browser and extract the CDP URL
+SESSION=$(kernel browsers create --stealth -o json)
+CDP_URL=$(echo "$SESSION" | jq -r '.cdp_ws_url')
+SESSION_ID=$(echo "$SESSION" | jq -r '.session_id')
+
+# Connect agent-browser to the Kernel session
+agent-browser connect "$CDP_URL"
+
+# Run your automation
+agent-browser open https://example.com
+agent-browser snapshot
+
+# Clean up
+agent-browser close
+kernel browsers delete "$SESSION_ID"
+```
+
+## Programmatic usage
+
+Use this approach if you want to use agent-browser as an alternative to Playwright within a Node.js or Python application while maintaining programmatic control over browser session lifecycle.
+
+<Tabs>
+  <Tab title="TypeScript">
+```typescript
+import Kernel from '@onkernel/sdk';
+import { execSync } from 'child_process';
+
+const kernel = new Kernel();
+const browser = await kernel.browsers.create({ stealth: true });
+
+console.log("Live view url:", browser.browser_live_view_url);
+
+try {
+  execSync(`agent-browser connect "${browser.cdp_ws_url}"`, { stdio: 'inherit' });
+  execSync('agent-browser open https://example.com', { stdio: 'inherit' });
+  execSync('agent-browser snapshot', { stdio: 'inherit' });
+  execSync('agent-browser close', { stdio: 'inherit' });
+} finally {
+  await kernel.browsers.deleteByID(browser.session_id);
+}
+```
+  </Tab>
+  <Tab title="Python">
+```python
+import subprocess
+from kernel import Kernel
+
+kernel = Kernel()
+browser = kernel.browsers.create(stealth=True)
+
+print(f"Live view url: {browser.browser_live_view_url}")
+
+try:
+    subprocess.run(["agent-browser", "connect", browser.cdp_ws_url], check=True)
+    subprocess.run(["agent-browser", "open", "https://example.com"], check=True)
+    subprocess.run(["agent-browser", "snapshot"], check=True)
+    subprocess.run(["agent-browser", "close"], check=True)
+finally:
+    kernel.browsers.delete_by_id(browser.session_id)
+```
+  </Tab>
+</Tabs>
+
+## Benefits of using Kernel with Agent Browser
+
+- **No local browser management**: Run automations without installing or maintaining browsers locally
+- **Scalability**: Launch multiple browser sessions in parallel
+- **Stealth mode**: Built-in anti-detection features for web scraping
+- **Session state**: Maintain browser state across runs via [Profiles](/browsers/profiles)
+- **Live view**: Debug your automations with real-time browser viewing
+
+## Next steps
+
+- Check out [live view](/browsers/live-view) for debugging your automations
+- Learn about [stealth mode](/browsers/bot-detection/stealth) for avoiding detection
+- Learn how to properly [terminate browser sessions](/browsers/termination)

@@ -97,3 +97,54 @@ kernel browsers extensions upload <session_id> ./my-extension
 <Info>
 Note that this will restart the browser process and break any connections to the browser CDP URL.
 </Info>
+
+## Extensions requiring enterprise policies
+
+For a complete list of available extension settings and policies, refer to the [Chrome Enterprise Policy documentation](https://chromeenterprise.google/policies/extension-settings/).
+
+### Uploading extensions requiring enterprise policies
+
+Some Chrome extensions require elevated permissions that Chrome will only grant when the extension is installed via enterprise policies. These extensions cannot be loaded with the standard `--load-extension` flag and require special handling.
+
+### What are enterprise policy extensions?
+
+Extensions that require enterprise policies typically:
+
+- Use permissions like `webRequestBlocking` or `webRequest` with blocking capabilities
+- Need to intercept and modify network requests before they're sent
+- Require installation via Chrome's `ExtensionInstallForcelist` policy
+
+Common examples include extensions for network filtering, request signing, or advanced content modification.
+
+### Required files for upload
+
+When uploading an extension that requires enterprise policies to Kernel, your extension directory or zip file must include:
+
+1. **Extension source files** - Your `manifest.json` and all extension code (background scripts, content scripts, etc.)
+2. **`update.xml`** - A Chrome update manifest that points to the `.crx` file location
+3. **`.crx` file** - The signed and packed extension file
+
+<Info>
+The `.crx` file and `update.xml` are required for Kernel to serve the extension via Chrome's `ExtensionInstallForcelist` policy. If you're deploying extensions from the Chrome Web Store via `ExtensionInstallForcelist`, these files are optional since Chrome uses the Web Store's default update URL.
+</Info>
+
+### Automatic detection and validation
+
+Kernel automatically detects extensions that require enterprise policies by analyzing the `manifest.json` file during upload. No manual configuration is needed.
+
+**Detection process:**
+1. You upload an extension via CLI or API
+2. Kernel scans the `manifest.json` for permissions like `webRequestBlocking`
+3. If enterprise policies are required, Kernel validates the required files are present
+
+### How it works
+
+Once you successfully upload an enterprise policy extension, Kernel handles the rest automatically:
+
+1. **Upload** - You upload your extension with all required files
+2. **Detection** - Kernel detects the enterprise policy requirement from the manifest
+3. **Policy configuration** - Extension is automatically added to `ExtensionInstallForcelist`
+4. **File serving** - The kernel-images server serves update files at `http://127.0.0.1:10001/extensions/{extension-id}/update.xml`
+5. **Installation** - Chrome installs the extension via enterprise policy when the browser starts
+
+No additional HTTP server or manual policy configuration is needed. The extension works seamlessly in any browser session that it's uploaded to.
