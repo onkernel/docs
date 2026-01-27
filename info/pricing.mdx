@@ -8,27 +8,28 @@ With Kernel, you only pay for what you use and nothing more. Our goal is to be c
 
 | Feature | Developer (free + usage) | Hobbyist ($30 / mo + usage) | Start-Up ($200 / mo + usage) | Enterprise |
 | --- | --- | --- | --- | --- |
-| Price per gb-second | $0.0000166667 | $0.0000166667 | $0.0000166667 | Custom |
+| Price per gb-second ($) | 0.0000166667 | 0.0000166667 | 0.0000166667 | Custom |
 | Headless browsers resource | 1 gb | 1 gb | 1 gb | 1 gb |
 | Headful browsers resource | 8 gb | 8 gb | 8 gb | 8 gb |
-| Free usage credits / mo | $5 | $15 | $50 | Custom |
+| Free usage credits / mo | $5 | $10 | $50 | Custom |
 | Extended browser timeouts | ✅ | ✅ | ✅ | ✅ |
 | Browser live view | ✅ | ✅ | ✅ | ✅ |
 | Configurable browser viewports | ✅ | ✅ | ✅ | ✅ |
 | Managed stealth mode | ✅ | ✅ | ✅ | ✅ |
 | Computer controls API | ✅ | ✅ | ✅ | ✅ |
-| Configurable & BYO proxies | ❌ | ✅ | ✅ | ✅ |
-| Browser replays | ❌ | ✅ | ✅ | ✅ |
+| Browser replays | ❌ | 7 days | 30 days | Custom |
 | Browser profiles | ❌ | ✅ | ✅ | ✅ |
+| Managed auth profiles | ❌ | ✅ | ✅ | ✅ |
 | File uploads & downloads | ❌ | ✅ | ✅ | ✅ |
-| Configurable browser extensions | ❌ | ✅ | ✅ | ✅ |
+| Configurable browser extensions | ❌ | ❌ | ✅ | ✅ |
+| Configurable & BYO proxies | ❌ | ❌ | ✅ | ✅ |
 | Browser pools | ❌ | ❌ | ✅ | ✅ |
 | SOC2 compliance | ✅ | ✅ | ✅ | ✅ |
 | HIPAA compliance (BAA) | ❌ | ❌ | ❌ | ✅ |
 
 > Note: Included monthly credits apply to usage costs only.
 
-## Browser pools
+## Reserved browsers (browser pools)
 
 With Browser Pools, you pay the standard usage-based price per GB-second while browsers run, plus a small disk space charge when they are idle.
 
@@ -38,13 +39,14 @@ With Browser Pools, you pay the standard usage-based price per GB-second while b
 | Disk allocation per browser | 4 GB | 1 GB |
 | Example: 50 browsers idle/month | $144/month | $36/month |
 
-## Limits
+## Concurrency limits
 
 | Feature | Developer (free + usage) | Hobbyist ($30 / mo + usage) | Start-Up ($200 / mo + usage) | Enterprise |
 | --- | --- | --- | --- | --- |
-| Log & replay retention | 30 days | 7 days | 30 days | Custom |
-| Concurrent browsers | 5 | 10 | 50 | Custom |
-| Concurrent invocations | 5 | 10 | 50 | Custom |
-| Concurrent invocations (per-app) | 5 | 10 | 20 | Custom |
+| Reserved browsers ([browser pools](/browsers/scaling/pools)) | 0 | 0 | 100 | Custom |
+| On-demand browsers | 5 | 10 | 50 | Custom |
+| Invocations | 5 | 10 | 50 | Custom |
+| Invocations (per-app) | 5 | 10 | 20 | Custom |
+| Managed auth profiles | N/A | 3 | 20 | Custom |
 
-> Note: Limits are org-wide by default unless stated otherwise.
+> Note: Limits are org-wide by default unless stated otherwise. `Managed auth profiles` refer to the number of active auth profiles that Kernel maintains using your stored [Credentials](/auth/credentials) or [1Password connection](/integrations/1password).
