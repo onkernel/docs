@@ -103,7 +103,8 @@
                           "proxies/isp",
                           "proxies/datacenter"
                         ]
-                      }
+                      },
+                      "browsers/bot-detection/web-bot-auth"
                     ]
                   },
                   "browsers/extensions",
