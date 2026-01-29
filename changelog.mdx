@@ -9,6 +9,16 @@ import { YouTubeVideo } from '/snippets/youtube-video.mdx';
 For API library updates, see the [Node SDK](https://github.com/onkernel/kernel-node-sdk/blob/main/CHANGELOG.md), [Python SDK](https://github.com/onkernel/kernel-python-sdk/blob/next/CHANGELOG.md), and [Go SDK](https://github.com/onkernel/kernel-go-sdk/blob/main/CHANGELOG.md) changelogs.
 </Note>
 
+<Update label="January 30" tags={["Product", "Docs"]}>
+## Product updates
+- We changed the default search engine for Kernel browsers to DuckDuckGo, which reduces CAPTCHA friction during web searches. 
+- We updated the Gemini Computer Use [Python](https://github.com/kernel/cli/tree/main/pkg/templates/python/gemini-computer-use) and [TypeScript](https://github.com/kernel/cli/tree/main/pkg/templates/typescript/gemini-computer-use) templates to use Kernel's Computer Controls API.
+
+## Documentation updates
+- We published a [Scaling in Production guide](/browsers/scaling/overview) with recommendations and best practices for handling high-concurrency workloads. Read it to learn how and when to use browser pools versus on-demand browsers, and see code samples for production implementations.
+- Added a new [integration guide](https://www.kernel.sh/docs/integrations/agent-browser) for [Agent Browser](https://github.com/vercel-labs/agent-browser), Vercel's headless browser automation CLI, which has built-in support for Kernel browsers.
+</Update>
+
 <Update label="January 23" tags={["Product"]}>
 ## Product updates
 <YouTubeVideo videoId="JICMuiC7H4M" title="Introducing Browser Pools" />
