@@ -1,4 +1,5 @@
 export const PricingCalculator = () => {
+    const [price, setPrice] = useState(0);
     const [plan, setPlan] = useState('free');
     const [headless, setHeadless] = useState(true);
     const [avgSessionLength, setAvgSessionLength] = useState(30);
@@ -33,7 +34,7 @@ export const PricingCalculator = () => {
                 price += usageCost - 50;
             }
         }
-        return price;
+        setPrice(price);
     };
   return (
     <div>
