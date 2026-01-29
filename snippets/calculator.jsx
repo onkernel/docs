@@ -2,6 +2,12 @@ import { useState, useEffect, useRef } from 'react';
 import { Card, Columns } from '@mintlify/components';
 
 export const PricingCalculator = () => {
+    const planPrices = {
+        free: 0,
+        hobbyist: 30,
+        startup: 200,
+    }
+
     const [plan, setPlan] = useState('free');
     const [headless, setHeadless] = useState(true);
     const [avgSessionLength, setAvgSessionLength] = useState(30);
@@ -9,17 +15,7 @@ export const PricingCalculator = () => {
     const [flash, setFlash] = useState(false);
     const prevPriceRef = useRef(null);
 
-    console.log('re-render');
-
-    let price = 0;
-    if (plan === 'free') {
-        price = 0;
-    } else if (plan === 'hobbyist') {
-        price = 30;
-    }
-    if (plan === 'startup') {
-        price = 200;
-    }
+    let price = planPrices[plan];
     let usageCost = 0
     if (headless) {
         usageCost += 0.0000166667 * 1 * numSessions * avgSessionLength;
@@ -34,7 +30,7 @@ export const PricingCalculator = () => {
         includedUsageCredits = 50;
     }
     if (usageCost > includedUsageCredits) {
-        price += usageCost - includedUsageCredits;
+        price += Math.max(0, usageCost - includedUsageCredits);
     }
     useEffect(() => {
         const prev = prevPriceRef.current;
@@ -45,22 +41,31 @@ export const PricingCalculator = () => {
         }
         prevPriceRef.current = { usageCost, includedUsageCredits, price };
     }, [usageCost, includedUsageCredits, price]);
-    const labelStyle = { fontWeight: 600, fontSize: '0.875rem', color: '#374151', minWidth: '10rem', flexShrink: 0 };
+    const labelStyle = { fontWeight: 600, fontSize: '0.875rem', color: '#374151', minWidth: '10rem', flexShrink: 0, maxWidth: '10rem' };
     const rowStyle = { display: 'flex', alignItems: 'center', gap: '0.5rem', minHeight: '2.25rem' };
     const inputStyle = { minWidth: 0, flex: 1, maxWidth: '100%', boxSizing: 'border-box' };
+    const selectStyle = {
+        ...inputStyle,
+        appearance: 'none',
+        backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23374151'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E")`,
+        backgroundRepeat: 'no-repeat',
+        backgroundPosition: 'right 0.5rem center',
+        backgroundSize: '0.75rem',
+        paddingRight: '1.5rem',
+    };
     return (
         <Columns cols={2}>
             <Card title="Controls" icon="calculator">
                 <div style={rowStyle}>
                     <label style={labelStyle}>Plan</label>
-                    <select style={inputStyle} value={plan} onChange={(e) => setPlan(e.target.value)}>
+                    <select style={selectStyle} value={plan} onChange={(e) => setPlan(e.target.value)}>
                         <option value="free">Free</option>
                         <option value="hobbyist">Hobbyist</option>
                         <option value="startup">Startup</option>
                     </select>
                 </div>
                 <div style={rowStyle}>
-                    <label style={labelStyle}>Average session length</label>
+                    <label style={labelStyle}>Session length (seconds)</label>
                     <input type="number" style={inputStyle} value={avgSessionLength} onChange={(e) => setAvgSessionLength(parseInt(e.target.value))} />
                 </div>
                 <div style={rowStyle}>
@@ -73,9 +78,10 @@ export const PricingCalculator = () => {
                 </div>
             </Card>
             <Card title="Price" icon="circle-dollar">
-                <div><span style={labelStyle}>Usage cost:</span> <span style={{ background: flash ? '#e9d5ff' : 'transparent', transition: 'background 0.5s ease' }}>${usageCost.toFixed(6)}</span></div>
-                <div><span style={labelStyle}>Included usage credits:</span> <span style={{ background: flash ? '#e9d5ff' : 'transparent', transition: 'background 0.5s ease' }}>${includedUsageCredits.toFixed(6)}</span></div>
-                <div><span style={labelStyle}>Price:</span> <span style={{ background: flash ? '#e9d5ff' : 'transparent', transition: 'background 0.5s ease' }}>${price.toFixed(2)}</span></div>
+                <div style={rowStyle}><span style={labelStyle}>Base plan:</span> <span style={{ background: flash ? '#e9d5ff' : 'transparent', transition: 'background 0.5s ease', marginLeft: 'auto' }}>${planPrices[plan].toFixed(2)}</span></div>
+                <div style={rowStyle}><span style={labelStyle}>Usage:</span> <span style={{ background: flash ? '#e9d5ff' : 'transparent', transition: 'background 0.5s ease', marginLeft: 'auto' }}>${usageCost.toFixed(2)}</span></div>
+                <div style={rowStyle}><span style={labelStyle}>Total:</span> <span style={{ background: flash ? '#e9d5ff' : 'transparent', transition: 'background 0.5s ease', marginLeft: 'auto' }}>${price.toFixed(2)}</span></div>
+                <div style={rowStyle}><span style={{ width: '100%', fontSize: '0.8rem', fontStyle: 'italic', textAlign: 'right' }}>(${includedUsageCredits.toFixed(0)} credits included)</span></div>
             </Card>
         </Columns>
     );
