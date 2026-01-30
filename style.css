@@ -1,3 +1,11 @@
+/* pricing calculator button selected state */
+:root {
+  --btn-selected-bg: rgb(172, 134, 249);
+}
+:is(.dark) {
+  --btn-selected-bg: rgb(124, 58, 237);
+}
+
 /* style sidebar titles */
 #navigation-items .sidebar-group-header #sidebar-title{
   font-weight: bold;

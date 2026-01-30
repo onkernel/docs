@@ -14,21 +14,7 @@ export const PricingCalculator = () => {
     const [avgSessionLength, setAvgSessionLength] = useState(30);
     const [numSessions, setNumSessions] = useState(100);
     const [flash, setFlash] = useState(false);
-    const getIsDarkMode = () => typeof document !== 'undefined' && document.documentElement.classList.contains('dark');
-    const [isDarkMode, setIsDarkMode] = useState(false);
     const prevPriceRef = useRef(null);
-    useEffect(() => {
-        setIsDarkMode(getIsDarkMode());
-        const observer = new MutationObserver(() => setIsDarkMode(getIsDarkMode()));
-        observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
-        const m = window.matchMedia('(prefers-color-scheme: dark)');
-        const onSchemeChange = () => setIsDarkMode(getIsDarkMode());
-        m.addEventListener('change', onSchemeChange);
-        return () => {
-            observer.disconnect();
-            m.removeEventListener('change', onSchemeChange);
-        };
-    }, []);
 
     let price = planPrices[plan];
     let usageCost = 0
@@ -91,8 +77,8 @@ export const PricingCalculator = () => {
                     <input type="number" style={{...inputStyle, ...numberInputStyle}} value={numSessions} onChange={(e) => setNumSessions(parseInt(e.target.value))} />
                 </div>
                 <div style={rowStyle}>
-                    <button class="btn btn-primary dark:text-white" style={{ padding: '0.25rem 0.5rem', borderRadius: '0.375rem', border: `1px solid ${!headless ? '#7c3aed' : '#000'}`, fontSize: '0.875rem', background: !headless ? (isDarkMode ? 'rgb(124, 58, 237)' : 'rgb(172 134 249)') : undefined }} onClick={() => setHeadless(false)}>Headful</button>
-                    <button class="btn btn-primary dark:text-white" style={{ padding: '0.25rem 0.5rem', borderRadius: '0.375rem', border: `1px solid ${headless ? '#7c3aed' : '#000'}`, fontSize: '0.875rem', background: headless ? (isDarkMode ? 'rgb(124, 58, 237)' : 'rgb(172 134 249)') : undefined }} onClick={() => setHeadless(true)}>Headless</button>
+                    <button class="btn btn-primary dark:text-white" style={{ padding: '0.25rem 0.5rem', borderRadius: '0.375rem', border: `1px solid ${!headless ? '#7c3aed' : '#000'}`, fontSize: '0.875rem', background: !headless ? 'var(--btn-selected-bg)' : undefined }} onClick={() => setHeadless(false)}>Headful</button>
+                    <button class="btn btn-primary dark:text-white" style={{ padding: '0.25rem 0.5rem', borderRadius: '0.375rem', border: `1px solid ${headless ? '#7c3aed' : '#000'}`, fontSize: '0.875rem', background: headless ? 'var(--btn-selected-bg)' : undefined }} onClick={() => setHeadless(true)}>Headless</button>
                 </div>
                 <div style={rowStyle}><span style={{ width: '100%', fontSize: '0.8rem', fontStyle: 'italic' }}>${headless ? usagePrices.toFixed(8) : (usagePrices * 8).toFixed(8)}/second</span></div>
             </Card>
