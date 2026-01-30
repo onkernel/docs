@@ -124,7 +124,8 @@
                           "proxies/isp",
                           "proxies/datacenter"
                         ]
-                      }
+                      },
+                      "browsers/bot-detection/web-bot-auth"
                     ]
                   },
                   "browsers/extensions",
@@ -181,7 +182,6 @@
                   "integrations/vercel/marketplace"
                 ]
               },
-              "integrations/web-bot-auth",
               "integrations/1password"
             ]
           },
