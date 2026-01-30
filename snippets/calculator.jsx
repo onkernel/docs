@@ -7,6 +7,7 @@ export const PricingCalculator = () => {
         hobbyist: 30,
         startup: 200,
     }
+    const usagePrices = 0.0000166667
 
     const [plan, setPlan] = useState('free');
     const [headless, setHeadless] = useState(true);
@@ -18,9 +19,9 @@ export const PricingCalculator = () => {
     let price = planPrices[plan];
     let usageCost = 0
     if (headless) {
-        usageCost += 0.0000166667 * 1 * numSessions * avgSessionLength;
+        usageCost += usagePrices * 1 * numSessions * avgSessionLength;
     } else {
-        usageCost += 0.0000166667 * 8 * numSessions * avgSessionLength;
+        usageCost += usagePrices * 8 * numSessions * avgSessionLength;
     }
 
     let includedUsageCredits = 5;
@@ -76,6 +77,7 @@ export const PricingCalculator = () => {
                     <button class="btn btn-primary" style={{ padding: '0.25rem 0.5rem', borderRadius: '0.375rem', border: `1px solid ${!headless ? '#7c3aed' : '#000'}`, fontSize: '0.875rem', background: !headless ? '#e9d5ff' : undefined }} onClick={() => setHeadless(false)}>Headful</button>
                     <button class="btn btn-primary" style={{ padding: '0.25rem 0.5rem', borderRadius: '0.375rem', border: `1px solid ${headless ? '#7c3aed' : '#000'}`, fontSize: '0.875rem', background: headless ? '#e9d5ff' : undefined }} onClick={() => setHeadless(true)}>Headless</button>
                 </div>
+                <div style={rowStyle}><span style={{ width: '100%', fontSize: '0.8rem', fontStyle: 'italic' }}>${headless ? usagePrices.toFixed(6) : (usagePrices * 8).toFixed(6)}/second</span></div>
             </Card>
             <Card title="Price" icon="circle-dollar">
                 <div style={rowStyle}><span style={labelStyle}>Base plan:</span> <span style={{ background: flash ? '#e9d5ff' : 'transparent', transition: 'background 0.5s ease', marginLeft: 'auto' }}>${planPrices[plan].toFixed(2)}</span></div>
