@@ -1,6 +1,6 @@
 /* pricing calculator button selected state */
 :root {
-  --btn-selected-bg: rgb(172, 134, 249);
+  --btn-selected-bg: rgb(224 209 254);
 }
 :is(.dark) {
   --btn-selected-bg: rgb(124, 58, 237);
