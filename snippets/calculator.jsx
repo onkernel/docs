@@ -45,6 +45,9 @@ export const PricingCalculator = () => {
     const labelStyle = { fontWeight: 600, fontSize: '0.875rem', color: '#374151', minWidth: '10rem', flexShrink: 0, maxWidth: '10rem' };
     const rowStyle = { display: 'flex', alignItems: 'center', gap: '0.5rem', minHeight: '2.25rem' };
     const inputStyle = { minWidth: 0, flex: 1, maxWidth: '100%', boxSizing: 'border-box' };
+    const numberInputStyle = {
+        borderBottom: '1px solid #7c3aed', textAlign: 'right'
+    };
     const selectStyle = {
         ...inputStyle,
         appearance: 'none',
@@ -67,11 +70,11 @@ export const PricingCalculator = () => {
                 </div>
                 <div style={rowStyle}>
                     <label style={labelStyle}>Session length (seconds)</label>
-                    <input type="number" style={inputStyle} value={avgSessionLength} onChange={(e) => setAvgSessionLength(parseInt(e.target.value))} />
+                    <input type="number" style={{...inputStyle, ...numberInputStyle}} value={avgSessionLength} onChange={(e) => setAvgSessionLength(parseInt(e.target.value))} />
                 </div>
                 <div style={rowStyle}>
                     <label style={labelStyle}>Number of sessions</label>
-                    <input type="number" style={inputStyle} value={numSessions} onChange={(e) => setNumSessions(parseInt(e.target.value))} />
+                    <input type="number" style={{...inputStyle, ...numberInputStyle}} value={numSessions} onChange={(e) => setNumSessions(parseInt(e.target.value))} />
                 </div>
                 <div style={rowStyle}>
                     <button class="btn btn-primary" style={{ padding: '0.25rem 0.5rem', borderRadius: '0.375rem', border: `1px solid ${!headless ? '#7c3aed' : '#000'}`, fontSize: '0.875rem', background: !headless ? '#e9d5ff' : undefined }} onClick={() => setHeadless(false)}>Headful</button>
