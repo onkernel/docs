@@ -1,9 +1,11 @@
-/* pricing calculator button selected state */
+/* pricing calculator button styling */
 :root {
   --btn-selected-bg: rgb(224 209 254);
+  --btn-border: #000;
 }
 :is(.dark) {
   --btn-selected-bg: rgb(124, 58, 237);
+  --btn-border: #fff;
 }
 
 /* style sidebar titles */

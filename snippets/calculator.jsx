@@ -37,14 +37,14 @@ export const PricingCalculator = () => {
         const prev = prevPriceRef.current;
         if (prev !== null && (prev.usageCost !== usageCost || prev.includedUsageCredits !== includedUsageCredits || prev.price !== price)) {
             setFlash(true);
-            const t = setTimeout(() => setFlash(false), 150);
+            const t = setTimeout(() => setFlash(false), 300);
             return () => clearTimeout(t);
         }
         prevPriceRef.current = { usageCost, includedUsageCredits, price };
     }, [usageCost, includedUsageCredits, price]);
     const labelStyle = { fontWeight: 600, fontSize: '0.875rem', minWidth: '10rem', flexShrink: 0, maxWidth: '10rem' };
     const rowStyle = { display: 'flex', alignItems: 'center', gap: '0.5rem', minHeight: '2.25rem' };
-    const inputStyle = { minWidth: 0, flex: 1, maxWidth: '100%', boxSizing: 'border-box' };
+    const inputStyle = { minWidth: 0, flex: 1, maxWidth: '100%', boxSizing: 'border-box', background: 'transparent' };
     const numberInputStyle = {
         borderBottom: '1px solid #7c3aed', textAlign: 'right'
     };
@@ -77,8 +77,8 @@ export const PricingCalculator = () => {
                     <input type="number" style={{...inputStyle, ...numberInputStyle}} value={numSessions} onChange={(e) => setNumSessions(parseInt(e.target.value))} />
                 </div>
                 <div style={rowStyle}>
-                    <button class="btn btn-primary dark:text-white" style={{ padding: '0.25rem 0.5rem', borderRadius: '0.375rem', border: `1px solid ${!headless ? '#7c3aed' : '#000'}`, fontSize: '0.875rem', background: !headless ? 'var(--btn-selected-bg)' : undefined }} onClick={() => setHeadless(false)}>Headful</button>
-                    <button class="btn btn-primary dark:text-white" style={{ padding: '0.25rem 0.5rem', borderRadius: '0.375rem', border: `1px solid ${headless ? '#7c3aed' : '#000'}`, fontSize: '0.875rem', background: headless ? 'var(--btn-selected-bg)' : undefined }} onClick={() => setHeadless(true)}>Headless</button>
+                    <button class="btn btn-primary dark:text-white" style={{ padding: '0.25rem 0.5rem', borderRadius: '0.375rem', border: `1px solid ${!headless ? '#7c3aed' : 'var(--btn-border)'}`, fontSize: '0.875rem', background: !headless ? 'var(--btn-selected-bg)' : undefined }} onClick={() => setHeadless(false)}>Headful</button>
+                    <button class="btn btn-primary dark:text-white" style={{ padding: '0.25rem 0.5rem', borderRadius: '0.375rem', border: `1px solid ${headless ? '#7c3aed' : 'var(--btn-border)'}`, fontSize: '0.875rem', background: headless ? 'var(--btn-selected-bg)' : undefined }} onClick={() => setHeadless(true)}>Headless</button>
                 </div>
                 <div style={rowStyle}><span style={{ width: '100%', fontSize: '0.8rem', fontStyle: 'italic' }}>${headless ? usagePrices.toFixed(8) : (usagePrices * 8).toFixed(8)}/second</span></div>
             </Card>
