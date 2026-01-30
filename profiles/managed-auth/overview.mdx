@@ -3,24 +3,24 @@ title: "Overview"
 description: "Create authenticated browser sessions for your automations"
 ---
 
-Agent Auth creates and maintains authenticated browser profiles for your automations. Store credentials once, and Kernel monitors auth state and re-authenticates automatically when needed. When you launch a browser with the profile, you're already logged in and ready to go.
+Managed Auth creates and maintains authenticated browser profiles for your automations. Store credentials once, and Kernel monitors auth state and re-authenticates automatically when needed. When you launch a browser with the profile, you're already logged in and ready to go.
 
 ## How It Works
 
 <Steps>
-  <Step title="Create an Auth Agent">
-    An **Auth Agent** represents a login session for a specific website and profile. Create one for each domain + profile combination.
+  <Step title="Create Managed Auth">
+    **Managed Auth** represents a login session for a specific website and profile. Create one for each domain + profile combination.
 
 <CodeGroup>
 ```typescript TypeScript
-const agent = await kernel.agents.auth.create({
+const auth = await kernel.profiles.auth.create({
   domain: 'netflix.com',
   profile_name: 'netflix-user-123',
 });
 ```
 
 ```python Python
-agent = await kernel.agents.auth.create(
+auth = await kernel.profiles.auth.create(
     domain="netflix.com",
     profile_name="netflix-user-123",
 )
@@ -32,40 +32,41 @@ agent = await kernel.agents.auth.create(
 
 <CodeGroup>
 ```typescript TypeScript
-const invocation = await kernel.agents.auth.invocations.create({
-  auth_agent_id: agent.id,
+const login = await kernel.profiles.auth.login(auth.id, {
+  save_credential_as: 'my-netflix-creds', // Optional: save for auto-reauth
 });
 
 // Send user to login page
-console.log('Login URL:', invocation.hosted_url);
+console.log('Login URL:', login.hosted_url);
 
 // Poll until complete
-let state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id);
-while (state.status === 'IN_PROGRESS') {
+let state = await kernel.profiles.auth.retrieve(auth.id);
+while (state.flow_status === 'IN_PROGRESS') {
   await new Promise(r => setTimeout(r, 2000));
-  state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id);
+  state = await kernel.profiles.auth.retrieve(auth.id);
 }
 
-if (state.status === 'SUCCESS') {
+if (state.status === 'AUTHENTICATED') {
   console.log('Authenticated!');
 }
 ```
 
 ```python Python
-invocation = await kernel.agents.auth.invocations.create(
-    auth_agent_id=agent.id,
+login = await kernel.profiles.auth.login(
+    auth.id,
+    save_credential_as="my-netflix-creds",  # Optional: save for auto-reauth
 )
 
 # Send user to login page
-print(f"Login URL: {invocation.hosted_url}")
+print(f"Login URL: {login.hosted_url}")
 
 # Poll until complete
-state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id)
-while state.status == "IN_PROGRESS":
+state = await kernel.profiles.auth.retrieve(auth.id)
+while state.flow_status == "IN_PROGRESS":
     await asyncio.sleep(2)
-    state = await kernel.agents.auth.invocations.retrieve(invocation.invocation_id)
+    state = await kernel.profiles.auth.retrieve(auth.id)
 
-if state.status == "SUCCESS":
+if state.status == "AUTHENTICATED":
     print("Authenticated!")
 ```
 </CodeGroup>
@@ -95,19 +96,19 @@ await page.goto("https://netflix.com")
 ```
 </CodeGroup>
 
-    For fully automated flows, link [Credentials](/auth/credentials) to enable re-authentication without user input.
+    For fully automated flows, link [Credentials](/profiles/credentials) to enable re-authentication without user input.
   </Step>
 </Steps>
 
 ## Choose Your Integration
 
 <CardGroup cols={2}>
-  <Card title="Hosted UI" icon="browser" href="/auth/agent/hosted-ui">
+  <Card title="Hosted UI" icon="browser" href="/profiles/managed-auth/hosted-ui">
     **Start here** - Simplest integration
 
     Redirect users to Kernel's hosted page. Add features incrementally: save credentials for auto-reauth, custom login URLs, SSO support.
   </Card>
-  <Card title="Programmatic" icon="code" href="/auth/agent/programmatic">
+  <Card title="Programmatic" icon="code" href="/profiles/managed-auth/programmatic">
     **Full control** - Custom UI or headless
 
     Build your own credential collection. Handle login fields, SSO buttons, MFA selection, and external actions (push notifications, security keys).
@@ -115,12 +116,12 @@ await page.goto("https://netflix.com")
 </CardGroup>
 
 <Tip>
-Layer in [Credentials](/auth/credentials) to enable fully automated re-authentication when sessions expire—no user interaction needed.
+Layer in [Credentials](/profiles/credentials) to enable fully automated re-authentication when sessions expire—no user interaction needed.
 </Tip>
 
-## Why Agent Auth?
+## Why Managed Auth?
 
-The most valuable workflows live behind logins. Agent Auth provides:
+The most valuable workflows live behind logins. Managed Auth provides:
 
 - **Works on any website** - Login pages discovered and handled automatically
 - **SSO/OAuth support** - "Sign in with Google/GitHub/Microsoft" buttons work out of the box via `allowed_domains`
