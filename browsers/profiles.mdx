@@ -112,16 +112,16 @@ print("Live view:", kernel_browser2.browser_live_view_url)
 
 ## Loading a profile into an existing browser
 
-You can load a profile into a browser after it has been created using the [update browser endpoint](/api-reference/browsers/update-browser-session).
+You can load a profile into a browser after it has been created using the [update browser endpoint](/api-reference/browsers/update-browser-session). This supports `save_changes` as well, allowing you to persist any changes made to the hot-loaded profile when the browser is closed.
 
 <CodeGroup>
 ```typescript Typescript/Javascript
 // Create a browser without a profile
 const kernelBrowser = await kernel.browsers.create();
 
-// Later, load a profile into the browser
+// Later, load a profile into the browser (with save_changes to persist updates)
 await kernel.browsers.update(kernelBrowser.session_id, {
-  profile: { name: 'profiles-demo' }
+  profile: { name: 'profiles-demo', save_changes: true }
 });
 ```
 
@@ -129,8 +129,8 @@ await kernel.browsers.update(kernelBrowser.session_id, {
 # Create a browser without a profile
 kernel_browser = await kernel.browsers.create()
 
-# Later, load a profile into the browser
-await kernel.browsers.update(kernel_browser.session_id, profile={"name": "profiles-demo"})
+# Later, load a profile into the browser (with save_changes to persist updates)
+await kernel.browsers.update(kernel_browser.session_id, profile={"name": "profiles-demo", "save_changes": True})
 ```
 </CodeGroup>
 
