@@ -5,6 +5,25 @@ description: "Open an interactive SSH session to a browser VM"
 
 SSH into a running Kernel browser VM for debugging, running commands, or setting up port forwarding.
 
+## Forward local dev server to browser
+
+A common use case is exposing a local development server to the remote Kernel browser. This lets the browser access `localhost` URLs that point to your local machine:
+
+```bash
+# 1. Start your local dev server (e.g., on port 3000)
+npm run dev
+
+# 2. Create a browser with extended timeout
+kernel browsers create --timeout 600
+
+# 3. Forward your local server to the VM
+#    This exposes localhost:3000 on your machine as localhost:3000 inside the VM
+kernel browsers ssh <session-id> -R 3000:localhost:3000
+
+# 4. In the browser's live view, navigate to:
+#    http://localhost:3000
+```
+
 ## Prerequisites
 
 The `kernel browsers ssh` command requires [websocat](https://github.com/vi/websocat) to be installed locally:
