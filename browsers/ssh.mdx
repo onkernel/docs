@@ -9,14 +9,19 @@ SSH into a running Kernel browser VM for debugging, running commands, or setting
 
 The `kernel browsers ssh` command requires [websocat](https://github.com/vi/websocat) to be installed locally:
 
+<Tabs>
+<Tab title="macOS">
 ```bash
-# macOS
 brew install websocat
-
-# Linux
-curl -fsSL https://github.com/vi/websocat/releases/download/v1.13.0/websocat.x86_64-unknown-linux-musl \
+```
+</Tab>
+<Tab title="Linux">
+```bash
+curl -fsSL https://github.com/vi/websocat/releases/download/v1.14.1/websocat.x86_64-unknown-linux-musl \
   -o /usr/local/bin/websocat && chmod +x /usr/local/bin/websocat
 ```
+</Tab>
+</Tabs>
 
 ## Basic usage
 
