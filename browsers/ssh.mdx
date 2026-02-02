@@ -24,6 +24,10 @@ kernel browsers ssh <session-id> -R 3000:localhost:3000
 #    http://localhost:3000
 ```
 
+<Note>
+Kernel detects browser activity via WebRTC (live view) or CDP connections. SSH connections alone don't count as activity, so without `--timeout`, your browser may be cleaned up while you're connected via SSH. Either set a timeout or keep the [live view](/browsers/live-view) open.
+</Note>
+
 ## Prerequisites
 
 The `kernel browsers ssh` command requires [websocat](https://github.com/vi/websocat) to be installed locally:
