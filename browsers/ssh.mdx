@@ -1,0 +1,84 @@
+---
+title: "SSH Access"
+description: "Open an interactive SSH session to a browser VM"
+---
+
+SSH into a running Kernel browser VM for debugging, running commands, or setting up port forwarding.
+
+## Prerequisites
+
+The `kernel browsers ssh` command requires [websocat](https://github.com/vi/websocat) to be installed locally:
+
+```bash
+# macOS
+brew install websocat
+
+# Linux
+curl -fsSL https://github.com/vi/websocat/releases/download/v1.13.0/websocat.x86_64-unknown-linux-musl \
+  -o /usr/local/bin/websocat && chmod +x /usr/local/bin/websocat
+```
+
+## Basic usage
+
+Open an interactive SSH shell to a browser VM:
+
+```bash
+kernel browsers ssh <session-id>
+```
+
+By default, this generates an ephemeral ed25519 SSH keypair for the session. The keypair is automatically cleaned up when the session ends.
+
+## Using an existing SSH key
+
+Specify an existing SSH private key instead of generating an ephemeral one:
+
+```bash
+kernel browsers ssh <session-id> -i ~/.ssh/id_ed25519
+```
+
+<Note>
+The corresponding `.pub` file must exist alongside the private key (e.g., `~/.ssh/id_ed25519.pub`).
+</Note>
+
+## Port forwarding
+
+Port forwarding uses standard SSH syntax.
+
+### Local forwarding (`-L`)
+
+Forward a local port to a port on the VM. Useful for accessing services running inside the VM from your local machine:
+
+```bash
+# Access VM's port 5432 (e.g., a database) on local port 5432
+kernel browsers ssh <session-id> -L 5432:localhost:5432
+```
+
+### Remote forwarding (`-R`)
+
+Forward a VM port to a port on your local machine. Useful for exposing a local development server to the browser:
+
+```bash
+# Expose local dev server (port 3000) on VM port 8080
+kernel browsers ssh <session-id> -R 8080:localhost:3000
+```
+
+This allows code running in the browser to access `localhost:8080` and reach your local development server.
+
+## Setup only
+
+Configure SSH on the VM without opening a connection:
+
+```bash
+kernel browsers ssh <session-id> --setup-only
+```
+
+This installs and configures the SSH server on the VM, then prints the manual connection command. Useful if you want to connect with your own SSH client or configuration.
+
+## Flags
+
+| Flag | Description |
+|------|-------------|
+| `-i, --identity <path>` | Path to SSH private key (generates ephemeral if not provided). |
+| `-L, --local-forward <spec>` | Local port forwarding (`localport:host:remoteport`). |
+| `-R, --remote-forward <spec>` | Remote port forwarding (`remoteport:host:localport`). |
+| `--setup-only` | Setup SSH on VM without connecting. |
