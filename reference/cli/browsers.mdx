@@ -44,6 +44,16 @@ Get detailed information about a browser session.
 |------|-------------|
 | `--output json`, `-o json` | Output raw JSON object. |
 
+### `kernel browsers ssh <session-id>`
+Open an interactive SSH session to a browser VM. Requires [websocat](https://github.com/vi/websocat) to be installed locally.
+
+| Flag | Description |
+|------|-------------|
+| `-i, --identity <path>` | Path to SSH private key (generates ephemeral if not provided). |
+| `-L, --local-forward <spec>` | Local port forwarding (`localport:host:remoteport`). |
+| `-R, --remote-forward <spec>` | Remote port forwarding (`remoteport:host:localport`). |
+| `--setup-only` | Setup SSH on VM without connecting. |
+
 ## Browser logs
 
 ### `kernel browsers logs stream <session-id>`
