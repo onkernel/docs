@@ -1,0 +1,112 @@
+---
+title: "SSH Access"
+description: "Open an interactive SSH session to a browser VM"
+---
+
+SSH into a running Kernel browser VM for debugging, running commands, or setting up port forwarding.
+
+## Forward local dev server to browser
+
+A common use case is exposing a local development server to the remote Kernel browser. This lets the browser access `localhost` URLs that point to your local machine:
+
+```bash
+# 1. Start your local dev server (e.g., on port 3000)
+npm run dev
+
+# 2. Create a browser with extended timeout
+kernel browsers create --timeout 600
+
+# 3. Forward your local server to the VM
+#    This exposes localhost:3000 on your machine as localhost:3000 inside the VM
+kernel browsers ssh <session-id> -R 3000:localhost:3000
+
+# 4. In the browser's live view, navigate to:
+#    http://localhost:3000
+```
+
+<Note>
+Kernel detects browser activity via WebRTC (live view) or CDP connections. SSH connections alone don't count as activity, so without `--timeout`, your browser may be cleaned up while you're connected via SSH. Either set a timeout or keep the [live view](/browsers/live-view) open.
+</Note>
+
+## Prerequisites
+
+The `kernel browsers ssh` command requires [websocat](https://github.com/vi/websocat) to be installed locally:
+
+<Tabs>
+<Tab title="macOS">
+```bash
+brew install websocat
+```
+</Tab>
+<Tab title="Linux">
+```bash
+curl -fsSL https://github.com/vi/websocat/releases/download/v1.14.1/websocat.x86_64-unknown-linux-musl \
+  -o /usr/local/bin/websocat && chmod +x /usr/local/bin/websocat
+```
+</Tab>
+</Tabs>
+
+## Basic usage
+
+Open an interactive SSH shell to a browser VM:
+
+```bash
+kernel browsers ssh <session-id>
+```
+
+By default, this generates an ephemeral ed25519 SSH keypair for the session. The keypair is automatically cleaned up when the session ends.
+
+## Using an existing SSH key
+
+Specify an existing SSH private key instead of generating an ephemeral one:
+
+```bash
+kernel browsers ssh <session-id> -i ~/.ssh/id_ed25519
+```
+
+<Note>
+The corresponding `.pub` file must exist alongside the private key (e.g., `~/.ssh/id_ed25519.pub`).
+</Note>
+
+## Port forwarding
+
+Port forwarding uses standard SSH syntax.
+
+### Local forwarding (`-L`)
+
+Forward a local port to a port on the VM. Useful for accessing services running inside the VM from your local machine:
+
+```bash
+# Access VM's port 5432 (e.g., a database) on local port 5432
+kernel browsers ssh <session-id> -L 5432:localhost:5432
+```
+
+### Remote forwarding (`-R`)
+
+Forward a VM port to a port on your local machine. Useful for exposing a local development server to the browser:
+
+```bash
+# Expose local dev server (port 3000) on VM port 8080
+kernel browsers ssh <session-id> -R 8080:localhost:3000
+```
+
+This allows code running in the browser to access `localhost:8080` and reach your local development server.
+
+## Setup only
+
+Configure SSH on the VM without opening a connection:
+
+```bash
+kernel browsers ssh <session-id> --setup-only
+```
+
+This installs and configures the SSH server on the VM, then prints the manual connection command. Useful if you want to connect with your own SSH client or configuration.
+
+## Flags
+
+| Flag | Description |
+|------|-------------|
+| `-i, --identity <path>` | Path to SSH private key (generates ephemeral if not provided). |
+| `-L, --local-forward <spec>` | Local port forwarding (`localport:host:remoteport`). |
+| `-R, --remote-forward <spec>` | Remote port forwarding (`remoteport:host:localport`). |
+| `--setup-only` | Setup SSH on VM without connecting. |

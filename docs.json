@@ -81,6 +81,7 @@
                   "browsers/viewport",
                   "browsers/profiles",
                   "browsers/file-io",
+                  "browsers/ssh",
                   "browsers/computer-controls",
                   "browsers/playwright-execution"
                 ]
