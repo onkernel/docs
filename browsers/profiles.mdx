@@ -69,6 +69,8 @@ After using a browser with `save_changes: true`, closing the browser will save c
 
 <Warning>
 Calling `browser.close()` does **not** save the profile state. You **must** explicitly delete the Kernel browser (or let the browser [timeout](/browsers/termination#automatic-deletion-via-timeout)) to persist the Profile.
+
+Additionally, calling `browser.close()` before deleting the Kernel browser will shut down Chromium, causing profile saving to fail.
 </Warning>
 
 <CodeGroup>
