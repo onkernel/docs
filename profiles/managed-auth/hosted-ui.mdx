@@ -12,9 +12,9 @@ Use the Hosted UI when:
 
 ## Getting started
 
-### 1. Create Managed Auth
+### 1. Create a Connection
 
-Managed Auth represents a login session for a specific website and profile.
+A Managed Auth Connection links a profile to a domain you want to keep authenticated.
 
 <CodeGroup>
 ```typescript TypeScript
@@ -32,9 +32,9 @@ auth = await kernel.profiles.auth.create(
 ```
 </CodeGroup>
 
-### 2. Start Authentication
+### 2. Start a Login Session
 
-Start a login flow to get the hosted login URL.
+Start a Managed Auth Session to get the hosted login URL.
 
 <CodeGroup>
 ```typescript TypeScript
@@ -139,7 +139,7 @@ import Kernel from '@onkernel/sdk';
 
 const kernel = new Kernel();
 
-// Create managed auth
+// Create connection
 const auth = await kernel.profiles.auth.create({
   domain: 'doordash.com',
   profile_name: 'doordash-user-123',
@@ -175,7 +175,7 @@ import asyncio
 
 kernel = Kernel()
 
-# Create managed auth
+# Create connection
 auth = await kernel.profiles.auth.create(
     domain="doordash.com",
     profile_name="doordash-user-123",
@@ -227,11 +227,11 @@ login = await kernel.profiles.auth.login(
 ```
 </CodeGroup>
 
-After successful login, future login flows for this managed auth will automatically use the saved credentials—no user interaction needed. See [Credentials](/profiles/credentials) for more on automated authentication.
+After successful login, future login sessions for this connection will automatically use the saved credentials—no user interaction needed. See [Credentials](/profiles/credentials) for more on automated authentication.
 
 ### Custom Login URL
 
-If the site's login page isn't at the default location, specify it when creating the managed auth:
+If the site's login page isn't at the default location, specify it when creating the connection:
 
 <CodeGroup>
 ```typescript TypeScript
@@ -277,7 +277,7 @@ The user can click the SSO button on the hosted page, complete OAuth with the pr
 
 ### Post-Login URL
 
-After successful authentication, retrieve the managed auth to get `post_login_url`—the page where the login landed. Use this to start your automation from the right place:
+After successful authentication, retrieve the connection to get `post_login_url`—the page where the login landed. Use this to start your automation from the right place:
 
 <CodeGroup>
 ```typescript TypeScript

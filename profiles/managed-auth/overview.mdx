@@ -8,8 +8,8 @@ Managed Auth creates and maintains authenticated browser profiles for your autom
 ## How It Works
 
 <Steps>
-  <Step title="Create Managed Auth">
-    **Managed Auth** represents a login session for a specific website and profile. Create one for each domain + profile combination.
+  <Step title="Create a Connection">
+    A **Managed Auth Connection** links a profile to a domain. Create one for each domain + profile combination you want to keep authenticated.
 
 <CodeGroup>
 ```typescript TypeScript
@@ -27,8 +27,8 @@ auth = await kernel.profiles.auth.create(
 ```
 </CodeGroup>
   </Step>
-  <Step title="Start Authentication">
-    Start the login flow. Users provide credentials via the hosted page (or your own UI).
+  <Step title="Start a Login Session">
+    A **Managed Auth Session** is the login flow. Start one to authenticate—users provide credentials via the hosted page (or your own UI).
 
 <CodeGroup>
 ```typescript TypeScript

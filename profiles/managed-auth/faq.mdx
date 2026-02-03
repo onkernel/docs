@@ -3,34 +3,22 @@ title: FAQ
 description: Frequently asked questions about Managed Auth
 ---
 
-## How Re-Authentication Works
+## How does re-authentication work?
 
-When you save credentials, Kernel keeps your session authenticated automatically. Kernel runs periodic checks to detect expired sessions, and when logout is detected, re-auth happens automatically. When you create a browser with the profile, it's already logged in.
+When you link credentials to a connection, Kernel monitors the session and re-authenticates automatically when it expires. Periodic health checks (default: every hour) detect logged-out sessions and trigger re-auth in the background, so the profile stays logged in without any action on your part.
 
-**Initial login** uses AI to discover the login page and identify form fields. This happens once per site—credentials are never passed to the LLM.
+<Warning>
+Automatic re-authentication only works when credentials are complete and don't require human input. If login needs SMS/email OTP, push notifications, or manual MFA selection, you'll need to trigger a new login session manually.
+</Warning>
 
-| Step | Method |
-|------|--------|
-| Discover login page | AI |
-| Identify form fields | AI |
-| Fill and submit credentials | Deterministic |
-| Handle captcha | Stealth mode + captcha solver |
-| Verify login success | AI |
+## How do I know if a connection needs authentication?
 
-**Re-authentication** is fully deterministic. No AI, no guessing—just replaying the stored login flow.
+Check the connection's `status` field:
 
-| Step | Method |
-|------|--------|
-| Navigate to login page | Deterministic (stored URL) |
-| Fill and submit credentials | Deterministic (stored field mapping) |
-| Handle captcha | Stealth mode + captcha solver |
-| Verify login success | AI |
+- `AUTHENTICATED` — Profile is logged in and ready to use
+- `NEEDS_AUTH` — Profile needs authentication (auto-reauth failed or isn't possible)
 
-**Session monitoring** runs periodic auth checks (default: every hour) to detect expired sessions. When logout is detected, re-auth happens automatically.
-
-<Info>
-For sites with short session timeouts, configurable check intervals per managed auth are coming soon.
-</Info>
+If `status` is `NEEDS_AUTH`, you'll need to start a new login session. This happens when auto-reauth fails (e.g., password changed) or when credentials require human input.
 
 ## What authentication methods are supported?
 
@@ -46,9 +34,8 @@ If a login attempt fails, Kernel will retry with exponential backoff. After mult
 
 - Invalid credentials
 - Bot detection blocking the login page
-- Site structure changes that break field detection
 - Captcha that couldn't be solved
 
 ## Can I use Managed Auth with any website?
 
-Managed Auth works with most websites that use standard login forms. Some sites with aggressive bot detection may require additional configuration (stealth mode, proxies). Sites that require passkeys or hardware security keys are not supported.
+Managed Auth works with any website. Sites with aggressive bot detection may require additional configuration (stealth mode, proxies). Passkeys and hardware security keys are not currently supported.

@@ -13,7 +13,7 @@ Use the Programmatic flow when:
 ## How It Works
 
 <Steps>
-  <Step title="Create Managed Auth and Start Authentication">
+  <Step title="Create Connection and Start Session">
     Same as [Hosted UI](/profiles/managed-auth/hosted-ui)
   </Step>
   <Step title="Poll and Submit">
@@ -26,7 +26,7 @@ Use the Programmatic flow when:
 
 ## Getting started
 
-### 1. Create Managed Auth
+### 1. Create a Connection
 
 <CodeGroup>
 ```typescript TypeScript
@@ -44,7 +44,7 @@ auth = await kernel.profiles.auth.create(
 ```
 </CodeGroup>
 
-### 2. Start Authentication
+### 2. Start a Login Session
 
 <CodeGroup>
 ```typescript TypeScript
@@ -132,7 +132,7 @@ import Kernel from '@onkernel/sdk';
 
 const kernel = new Kernel();
 
-// Create managed auth
+// Create connection
 const auth = await kernel.profiles.auth.create({
   domain: 'github.com',
   profile_name: 'github-profile',
@@ -185,7 +185,7 @@ import asyncio
 
 kernel = Kernel()
 
-# Create managed auth
+# Create connection
 auth = await kernel.profiles.auth.create(
     domain="github.com",
     profile_name="github-profile",
@@ -269,7 +269,7 @@ if state.pending_sso_buttons:
 </CodeGroup>
 
 <Info>
-Remember to set `allowed_domains` on the managed auth to include the OAuth provider's domain (e.g., `accounts.google.com`).
+Remember to set `allowed_domains` on the connection to include the OAuth provider's domain (e.g., `accounts.google.com`).
 </Info>
 
 ### MFA Selection
@@ -356,9 +356,23 @@ The `flow_status` field indicates the current flow state:
 | `EXPIRED` | Flow timed out (5 minutes) |
 | `CANCELED` | Flow was canceled |
 
-The `status` field indicates the overall managed auth state:
+The `status` field indicates the overall connection state:
 
 | Status | Description |
 |--------|-------------|
 | `AUTHENTICATED` | Profile is logged in and ready to use |
 | `NEEDS_AUTH` | Profile needs authentication |
+
+## Real-Time Updates with SSE
+
+For real-time UIs, you can stream login flow events via Server-Sent Events instead of polling:
+
+```
+GET /profiles/auth/{id}/events
+```
+
+The stream delivers `managed_auth_state` events with the same fields as polling (`flow_status`, `flow_step`, `discovered_fields`, etc.) and terminates automatically when the flow reaches a terminal state.
+
+<Note>
+Polling is recommended for most integrations. SSE is useful when building real-time UIs that need instant updates without polling delays.
+</Note>
