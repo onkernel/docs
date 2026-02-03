@@ -4,9 +4,9 @@ title: "Termination & Timeouts"
 
 Kernel browsers should be terminated after you're done with them.
 
-<Info>
-  Using Playwright/Puppeteer's method `browser.close()` does not delete the browser. Use one of the methods below to delete the browser.
-</Info>
+<Warning>
+  Using Playwright/Puppeteer's method `browser.close()` does not delete the browser. Use one of the methods below to delete the browser. Calling `browser.close()` before deleting the Kernel browser will shut down Chromium, causing profile saving to fail.
+</Warning>
 
 ## Deleting a browser via session ID
 
