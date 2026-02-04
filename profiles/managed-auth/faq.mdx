@@ -39,3 +39,9 @@ If a login attempt fails, Kernel will retry with exponential backoff. After mult
 ## Can I use Managed Auth with any website?
 
 Managed Auth works with any website. Sites with aggressive bot detection may require additional configuration (stealth mode, proxies). Passkeys and hardware security keys are not currently supported.
+
+## How is Managed Auth billed?
+
+Managed Auth is included on all paid plans with no per-connection fees. It uses browser sessions to log in and keep your sessions fresh—these count toward your browser usage like any other browser session.
+
+Auth sessions are fast (typically 5-30 seconds each). Kernel monitors session health and re-authenticates automatically when sessions expire—most stay valid for days. For example, keeping 100 auth connections logged in typically costs less than $5/month in browser usage. See [Pricing & Limits](/info/pricing#managed-auth-billing) for details.
