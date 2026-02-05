@@ -7,6 +7,10 @@ description: "Downloads, uploads, and manipulating the browser's filesystem"
 
 Kernel browsers run in fully sandboxed environments with writable filesystems. When your automation downloads a file, it's saved inside the browser's filesystem and can be retrieved using Kernel's File I/O APIs.
 
+<Warning>
+  Files can only be retrieved while the browser session is still active. Once the browser session is destroyed or times out, all files from that session are permanently deleted and no longer accessible.
+</Warning>
+
 
 ### Playwright
 
