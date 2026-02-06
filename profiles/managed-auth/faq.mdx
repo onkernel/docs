@@ -11,6 +11,25 @@ When you link credentials to a connection, Kernel monitors the session and re-au
 Automatic re-authentication only works when credentials are complete and don't require human input. If login needs SMS/email OTP, push notifications, or manual MFA selection, you'll need to trigger a new login session manually.
 </Warning>
 
+## How do I know if a connection can auto-reauth?
+
+Check the `can_reauth` field on a connection. This boolean tells you whether Kernel can automatically re-authenticate the connection when the session expires.
+
+`can_reauth` is `true` when **all** of the following are met:
+
+1. **Credential linked** — A credential is attached to the connection (stored in Kernel or via an external provider like [1Password](/integrations/1password))
+2. **Login URL set** — The connection has a `login_url` (set automatically after the first successful login, or provided manually)
+3. **Login flow learned** — At least one successful login has completed so Kernel has learned the login flow for the site
+4. **No external action required** — The learned login flow doesn't require human intervention (see below)
+
+### External actions that prevent auto-reauth
+
+After a successful login, Kernel saves the login flow. If the flow includes steps that require human action—like SMS/email OTP, push notifications, or manual MFA selection—Kernel marks the connection as unable to auto-reauth because those steps can't be automated without user input.
+
+If your login flow requires one of these, you can still automate around it:
+- **Switch to TOTP** — If the site supports authenticator apps, add a `totp_secret` to your credential. TOTP codes are generated automatically, so the login flow won't require external action.
+- **Trigger manual re-auth** — Start a new login session when `status` is `NEEDS_AUTH` and route the user through the [Hosted UI](/profiles/managed-auth/hosted-ui) or [Programmatic](/profiles/managed-auth/programmatic) flow.
+
 ## How do I know if a connection needs authentication?
 
 Check the connection's `status` field:
@@ -18,7 +37,7 @@ Check the connection's `status` field:
 - `AUTHENTICATED` — Profile is logged in and ready to use
 - `NEEDS_AUTH` — Profile needs authentication (auto-reauth failed or isn't possible)
 
-If `status` is `NEEDS_AUTH`, you'll need to start a new login session. This happens when auto-reauth fails (e.g., password changed) or when credentials require human input.
+If `status` is `NEEDS_AUTH`, start a new login session. This happens when auto-reauth fails (e.g., password changed), when credentials require human input, or when `can_reauth` is `false`.
 
 ## What authentication methods are supported?
 
