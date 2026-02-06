@@ -1,0 +1,47 @@
+---
+title: FAQ
+description: Frequently asked questions about Managed Auth
+---
+
+## How does re-authentication work?
+
+When you link credentials to a connection, Kernel monitors the session and re-authenticates automatically when it expires. Periodic health checks (default: every hour) detect logged-out sessions and trigger re-auth in the background, so the profile stays logged in without any action on your part.
+
+<Warning>
+Automatic re-authentication only works when credentials are complete and don't require human input. If login needs SMS/email OTP, push notifications, or manual MFA selection, you'll need to trigger a new login session manually.
+</Warning>
+
+## How do I know if a connection needs authentication?
+
+Check the connection's `status` field:
+
+- `AUTHENTICATED` — Profile is logged in and ready to use
+- `NEEDS_AUTH` — Profile needs authentication (auto-reauth failed or isn't possible)
+
+If `status` is `NEEDS_AUTH`, you'll need to start a new login session. This happens when auto-reauth fails (e.g., password changed) or when credentials require human input.
+
+## What authentication methods are supported?
+
+Managed Auth supports username/password authentication and most SSO providers. 
+
+<Warning>
+Passkey-based authentication (e.g., Google accounts with passkeys enabled) is not currently supported. If a user's SSO provider requires a passkey, the login will fail.
+</Warning>
+
+## What happens if login fails?
+
+If a login attempt fails, Kernel will retry with exponential backoff. After multiple failures, the [login flow](/profiles/managed-auth/hosted-ui) will be marked as failed and you'll receive an error. Common failure reasons include:
+
+- Invalid credentials
+- Bot detection blocking the login page
+- Captcha that couldn't be solved
+
+## Can I use Managed Auth with any website?
+
+Managed Auth works with any website. Sites with aggressive bot detection may require additional configuration (stealth mode, proxies). Passkeys and hardware security keys are not currently supported.
+
+## How is Managed Auth billed?
+
+Managed Auth is included on all paid plans with no per-connection fees. It uses browser sessions to log in and keep your sessions fresh—these count toward your browser usage like any other browser session.
+
+Auth sessions are fast (typically 5-30 seconds each). Kernel monitors session health and re-authenticates automatically when sessions expire—most stay valid for days. For example, keeping 100 auth connections logged in typically costs less than $5/month in browser usage. See [Pricing & Limits](/info/pricing#managed-auth-billing) for details.
