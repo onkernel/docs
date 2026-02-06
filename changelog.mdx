@@ -9,6 +9,27 @@ import { YouTubeVideo } from '/snippets/youtube-video.mdx';
 For API library updates, see the [Node SDK](https://github.com/onkernel/kernel-node-sdk/blob/main/CHANGELOG.md), [Python SDK](https://github.com/onkernel/kernel-python-sdk/blob/next/CHANGELOG.md), and [Go SDK](https://github.com/onkernel/kernel-go-sdk/blob/main/CHANGELOG.md) changelogs.
 </Note>
 
+<Update label="February 6" tags={["Product", "Docs"]}>
+## Product updates
+
+### API
+- Added a `/json` endpoint to the CDP proxy, enabling native Playwright `connectOverCDP()` connections.
+- Added an API to get the current cursor position, useful for debugging and building adaptive automation logic.
+- Added an [API](/api-reference/invocations/list-browsers-for-an-invocation) to retrieve browser session IDs associated with a specific invocation.
+
+### Browsers and dashboard
+- Added [SSH access](/browsers/ssh) to Kernel browsers, so you can connect directly via terminal for debugging and inspection.
+- Added support for the 1280x800 viewport size, which improves click coordinate accuracy.
+
+### Bug fixes
+- Live View clipboard now syncs correctly between browser and local machine.
+- Chrome address autofill prompts are automatically disabled.
+
+## Documentation updates
+- Added a [pricing calculator](/info/pricing#pricing-calculator) to help you estimate costs based on your plan, session length, and browser type.
+- Clarified [file](/browsers/file-io) access limitations and browser session deletion behavior.
+</Update>
+
 <Update label="January 30" tags={["Product", "Docs"]}>
 ## Product updates
 - We changed the default search engine for Kernel browsers to DuckDuckGo, which reduces CAPTCHA friction during web searches. 
