@@ -17,14 +17,14 @@ Managed Auth creates and maintains authenticated browser profiles for your autom
 
 <CodeGroup>
 ```typescript TypeScript
-const auth = await kernel.profiles.auth.create({
+const auth = await kernel.auth.connections.create({
   domain: 'netflix.com',
   profile_name: 'netflix-user-123',
 });
 ```
 
 ```python Python
-auth = await kernel.profiles.auth.create(
+auth = await kernel.auth.connections.create(
     domain="netflix.com",
     profile_name="netflix-user-123",
 )
@@ -36,7 +36,7 @@ auth = await kernel.profiles.auth.create(
 
 <CodeGroup>
 ```typescript TypeScript
-const login = await kernel.profiles.auth.login(auth.id, {
+const login = await kernel.auth.connections.login(auth.id, {
   save_credential_as: 'my-netflix-creds', // Optional: save for auto-reauth
 });
 
@@ -44,10 +44,10 @@ const login = await kernel.profiles.auth.login(auth.id, {
 console.log('Login URL:', login.hosted_url);
 
 // Poll until complete
-let state = await kernel.profiles.auth.retrieve(auth.id);
+let state = await kernel.auth.connections.retrieve(auth.id);
 while (state.flow_status === 'IN_PROGRESS') {
   await new Promise(r => setTimeout(r, 2000));
-  state = await kernel.profiles.auth.retrieve(auth.id);
+  state = await kernel.auth.connections.retrieve(auth.id);
 }
 
 if (state.status === 'AUTHENTICATED') {
@@ -56,7 +56,7 @@ if (state.status === 'AUTHENTICATED') {
 ```
 
 ```python Python
-login = await kernel.profiles.auth.login(
+login = await kernel.auth.connections.login(
     auth.id,
     save_credential_as="my-netflix-creds",  # Optional: save for auto-reauth
 )
@@ -65,10 +65,10 @@ login = await kernel.profiles.auth.login(
 print(f"Login URL: {login.hosted_url}")
 
 # Poll until complete
-state = await kernel.profiles.auth.retrieve(auth.id)
+state = await kernel.auth.connections.retrieve(auth.id)
 while state.flow_status == "IN_PROGRESS":
     await asyncio.sleep(2)
-    state = await kernel.profiles.auth.retrieve(auth.id)
+    state = await kernel.auth.connections.retrieve(auth.id)
 
 if state.status == "AUTHENTICATED":
     print("Authenticated!")

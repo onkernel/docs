@@ -18,14 +18,14 @@ A Managed Auth Connection links a profile to a domain you want to keep authentic
 
 <CodeGroup>
 ```typescript TypeScript
-const auth = await kernel.profiles.auth.create({
+const auth = await kernel.auth.connections.create({
   domain: 'linkedin.com',
   profile_name: 'linkedin-profile',
 });
 ```
 
 ```python Python
-auth = await kernel.profiles.auth.create(
+auth = await kernel.auth.connections.create(
     domain="linkedin.com",
     profile_name="linkedin-profile",
 )
@@ -38,11 +38,11 @@ Start a Managed Auth Session to get the hosted login URL.
 
 <CodeGroup>
 ```typescript TypeScript
-const login = await kernel.profiles.auth.login(auth.id);
+const login = await kernel.auth.connections.login(auth.id);
 ```
 
 ```python Python
-login = await kernel.profiles.auth.login(auth.id)
+login = await kernel.auth.connections.login(auth.id)
 ```
 </CodeGroup>
 
@@ -72,11 +72,11 @@ On your backend, poll until authentication completes:
 
 <CodeGroup>
 ```typescript TypeScript
-let state = await kernel.profiles.auth.retrieve(auth.id);
+let state = await kernel.auth.connections.retrieve(auth.id);
 
 while (state.flow_status === 'IN_PROGRESS') {
   await new Promise(r => setTimeout(r, 2000));
-  state = await kernel.profiles.auth.retrieve(auth.id);
+  state = await kernel.auth.connections.retrieve(auth.id);
 }
 
 if (state.status === 'AUTHENTICATED') {
@@ -85,11 +85,11 @@ if (state.status === 'AUTHENTICATED') {
 ```
 
 ```python Python
-state = await kernel.profiles.auth.retrieve(auth.id)
+state = await kernel.auth.connections.retrieve(auth.id)
 
 while state.flow_status == "IN_PROGRESS":
     await asyncio.sleep(2)
-    state = await kernel.profiles.auth.retrieve(auth.id)
+    state = await kernel.auth.connections.retrieve(auth.id)
 
 if state.status == "AUTHENTICATED":
     print("Authentication successful!")
@@ -140,22 +140,22 @@ import Kernel from '@onkernel/sdk';
 const kernel = new Kernel();
 
 // Create connection
-const auth = await kernel.profiles.auth.create({
+const auth = await kernel.auth.connections.create({
   domain: 'doordash.com',
   profile_name: 'doordash-user-123',
 });
 
 // Start authentication
-const login = await kernel.profiles.auth.login(auth.id);
+const login = await kernel.auth.connections.login(auth.id);
 
 // Send user to hosted page
 console.log('Login URL:', login.hosted_url);
 
 // Poll for completion
-let state = await kernel.profiles.auth.retrieve(auth.id);
+let state = await kernel.auth.connections.retrieve(auth.id);
 while (state.flow_status === 'IN_PROGRESS') {
   await new Promise(r => setTimeout(r, 2000));
-  state = await kernel.profiles.auth.retrieve(auth.id);
+  state = await kernel.auth.connections.retrieve(auth.id);
 }
 
 if (state.status === 'AUTHENTICATED') {
@@ -176,22 +176,22 @@ import asyncio
 kernel = Kernel()
 
 # Create connection
-auth = await kernel.profiles.auth.create(
+auth = await kernel.auth.connections.create(
     domain="doordash.com",
     profile_name="doordash-user-123",
 )
 
 # Start authentication
-login = await kernel.profiles.auth.login(auth.id)
+login = await kernel.auth.connections.login(auth.id)
 
 # Send user to hosted page
 print(f"Login URL: {login.hosted_url}")
 
 # Poll for completion
-state = await kernel.profiles.auth.retrieve(auth.id)
+state = await kernel.auth.connections.retrieve(auth.id)
 while state.flow_status == "IN_PROGRESS":
     await asyncio.sleep(2)
-    state = await kernel.profiles.auth.retrieve(auth.id)
+    state = await kernel.auth.connections.retrieve(auth.id)
 
 if state.status == "AUTHENTICATED":
     browser = await kernel.browsers.create(
@@ -214,13 +214,13 @@ Capture the user's credentials during login so future sessions can re-authentica
 
 <CodeGroup>
 ```typescript TypeScript
-const login = await kernel.profiles.auth.login(auth.id, {
+const login = await kernel.auth.connections.login(auth.id, {
   save_credential_as: 'my-saved-creds',
 });
 ```
 
 ```python Python
-login = await kernel.profiles.auth.login(
+login = await kernel.auth.connections.login(
     auth.id,
     save_credential_as="my-saved-creds",
 )
@@ -235,7 +235,7 @@ If the site's login page isn't at the default location, specify it when creating
 
 <CodeGroup>
 ```typescript TypeScript
-const auth = await kernel.profiles.auth.create({
+const auth = await kernel.auth.connections.create({
   domain: 'example.com',
   profile_name: 'my-profile',
   login_url: 'https://example.com/auth/signin',
@@ -243,7 +243,7 @@ const auth = await kernel.profiles.auth.create({
 ```
 
 ```python Python
-auth = await kernel.profiles.auth.create(
+auth = await kernel.auth.connections.create(
     domain="example.com",
     profile_name="my-profile",
     login_url="https://example.com/auth/signin",
@@ -257,7 +257,7 @@ For sites with "Sign in with Google/GitHub/Microsoft", add the OAuth provider's 
 
 <CodeGroup>
 ```typescript TypeScript
-const auth = await kernel.profiles.auth.create({
+const auth = await kernel.auth.connections.create({
   domain: 'example.com',
   profile_name: 'my-profile',
   allowed_domains: ['accounts.google.com', 'google.com'],
@@ -265,7 +265,7 @@ const auth = await kernel.profiles.auth.create({
 ```
 
 ```python Python
-auth = await kernel.profiles.auth.create(
+auth = await kernel.auth.connections.create(
     domain="example.com",
     profile_name="my-profile",
     allowed_domains=["accounts.google.com", "google.com"],
@@ -281,7 +281,7 @@ After successful authentication, retrieve the connection to get `post_login_url`
 
 <CodeGroup>
 ```typescript TypeScript
-const managedAuth = await kernel.profiles.auth.retrieve(auth.id);
+const managedAuth = await kernel.auth.connections.retrieve(auth.id);
 
 if (managedAuth.post_login_url) {
   await page.goto(managedAuth.post_login_url);
@@ -290,7 +290,7 @@ if (managedAuth.post_login_url) {
 ```
 
 ```python Python
-managed_auth = await kernel.profiles.auth.retrieve(auth.id)
+managed_auth = await kernel.auth.connections.retrieve(auth.id)
 
 if managed_auth.post_login_url:
     await page.goto(managed_auth.post_login_url)
