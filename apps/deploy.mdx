@@ -101,3 +101,39 @@ SUCCESS  Total deployment time: 2.78s
 ```
 
 Once deployed, you can [invoke](/apps/invoke) your app from anywhere.
+
+## Deploy Button
+
+The Deploy Button lets users deploy your Kernel app with a single click. It's ideal for sharing open-source projects, templates, or example apps that others can deploy to their own Kernel account.
+
+### How it works
+
+1. Go to the [Deploy Button generator](https://dashboard.onkernel.com/deploy-button) in the Kernel dashboard
+2. Enter your public GitHub repository URL
+3. Specify the required environment variables (API keys, secrets, etc.) that users need to provide
+4. Copy the generated button snippet or link
+
+When someone clicks your Deploy Button, they're taken to a deployment flow where they:
+- Connect their Kernel account
+- Enter the required environment variable values you specified
+- Deploy the app to their account
+
+### Use cases
+
+- **Open-source projects**: Let users deploy your app without cloning repos or running CLI commands
+- **Templates and starters**: Share ready-to-deploy examples that others can customize
+- **Documentation**: Embed deploy buttons in READMEs so readers can try your code instantly
+
+### Adding the button to your repository
+
+After generating your button, add it to your README or documentation:
+
+```markdown
+[![Deploy](https://www.kernel.sh/brand_assets/kernel_deploy.svg)](https://dashboard.onkernel.com/deploy?repo=https%3A%2F%2Fgithub.com%2Forg%2Frepo&entrypoint=index.ts)
+```
+
+Or use HTML:
+
+```html
+<a href="https://dashboard.onkernel.com/deploy?repo=https%3A%2F%2Fgithub.com%2Forg%2Frepo&entrypoint=index.ts"><img src="https://www.kernel.sh/brand_assets/kernel_deploy.svg" alt="Deploy" /></a>
+```
